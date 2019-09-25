@@ -27,89 +27,82 @@ public class SelectServer {
 	
 	private static int BUFFERSIZE = 32;
 	
-    // Move these object declarations here so they can be accessed
-	// by both main and static helper methods
-	// Static since they belong to the class rather than an instance
-	// of the class since we are essentially following a procedural
-	// design
-	// => => => 
-	// Initialize buffers and coders for receive and send on channels
-    private static String command = "";	
-    private static Charset charset = Charset.forName( "us-ascii" );  
-    private static CharsetDecoder decoder = charset.newDecoder();  
-    private static CharsetEncoder encoder = charset.newEncoder();
-    private static ByteBuffer inByteBuffer = null;
-    private static CharBuffer inCharBuffer = null;
-    private static ByteBuffer outByteBuffer = null;
-    private static CharBuffer outCharBuffer = null;
-    private static int bytesSent, bytesRecv;     // number of bytes sent or received
-    private static DatagramPacket packet = null; //datagram packet for DatagramChannel
+	// Buffers and coders
+    private String command;	
+    private Charset charset;  
+    private CharsetDecoder decoder;  
+    private CharsetEncoder encoder;
+    private ByteBuffer inByteBuffer;
+    private CharBuffer inCharBuffer;
+    private ByteBuffer outByteBuffer;
+    private CharBuffer outCharBuffer;
+    private int bytesSent, bytesRecv;     // number of bytes sent or received
     
-    // Initialize the selector and channels
-    private static Selector selector = null;
-    private static ServerSocketChannel tcpChannel;
-    private static DatagramChannel udpChannel;
-    private static SelectableChannel rdyChannel; // for when we iterate through the selector ready key set
-    private static SelectionKey key;
+    // Selector and channels
+    private Selector selector;
+    private ServerSocketChannel tcpChannel;
+    private DatagramChannel udpChannel;
+    private SelectableChannel rdyChannel; // for when we iterate through the selector ready key set
+    private SelectionKey key;
+    private DatagramPacket packet;		 //datagram packet for DatagramChannel
     
+    public SelectServer(int port) throws IOException
+    {
+    		// Initialize buffers and coders 
+    	 	command = "";	
+    	    charset = Charset.forName( "us-ascii" );  
+    	    decoder = charset.newDecoder();  
+    	    encoder = charset.newEncoder();
+    	
+    		// Create the selector to which we will register our TCP and UDP channels
+        selector = Selector.open();
+        
+        // Open sockets and make it non-blocking
+        tcpChannel = ServerSocketChannel.open();	// open but not yet bound
+        udpChannel = DatagramChannel.open();
+        tcpChannel.configureBlocking(false);
+        udpChannel.configureBlocking(false);
+        
+        // Create socket address with input port number and wildcard address 
+        InetSocketAddress isa = new InetSocketAddress(port);
+        // Bind the socket to the address
+        tcpChannel.socket().bind(isa);
+        udpChannel.socket().bind(isa);
+
+        // Register the channels with the selector 
+        tcpChannel.register(selector, SelectionKey.OP_ACCEPT); // the TCP server is interested in connection requests
+        udpChannel.register(selector, SelectionKey.OP_READ);   // the UDP server is interested in read requests 
+    }
     
+    /**
+     * Main method wherein we will create an instance of our SelectServer class
+     * and listen for both incoming TCP connection requests via a ServerSocket
+     * Channel and send/receive datagrams via a DatagramChannel.
+     * This allows non-blocking I/0. 
+     * @param args[0] : Port over which we will communicate
+     * @throws Exception
+     */
     public static void main(String args[]) throws Exception 
     {
+    		// Ensure proper command line usage
         if (args.length != 1)
         {
             System.out.println("Usage: UDPServer <Listening Port>");
             System.exit(1);
         }
-
-        /*
-         * // Initialize buffers and coders for receive and send on channels
-        String command = "";	
-        Charset charset = Charset.forName( "us-ascii" );  
-        CharsetDecoder decoder = charset.newDecoder();  
-        CharsetEncoder encoder = charset.newEncoder();
-        ByteBuffer inByteBuffer = null;
-        CharBuffer inCharBuffer = null;
-        ByteBuffer outByteBuffer = null;
-        CharBuffer outCharBuffer = null;
-        int bytesSent, bytesRecv;     // number of bytes sent or received
-        // Declare a datagram packet for DatagramChannel
-        DatagramPacket packet = null;
-        */
         
-        // Initialize the selector
-        Selector selector = Selector.open();
+        SelectServer selectServer = new SelectServer(Integer.parseInt(args[0]));
         
-        /****************************************************************
-         * FOR TCP: Create channel to listen for incoming TCP connections
-         ****************************************************************/
+        // Monitor selector-registered sockets for activity
+        selectServer.monitorSockets();
         
-        // Open server socket channel and make it non-blocking
-        tcpChannel = ServerSocketChannel.open();	// open but not yet bound
-        tcpChannel.configureBlocking(false);
-        
-        // Create socket address with specified port number and wildcard address 
-        InetSocketAddress isa = new InetSocketAddress(Integer.parseInt(args[0]));
-        // Bind the socket to the address
-        tcpChannel.socket().bind(isa);
-        
-        /****************************************************************
-         * FOR UDP: Create channel that can send and receive UDP packets
-         ****************************************************************/
-
-        // Open datagram socket channel and make it non-blocking
-        udpChannel = DatagramChannel.open();
-        udpChannel.configureBlocking(false);
-        
-        // Bind the datagram socket to the same address (port) as the server socket
-        udpChannel.socket().bind(isa);
-
-        // Register the channels with the selector 
-        // Register that the TCP server is interested in connection requests
-        // Register that the UDP server is interested in read requests 
-        tcpChannel.register(selector, SelectionKey.OP_ACCEPT);
-        udpChannel.register(selector, SelectionKey.OP_READ);
-
-        // Wait for something happen among all registered sockets
+        // Close all connections
+        selectServer.close();
+    }
+    
+    private void monitorSockets() 
+    {
+    		// Wait for something happen among all registered sockets
         try {
             boolean terminated = false;
             while (!terminated) 
@@ -121,8 +114,8 @@ public class SelectServer {
                 }
                 
                 // Get set of ready sockets
-                Set readyKeys = selector.selectedKeys();
-                Iterator readyItor = readyKeys.iterator();
+                Set<SelectionKey> readyKeys = selector.selectedKeys();
+                Iterator<SelectionKey> readyItor = readyKeys.iterator();
 
                 // Walk through the ready set
                 while (readyItor.hasNext()) 
@@ -285,8 +278,12 @@ public class SelectServer {
         catch (IOException e) {
             System.out.println(e);
         }
- 
-        // close all connections
+		
+	}
+    
+    private void close() throws IOException
+    {
+    		// close all connections
         Set keys = selector.keys();
         Iterator itr = keys.iterator();
         while (itr.hasNext()) 
@@ -299,20 +296,19 @@ public class SelectServer {
                 ((SocketChannel)key.channel()).socket().close();
         }
     }
-    
-    // HELPER METHODS
-    public static void acceptClientConnection() throws Exception
+	
+    private void acceptClientConnection() throws IOException
     {
     		// Accept a connection made to this channel's socket
         SocketChannel clientChannel = ((ServerSocketChannel)rdyChannel).accept();
         clientChannel.configureBlocking(false);
-        System.out.println("Accept conncection from " + clientChannel.socket().toString());
+        System.out.println("Accept connection from " + clientChannel.socket().toString());
         
         // Register the new connection for read operation
         clientChannel.register(selector, SelectionKey.OP_READ);
     }
     
-    public static void receiveDatagram() throws Exception
+    private void receiveDatagram() throws IOException
     {
     		DatagramChannel udpChan = (DatagramChannel) rdyChannel;
 		// Receive datagram available on this channel 
@@ -337,7 +333,7 @@ public class SelectServer {
 		}
     }
     
-    public static boolean readFromClientChannel() throws Exception
+    private boolean readFromClientChannel() throws IOException
     {
     		SocketChannel clientChannel = (SocketChannel) rdyChannel;
         
@@ -374,13 +370,13 @@ public class SelectServer {
         return true;
     }
    
-    public static void sendToUDPClient(CharBuffer outCharBuffer)
+    private void sendToUDPClient(CharBuffer outCharBuffer)
     {
     		outCharBuffer.flip();	// flip buffer: limit is set to current position and position to zero
     		
     }
     
-    public static void sendToTCPClient(CharBuffer outCharBuffer)
+    private void sendToTCPClient(CharBuffer outCharBuffer)
     {
     		outCharBuffer.flip();	// flip buffer: limit is set to current position and position to zero
     		
