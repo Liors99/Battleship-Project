@@ -291,7 +291,7 @@ public class SelectServer {
         decoder.decode(inByteBuffer, inCharBuffer, false);
         inCharBuffer.flip();		
         command = inCharBuffer.toString();
-        System.out.println("TCP Client: " + command);
+        System.out.println("TCP Client: " + inCharBuffer.toString());
         
         // Echo the message back
         inByteBuffer.flip();
