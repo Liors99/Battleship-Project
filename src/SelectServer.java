@@ -113,113 +113,51 @@ public class SelectServer {
                     System.exit(1);
                 }
                 
-                // Get set of ready sockets
+                // Get set of ready keys
+                // i.e., the keys whose channels have been detected to 
+                // be ready for at least one operation identified in the
+                // key's interests upon registration to the selector
                 Set<SelectionKey> readyKeys = selector.selectedKeys();
                 Iterator<SelectionKey> readyItor = readyKeys.iterator();
 
                 // Walk through the ready set
                 while (readyItor.hasNext()) 
                 {
-                    // Get key from set
+                    // Get the next key
                     key = (SelectionKey)readyItor.next();
 
                     // Remove current entry
                     readyItor.remove();
                     
-                    // Get the channel of the ready key
+                    // Get the channel of the key
                     rdyChannel = key.channel();
-                    //System.out.println("What kind of channel am I?");
-                    //System.out.println(channel.getClass().getName());
-
-                    // Accept new connection requests to TCP socket, if any
-                    // If this key's channel is ready to accept a new socket connection
+                    
+                    // If this key's channel is ready to accept a new socket connection,
+                    // accept.
                     if (key.isAcceptable()) 	
-                    {
                     		acceptClientConnection();
-                    		/*
-                        // Accept a connection made to this channel's socket
-                        SocketChannel clientChannel = ((ServerSocketChannel)channel).accept();
-                        clientChannel.configureBlocking(false);
-                        System.out.println("Accept conncection from " + clientChannel.socket().toString());
-                        
-                        // Register the new connection for read operation
-                        clientChannel.register(selector, SelectionKey.OP_READ);
-                        */
-                    } 
-                    // If the key's channel is ready for reading
+                    
+                    // If the key's channel is ready for reading,
+                    // check whether the channel is a DatagramChannel (UDP)
+                    // or a ServerSocketChannel (TCP)
                     else if (key.isReadable()) 
                     {
-                    		// Open input and output streams
+                    		// First open input and output streams
                         inByteBuffer = ByteBuffer.allocateDirect(BUFFERSIZE);
                         inCharBuffer = CharBuffer.allocate(BUFFERSIZE);
                         outByteBuffer = ByteBuffer.allocateDirect(BUFFERSIZE);
                         outCharBuffer = CharBuffer.allocate(BUFFERSIZE);	
                         
-                    		// If there is a datagram waiting at the UDP socket
+                    		// If there is a datagram waiting at the UDP socket, receive it.
                     		if (rdyChannel instanceof DatagramChannel)
-						{
                     			receiveDatagram();
-                    			/*
-                    			DatagramChannel udpChan = (DatagramChannel) rdyChannel;
-                    			// Receive datagram available on this channel 
-                    			// Returns the datagram's source address
-                    			SocketAddress clientAdd = udpChan.receive(inByteBuffer);
-                    			
-                    			// How to do error checking on receive?
-                    			
-                    			if (clientAdd != null)
-                    			{
-                    				// make buffer ready for a new sequence of channel-write
-                    				// or relative get operations
-                    				inByteBuffer.flip();	// make buffer available    	
-                    				decoder.decode(inByteBuffer, inCharBuffer, false);
-                    				inCharBuffer.flip();		
-                    				command = inCharBuffer.toString();
-                    				System.out.println("UDP Client: " + command);
-                    				
-                    				// echo the message back
-                    				inByteBuffer.flip();
-                    				udpChan.send(inByteBuffer,clientAdd);
-                    			}
-                    			*/
-						}
                     		
                     		// Else if a TCP client socket channel is ready for reading
-						else 
+						else if (rdyChannel instanceof SocketChannel)
 						{
+							// If read is not successful (?), continue
 							if (!readFromClientChannel())
-								continue;
-							/*
-							SocketChannel clientChannel = (SocketChannel) rdyChannel;
-                  
-                            // Read from client socket channel
-                            bytesRecv = clientChannel.read(inByteBuffer);
-                            if (bytesRecv <= 0)
-                            {
-                                System.out.println("read() error, or connection closed");
-                                key.cancel();  // deregister the socket
-                                continue;
-                            }
-                            
-                            // make buffer ready for a new sequence of channel-write
-                            // or relative get operations
-                            inByteBuffer.flip();	// make buffer available    	
-                            decoder.decode(inByteBuffer, inCharBuffer, false);
-                            inCharBuffer.flip();		
-                            command = inCharBuffer.toString();
-                            System.out.println("TCP Client: " + command);
-                            
-                            // Echo the message back
-                            inByteBuffer.flip();
-                            
-                            bytesSent = clientChannel.write(inByteBuffer); 
-                            if (bytesSent != bytesRecv)
-                            {
-                                System.out.println("write() error, or connection closed");
-                                key.cancel();  // deregister the socket
-                                continue;
-                            }
-                            */
+								continue;						
 						}
                         
                         if (command.equals("terminate\n"))
