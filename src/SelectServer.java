@@ -178,6 +178,7 @@ public class SelectServer {
                             for (File file : files)
                             {
                             		// Put filename in CharBuffer
+                            		outCharBuffer.flip();
                             		outCharBuffer.put(file.getName());
                             		outCharBuffer.flip();	// flip buffer: limit is set to current position and position to zero
                             		// Encode to ByteBuffer for transfer
