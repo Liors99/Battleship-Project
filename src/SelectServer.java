@@ -42,9 +42,11 @@ public class SelectServer {
     private Selector selector;
     private ServerSocketChannel tcpChannel;
     private DatagramChannel udpChannel;
-    private SelectableChannel rdyChannel; // for when we iterate through the selector ready key set
+    private SelectableChannel keyChannel; // for when we iterate through the selector ready key set
     private SelectionKey key;
     private DatagramPacket packet;		 //datagram packet for DatagramChannel
+    private SocketChannel udpClientChannel;
+    private SocketAddress udpClientAdd;
     
     public SelectServer(int port) throws IOException
     {
@@ -130,7 +132,7 @@ public class SelectServer {
                     readyItor.remove();
                     
                     // Get the channel of the key
-                    rdyChannel = key.channel();
+                    keyChannel = key.channel();
                     
                     // If this key's channel is ready to accept a new socket connection,
                     // accept.
@@ -149,11 +151,11 @@ public class SelectServer {
                         outCharBuffer = CharBuffer.allocate(BUFFERSIZE);	
                         
                     		// If there is a datagram waiting at the UDP socket, receive it.
-                    		if (rdyChannel instanceof DatagramChannel)
+                    		if (keyChannel == udpChannel)
                     			receiveDatagram();
                     		
                     		// Else if a TCP client socket channel is ready for reading
-						else if (rdyChannel instanceof SocketChannel)
+						else if (keyChannel instanceof SocketChannel)
 						{
 							// If read is not successful (?), continue
 							if (!readFromClientChannel())
@@ -163,7 +165,7 @@ public class SelectServer {
                         if (command.equals("terminate\n"))
                             terminated = true;
                         
-                        /*
+                        
                         else if (command.equals("list\n"))
                         {
                                 String dirName = System.getProperty("user.dir");
@@ -171,13 +173,23 @@ public class SelectServer {
                                 
                                 for (File file : files)
                                 {
-                                		// Put filename in Char Buffer
+                                		// Put filename in CharBuffer
                                 		outCharBuffer.put(file.getName());
-                                		// Send filename to Client
-                                		//if ()
-                                		//sendToUDPClient(outCharBuffer);
+                                		outCharBuffer.flip();	// flip buffer: limit is set to current position and position to zero
+                                		// Encode to ByteBuffer for transfer
+                                		encoder.encode(outCharBuffer, outByteBuffer, false);
+                                		
+                                		if (keyChannel == udpChannel)
+                                			sendToUDPClient(outByteBuffer);
+                                		
+                                		else if (keyChannel instanceof SocketChannel)
+                                		{
+                                			if(!sendToTCPClient(outByteBuffer))
+                                				continue;
+                                		}
                                 }
                         }
+                        /*
                         else 
                         {
                         		String[] words = command.split("\\s+");
@@ -205,10 +217,7 @@ public class SelectServer {
                         		}
                         }
                         */
-                        
-                    
-
-                        
+              
                     } // end of else if (key.isReadible())
                 } // end of while (readyItor.hasNext()) 
             } // end of while (!terminated)
@@ -222,8 +231,8 @@ public class SelectServer {
     private void close() throws IOException
     {
     		// close all connections
-        Set keys = selector.keys();
-        Iterator itr = keys.iterator();
+        Set<SelectionKey> keys = selector.keys();
+        Iterator<SelectionKey> itr = keys.iterator();
         while (itr.hasNext()) 
         {
             SelectionKey key = (SelectionKey)itr.next();
@@ -238,24 +247,23 @@ public class SelectServer {
     private void acceptClientConnection() throws IOException
     {
     		// Accept a connection made to this channel's socket
-        SocketChannel clientChannel = ((ServerSocketChannel)rdyChannel).accept();
-        clientChannel.configureBlocking(false);
-        System.out.println("Accept connection from " + clientChannel.socket().toString());
+        udpClientChannel = ((ServerSocketChannel)keyChannel).accept();
+        udpClientChannel.configureBlocking(false);
+        System.out.println("Accept connection from " + udpClientChannel.socket().toString());
         
         // Register the new connection for read operation
-        clientChannel.register(selector, SelectionKey.OP_READ);
+        udpClientChannel.register(selector, SelectionKey.OP_READ);
     }
     
     private void receiveDatagram() throws IOException
     {
-    		DatagramChannel udpChan = (DatagramChannel) rdyChannel;
 		// Receive datagram available on this channel 
 		// Returns the datagram's source address
-		SocketAddress clientAdd = udpChan.receive(inByteBuffer);
+		udpClientAdd = udpChannel.receive(inByteBuffer);
 		
 		// How to do error checking on receive?
-		
-		if (clientAdd != null)
+	
+		if (udpClientAdd != null)
 		{
 			// make buffer ready for a new sequence of channel-write
 			// or relative get operations
@@ -267,13 +275,13 @@ public class SelectServer {
 			
 			// echo the message back
 			inByteBuffer.flip();
-			udpChan.send(inByteBuffer,clientAdd);
+			udpChannel.send(inByteBuffer,udpClientAdd);
 		}
     }
     
     private boolean readFromClientChannel() throws IOException
     {
-    		SocketChannel clientChannel = (SocketChannel) rdyChannel;
+    		SocketChannel clientChannel = (SocketChannel) keyChannel;
         
         // Read from client socket channel
         bytesRecv = clientChannel.read(inByteBuffer);
@@ -308,16 +316,25 @@ public class SelectServer {
         return true;
     }
    
-    private void sendToUDPClient(CharBuffer outCharBuffer)
+    private void sendToUDPClient(ByteBuffer outByteBuffer) throws IOException
     {
-    		outCharBuffer.flip();	// flip buffer: limit is set to current position and position to zero
-    		
+    		udpChannel.send(outByteBuffer, udpClientAdd);	
     }
     
-    private void sendToTCPClient(CharBuffer outCharBuffer)
+    private boolean sendToTCPClient(ByteBuffer outByteBuffer) throws IOException
     {
     		outCharBuffer.flip();	// flip buffer: limit is set to current position and position to zero
     		
+    		bytesSent = udpClientChannel.write(outByteBuffer); 
+    		if (bytesSent != bytesRecv)
+    		{
+    			System.out.println("write() error, or connection closed");
+    			key.cancel();  // deregister the socket
+    			//continue;
+    			return false;
+    		}
+    	        
+    	        return true;  		
     }
     
     
