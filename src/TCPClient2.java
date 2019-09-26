@@ -130,6 +130,7 @@ class TCPClient2 {
 		}
 		
 		// How do we check that we received the entire message?
+		// Use first 2 bytes of message to contain message size
 		
 		return new String(charBuffer);
     }
