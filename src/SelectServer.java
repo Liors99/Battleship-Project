@@ -157,7 +157,7 @@ public class SelectServer {
                 		// If there is a datagram waiting at the UDP socket, receive it.
                 		if (keyChannel == udpChannel)
                 		{
-                			command = receiveDatagram();
+                			command = receiveDatagram() + "\n";
                 		}
                 		
                 		// Else if a TCP client socket channel is ready for reading
@@ -324,7 +324,7 @@ public class SelectServer {
 				e.printStackTrace();
 			}
 		}
-		return msg + "\n";
+		return msg;
     }
     
     private boolean readFromClientChannel() 
