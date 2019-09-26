@@ -158,6 +158,7 @@ public class SelectServer {
                 		if (keyChannel == udpChannel)
                 		{
                 			command = receiveDatagram();
+                			System.out.println(command);
                 			if (command.equals("terminate\n"))
                                 terminated = true;
                 		}
