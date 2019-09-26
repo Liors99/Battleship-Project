@@ -185,7 +185,7 @@ public class SelectServer {
                             		outCharBuffer.rewind();	// make ready for read()
                             		// Encode to ByteBuffer for transfer
                             		encoder.encode(outCharBuffer, outByteBuffer, false);
-                            		outCharBuffer.flip(); // make ready for write()
+                            		outByteBuffer.flip(); // make ready for write()
                             		
                             		if (keyChannel == udpChannel)
                             			sendToUDPClient(outByteBuffer);
