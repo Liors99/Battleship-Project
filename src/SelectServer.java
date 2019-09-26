@@ -188,7 +188,16 @@ public class SelectServer {
                             		outByteBuffer.flip(); // make ready for write()
                             		
                             		if (keyChannel == udpChannel)
-                            			sendToUDPClient(outByteBuffer);
+                            		{
+                            			try {
+                            					System.out.println("YEah we get here");
+											udpChannel.send(outByteBuffer, udpClientAdd);
+										} catch (IOException e) {
+											// TODO Auto-generated catch block
+											e.printStackTrace();
+										}
+                            		}
+                            			//sendToUDPClient(outByteBuffer);
                             		
                             		else if (keyChannel instanceof SocketChannel)
                             		{
