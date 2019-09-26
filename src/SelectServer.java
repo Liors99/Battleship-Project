@@ -170,7 +170,7 @@ public class SelectServer {
                         terminated = true;
                     
                     
-                    else if (command.equals("list\n"))
+                    else if (command.trim().equals("list\n"))
                     {
                             String dirName = System.getProperty("user.dir");
                             File[] files = new File(dirName).listFiles();
@@ -182,10 +182,10 @@ public class SelectServer {
                             		System.out.println("It takes " + file.getName().getBytes().length + " bytes");
                             		outCharBuffer.clear();	// set position to zero and set limit to capacity
                             		outCharBuffer.put(file.getName());
-                            		outCharBuffer.flip();	// flip buffer: limit is set to current position and position to zero
+                            		outCharBuffer.rewind();	// make ready for read()
                             		// Encode to ByteBuffer for transfer
                             		encoder.encode(outCharBuffer, outByteBuffer, false);
-                            		outCharBuffer.flip();
+                            		outCharBuffer.flip(); // make ready for write()
                             		
                             		if (keyChannel == udpChannel)
                             			sendToUDPClient(outByteBuffer);
@@ -299,12 +299,12 @@ public class SelectServer {
 			// or relative get operations
 			inByteBuffer.flip();	// make buffer available    	
 			decoder.decode(inByteBuffer, inCharBuffer, false);
-			inCharBuffer.flip();		
+			inCharBuffer.flip();	 // make buffer ready for get()	
 			command = inCharBuffer.toString();
 			System.out.println("UDP Client: " + command);
 			
 			// echo the message back
-			inByteBuffer.flip();
+			inByteBuffer.flip(); // make buffer ready for write()/get()
 			try {
 				udpChannel.send(inByteBuffer,udpClientAdd);
 			} catch (IOException e) {
@@ -335,14 +335,14 @@ public class SelectServer {
         
         // make buffer ready for a new sequence of channel-write
         // or relative get operations
-        inByteBuffer.flip();	// make buffer available    	
+        inByteBuffer.flip();	// is this necessary here?  	
         decoder.decode(inByteBuffer, inCharBuffer, false);
         inCharBuffer.flip();		
         command = inCharBuffer.toString();
         System.out.println("TCP Client: " + inCharBuffer.toString());
         
         // Echo the message back
-        inByteBuffer.flip();
+        inByteBuffer.flip(); //make buffer ready for write()
         
         try {
 			bytesSent = clientChannel.write(inByteBuffer);
