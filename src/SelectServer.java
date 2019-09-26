@@ -323,6 +323,7 @@ public class SelectServer {
         command = inCharBuffer.toString();
         System.out.println("TCP Client: " + command);
         
+        /*
         // Echo the message back
         inByteBuffer.flip(); //make buffer ready for write()
         
@@ -339,7 +340,7 @@ public class SelectServer {
             //continue;
             return false;
         }
-        
+        */
         return true;
     }
     
@@ -378,7 +379,7 @@ public class SelectServer {
     		// Send list of files to TCP client
     		bytesSent = sendToTCPClient(outByteBuffer);
     		
-    		System.out.println("bytes sent : " + bytesSent);
+    		//System.out.println("bytes sent : " + bytesSent);
     		
     		// error checking on bytes
     		if (bytesSent != msg.length())
