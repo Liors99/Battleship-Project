@@ -366,6 +366,7 @@ public class SelectServer {
     {
     		String fileName = command.substring(3).trim();
 	 	String fileMsg = "";
+	 	System.out.println("Getting file " + fileName);
 	 	
 		try
 		{
@@ -390,6 +391,9 @@ public class SelectServer {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		System.out.println("Files contents:");
+		System.out.println(fileMsg);
 		
 		// Send file contents to client and return success boolean
 		return sendToTCPClient(fileMsg);
