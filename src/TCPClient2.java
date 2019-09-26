@@ -66,10 +66,12 @@ class TCPClient2 {
 			// What we do now depends on the command we sent, if any
 			if (line.trim().equals("list"))
 			{
-				System.out.println("Yahoo");
 				tcpClient.receiveFileList();
 			}
-			
+			else if (line.trim().startsWith("get"))
+			{
+				tcpClient.receiveFileContents();
+			}
 			else
 			{
 				// Getting response from the server
@@ -103,5 +105,10 @@ class TCPClient2 {
     		
     		String fileList = new String(charBuffer);
     		System.out.println(fileList);
+    }
+    
+    private void receiveFileContents()
+    {
+    		
     }
 } 

@@ -95,7 +95,7 @@ public class SelectServer {
         
         // Monitor selector-registered sockets for activity
         selectServer.monitorSockets();
-        
+
         // Close all connections
         selectServer.close();
     }
@@ -156,7 +156,9 @@ public class SelectServer {
                 			command = receiveDatagram();
                 			
                 			if (command.equals("terminate"))
+                			{
                 				terminated = true;
+                			}
                 		}
                 		
                 		// Else if a TCP client socket channel is ready for reading
@@ -167,48 +169,33 @@ public class SelectServer {
 							continue;		
 						
 						if (command.equals("terminate\n"))
-	                        terminated = true;
-	                    
+						{
+							System.out.println("TCP Client: terminate");
+							terminated = true;
+						}
 	                    else if (command.equals("list\n"))
 	                    {
+	                    		System.out.println("TCP Client: list");
 	                    		boolean success = sendFileList();
 	                    		if (!success)
 	                    			continue;
 	                    } 
+	                    else if (command.trim().startsWith("get"))
+	                    {
+	                    		// Remove any excess while spaces in the command
+	                    		System.out.println("TCP Client: get " + command.trim().substring(3).trim());
+	                    		boolean success = sendFileContents();
+	                    		if (!success)
+	                    		{
+	                    			System.out.println("open() failed");
+	                    			continue;
+	                    		}
+	                    }
 	                    else
 	                    {
 	                    		String msg = "Unknown command: " + command;
 	                    		sendToTCPClient(msg);
 	                    }
-	                    
-	                    /*
-	                    else 
-	                    {
-	                    		String[] words = command.split("\\s+");
-	                    		if (words[0].equals("get") && words.length == 2)
-	                    		{
-	                    			try
-	                    			{
-	                    				String fileName = words[1];
-	                    				BufferedReader reader = new BufferedReader(new FileReader(fileName));
-	                    				String fileLine;
-	                    				
-	                    				while ((fileLine = reader.readLine()) != null)
-	                    				{
-	                    					// Send file contents to client a line at a time
-	                    				}
-	                    				
-	                    				reader.close();
-	                    			}
-	                    			catch (Exception e)
-	                    			{
-	                    				String errMsg = "Error in opening file <filename>";
-	                    				// Send error message to client
-	                    			}
-	                    			
-	                    		}
-	                    }
-	                    */
 					}
           
                 } // end of else if (key.isReadible())
@@ -287,7 +274,7 @@ public class SelectServer {
 			decoder.decode(inByteBuffer, inCharBuffer, false);
 			inCharBuffer.flip();	 // make buffer ready for get()	
 			msg = inCharBuffer.toString();
-			System.out.println("UDP Client: " + msg);
+			System.out.print("UDP Client: " + msg);
 			
 			// echo the message back
 			inByteBuffer.flip(); // make buffer ready for write()/get()
@@ -361,14 +348,45 @@ public class SelectServer {
         			continue;
         		
         		// For debugging
-        		System.out.println(file.getName());
+        		//System.out.println(file.getName());
         			
         		msg += file.getName() + "\n";
         }
         
-        return sendToTCPClient(msg);
-       
-        
+        return sendToTCPClient(msg);   
+    }
+    
+    private boolean sendFileContents()
+    {
+    		String fileName = command.substring(3).trim();
+	 	String fileMsg = "";
+	 	
+		try
+		{
+			// Read files contents line by line and append to outgoing message
+			BufferedReader reader = new BufferedReader(new FileReader(fileName));
+			String fileLine;
+			
+			while ((fileLine = reader.readLine()) != null)
+			{
+				// Append file line to file message
+				fileMsg += fileLine + "\n";
+			}
+			
+			reader.close();
+		}
+		catch (FileNotFoundException e)
+		{
+			sendToTCPClient("Error in opening file <filename>");
+			return false; // did not succeed 
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		// Send file contents to client and return success boolean
+		return sendToTCPClient(fileMsg);
     }
    
     
