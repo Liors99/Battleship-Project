@@ -316,11 +316,11 @@ public class SelectServer {
     
     private boolean readFromClientChannel() 
     {
-    		SocketChannel clientChannel = (SocketChannel) keyChannel;
+    		udpClientChannel = (SocketChannel) keyChannel;
         
         // Read from client socket channel
         try {
-			bytesRecv = clientChannel.read(inByteBuffer);
+			bytesRecv = udpClientChannel.read(inByteBuffer);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -345,7 +345,7 @@ public class SelectServer {
         inByteBuffer.flip(); //make buffer ready for write()
         
         try {
-			bytesSent = clientChannel.write(inByteBuffer);
+			bytesSent = udpClientChannel.write(inByteBuffer);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
