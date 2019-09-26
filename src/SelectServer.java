@@ -193,6 +193,7 @@ public class SelectServer {
 	                    }
 	                    else
 	                    {
+	                    		System.out.print("TCP Client : " + command.trim());
 	                    		String msg = "Unknown command: " + command;
 	                    		sendToTCPClient(msg);
 	                    }
@@ -313,8 +314,7 @@ public class SelectServer {
         decoder.decode(inByteBuffer, inCharBuffer, false);
         inCharBuffer.flip();		
         command = inCharBuffer.toString();
-        System.out.print("TCP Client: " + command); //do not need extra "\n" at end
-        
+       
         /*
         // Echo the message back
         inByteBuffer.flip(); //make buffer ready for write()
