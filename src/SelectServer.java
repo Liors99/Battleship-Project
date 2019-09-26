@@ -156,7 +156,7 @@ public class SelectServer {
                     
                 		// If there is a datagram waiting at the UDP socket, receive it.
                 		if (keyChannel == udpChannel)
-                			receiveDatagram();
+                			command = receiveDatagram();
                 		
                 		// Else if a TCP client socket channel is ready for reading
 					else if (keyChannel instanceof SocketChannel)
@@ -289,8 +289,9 @@ public class SelectServer {
 		}
     }
     
-    private void receiveDatagram() 
+    private String receiveDatagram() 
     {
+    		String msg = ""; 
 		// Receive datagram available on this channel 
 		// Returns the datagram's source address
 		try {
@@ -309,8 +310,8 @@ public class SelectServer {
 			inByteBuffer.flip();	// make buffer available    	
 			decoder.decode(inByteBuffer, inCharBuffer, false);
 			inCharBuffer.flip();	 // make buffer ready for get()	
-			command = inCharBuffer.toString();
-			System.out.println("UDP Client: " + command);
+			msg = inCharBuffer.toString();
+			System.out.println("UDP Client: " + msg);
 			
 			// echo the message back
 			inByteBuffer.flip(); // make buffer ready for write()/get()
@@ -321,6 +322,7 @@ public class SelectServer {
 				e.printStackTrace();
 			}
 		}
+		return msg;
     }
     
     private boolean readFromClientChannel() 
@@ -348,7 +350,7 @@ public class SelectServer {
         decoder.decode(inByteBuffer, inCharBuffer, false);
         inCharBuffer.flip();		
         command = inCharBuffer.toString();
-        System.out.println("TCP Client: " + inCharBuffer.toString());
+        System.out.println("TCP Client: " + command);
         
         // Echo the message back
         inByteBuffer.flip(); //make buffer ready for write()
