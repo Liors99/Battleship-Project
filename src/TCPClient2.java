@@ -93,21 +93,14 @@ class TCPClient2 {
     private void receiveFileList()
     {
     		String fileList = receiveMsg();
-    		System.out.println(fileList);
+    		System.out.print(fileList);
     }
     
     private void receiveFileContents()
     {
     		String fileContents = receiveMsg();
     		System.out.print(fileContents);
-    		/*
-    		if (fileContents.equals("Error in opening file <filename>"))
-    			System.out.print(fileContents);
-    		else
-    		{
-    			//Save file contents
-    		}
-    		*/
+    
     }
     
     private String receiveMsg()
