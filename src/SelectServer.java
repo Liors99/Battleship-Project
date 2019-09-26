@@ -214,20 +214,26 @@ public class SelectServer {
             SelectionKey key = (SelectionKey)itr.next();
             //itr.remove();
             
-            if (key.isAcceptable())
-				try {
+            // Close server sockets
+            if (key.channel() instanceof ServerSocketChannel)
+            {
+            	try {
 					((ServerSocketChannel)key.channel()).socket().close();
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-			else if (key.isValid())
+            }
+			// Close client sockets	
+			else if (key.channel() instanceof SocketChannel)
+			{
 				try {
 					((SocketChannel)key.channel()).socket().close();
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
+			}		
         }
     }
 	

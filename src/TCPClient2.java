@@ -74,9 +74,12 @@ class TCPClient2 {
 			}
 			else
 			{
-				// Getting response from the server
-	            line = tcpClient.inBuffer.readLine();
-	            System.out.println("Server: " + line);
+				if (!line.equals("terminate"))
+				{
+					// Getting response from the server
+		            line = tcpClient.inBuffer.readLine();
+		            System.out.println("Server: " + line);
+				}
 			}
               
             System.out.print("Please enter a message to be sent to the server ('logout' to terminate): ");
