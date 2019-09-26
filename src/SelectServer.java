@@ -157,7 +157,10 @@ public class SelectServer {
                 		// If there is a datagram waiting at the UDP socket, receive it.
                 		if (keyChannel == udpChannel)
                 		{
-                			command = receiveDatagram() + "\n";
+                			command = receiveDatagram();
+                			
+                			if (command.equals("terminate"))
+                				terminated = true;
                 		}
                 		
                 		// Else if a TCP client socket channel is ready for reading
@@ -165,77 +168,47 @@ public class SelectServer {
 					{
 						// If read is not successful (?), continue
 						if (!readFromClientChannel())
-							continue;						
+							continue;		
+						
+						if (command.equals("terminate\n"))
+	                        terminated = true;
+	                    
+	                    else if (command.equals("list\n"))
+	                    {
+	                    		boolean success = sendFileList();
+	                    		if (!success)
+	                    			continue;
+	                    }       
+	                    
+	                    /*
+	                    else 
+	                    {
+	                    		String[] words = command.split("\\s+");
+	                    		if (words[0].equals("get") && words.length == 2)
+	                    		{
+	                    			try
+	                    			{
+	                    				String fileName = words[1];
+	                    				BufferedReader reader = new BufferedReader(new FileReader(fileName));
+	                    				String fileLine;
+	                    				
+	                    				while ((fileLine = reader.readLine()) != null)
+	                    				{
+	                    					// Send file contents to client a line at a time
+	                    				}
+	                    				
+	                    				reader.close();
+	                    			}
+	                    			catch (Exception e)
+	                    			{
+	                    				String errMsg = "Error in opening file <filename>";
+	                    				// Send error message to client
+	                    			}
+	                    			
+	                    		}
+	                    }
+	                    */
 					}
-                    
-                    if (command.equals("terminate\n"))
-                        terminated = true;
-                    
-                    
-                    else if (command.equals("list\n"))
-                    {
-                            String dirName = System.getProperty("user.dir");
-                            File[] files = new File(dirName).listFiles();
-                            
-                            for (File file : files)
-                            {
-                            		// Put filename in CharBuffer
-                            		System.out.println(file.getName());
-                            		System.out.println("It takes " + file.getName().getBytes().length + " bytes");
-                            		outCharBuffer.clear();	// set position to zero and set limit to capacity
-                            		outCharBuffer.put(file.getName());
-                            		outCharBuffer.rewind();	// make ready for read()
-                            		// Encode to ByteBuffer for transfer
-                            		encoder.encode(outCharBuffer, outByteBuffer, false);
-                            		outByteBuffer.flip(); // make ready for write()
-                            		
-                            		if (keyChannel == udpChannel)
-                            		{
-                            			try {
-                            					System.out.println("YEah we get here");
-											udpChannel.send(outByteBuffer, udpClientAdd);
-										} catch (IOException e) {
-											// TODO Auto-generated catch block
-											e.printStackTrace();
-										}
-                            		}
-                            			//sendToUDPClient(outByteBuffer);
-                            		
-                            		else if (keyChannel instanceof SocketChannel)
-                            		{
-                            			if(!sendToTCPClient(outByteBuffer))
-                            				continue;
-                            		}
-                            }
-                    }
-                    /*
-                    else 
-                    {
-                    		String[] words = command.split("\\s+");
-                    		if (words[0].equals("get") && words.length == 2)
-                    		{
-                    			try
-                    			{
-                    				String fileName = words[1];
-                    				BufferedReader reader = new BufferedReader(new FileReader(fileName));
-                    				String fileLine;
-                    				
-                    				while ((fileLine = reader.readLine()) != null)
-                    				{
-                    					// Send file contents to client a line at a time
-                    				}
-                    				
-                    				reader.close();
-                    			}
-                    			catch (Exception e)
-                    			{
-                    				String errMsg = "Error in opening file <filename>";
-                    				// Send error message to client
-                    			}
-                    			
-                    		}
-                    }
-                    */
           
                 } // end of else if (key.isReadible())
             } // end of while (readyItor.hasNext()) 
@@ -373,30 +346,56 @@ public class SelectServer {
         
         return true;
     }
-   
-    private void sendToUDPClient(ByteBuffer outByteBuffer) 
-    {
-    		try {
-				udpChannel.send(outByteBuffer, udpClientAdd);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}	
-    }
     
-    private boolean sendToTCPClient(ByteBuffer outByteBuffer) 
+    private boolean sendFileList()
     {
-    		try {
-				bytesSent = udpClientChannel.write(outByteBuffer);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} 
+    		String dirName = System.getProperty("user.dir");
+        File[] files = new File(dirName).listFiles();
+        String msg = "";
+        
+        for (File file : files)
+        {
+        		if (!file.isFile())	// Only list "normal" files, i.e., not directories
+        			continue;
+        		
+        		// For debugging
+        		System.out.println(file.getName());
+        			
+        		msg += file.getName() + "\n";
+        }
+       
+        // Write message to outward CharBuffer
+    		outCharBuffer.clear();	// set position to zero and set limit to capacity
+    		outCharBuffer.put(msg);
+    		outCharBuffer.flip();	
+    		// Encode to ByteBuffer for transfer
+    		encoder.encode(outCharBuffer, outByteBuffer, false);
+    		outByteBuffer.flip(); 
     		
-    		// Do we need some error checking on bytesSent?
-    		System.out.println("Just sent " + bytesSent + " bytes");
-    	        
-    	        return true;  		
+    		// Send list of files to TCP client
+    		bytesSent = sendToTCPClient(outByteBuffer);
+    		
+    		// error checking on bytes
+    		if (bytesSent != msg.length())
+    		{
+    			// Error message
+        		System.out.println("Sorry :(");
+        		// return false;
+        }
+        
+        return true;
+    }
+   
+    
+    private int sendToTCPClient(ByteBuffer outByteBuffer) 
+    {
+	    	try {
+	    		bytesSent = udpClientChannel.write(outByteBuffer);
+	    	} catch (IOException e) {
+	    		// TODO Auto-generated catch block
+	    		e.printStackTrace();
+	    	} 	
+	    	return bytesSent; 		
     }
     
     
