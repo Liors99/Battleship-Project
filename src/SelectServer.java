@@ -365,6 +365,8 @@ public class SelectServer {
         }
        
         // Write message to outward CharBuffer
+        	System.out.println("Our message is " + msg.getBytes().length + " bytes long");
+        	System.out.println("Our buffer capacity is " + outCharBuffer.capacity() + "bytes");
     		outCharBuffer.clear();	// set position to zero and set limit to capacity
     		outCharBuffer.put(msg);
     		outCharBuffer.flip();	
