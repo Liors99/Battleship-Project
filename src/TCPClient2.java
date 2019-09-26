@@ -75,10 +75,14 @@ class TCPClient2 {
 			{
 				String fileContents = tcpClient.receiveMsg();
 				
+				System.out.println("File contents:");
+				System.out.println(fileContents);
+				
 				// Save file contents
 				String fileName = line.substring(3).trim() + "-" + tcpClient.portNumber;
 				try 
 				{
+					System.out.println("Will save in " + fileName);
 					BufferedWriter writer = new BufferedWriter(new FileWriter(fileName));
 				    writer.write(fileContents); 
 				    writer.close();
