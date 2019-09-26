@@ -170,7 +170,7 @@ public class SelectServer {
                         terminated = true;
                     
                     
-                    else if (command.trim().equals("list\n"))
+                    else if (command.equals("list\n"))
                     {
                             String dirName = System.getProperty("user.dir");
                             File[] files = new File(dirName).listFiles();
