@@ -174,7 +174,12 @@ public class SelectServer {
 	                    		boolean success = sendFileList();
 	                    		if (!success)
 	                    			continue;
-	                    }       
+	                    } 
+	                    else
+	                    {
+	                    		String msg = "Unknown command: " + command;
+	                    		sendToTCPClient(msg);
+	                    }
 	                    
 	                    /*
 	                    else 
@@ -360,8 +365,16 @@ public class SelectServer {
         			
         		msg += file.getName() + "\n";
         }
+        
+        return sendToTCPClient(msg);
        
-        // Write message to outward CharBuffer
+        
+    }
+   
+    
+    private boolean sendToTCPClient(String msg) 
+    {
+    		// Write message to outward CharBuffer
         int msgSize = msg.getBytes().length;
         ByteBuffer outByteBuffer = ByteBuffer.allocateDirect(msgSize);
         CharBuffer outCharBuffer = CharBuffer.allocate(msgSize);	
@@ -376,10 +389,13 @@ public class SelectServer {
     		encoder.encode(outCharBuffer, outByteBuffer, false);
     		outByteBuffer.flip(); 
     		
-    		// Send list of files to TCP client
-    		bytesSent = sendToTCPClient(outByteBuffer);
-    		
     		//System.out.println("bytes sent : " + bytesSent);
+    		try {
+	    		bytesSent = udpClientChannel.write(outByteBuffer);
+	    	} catch (IOException e) {
+	    		// TODO Auto-generated catch block
+	    		e.printStackTrace();
+	    	} 	
     		
     		// error checking on bytes
     		if (bytesSent != msg.length())
@@ -389,19 +405,7 @@ public class SelectServer {
             return false;    
         }
         
-        return true;
-    }
-   
-    
-    private int sendToTCPClient(ByteBuffer outByteBuffer) 
-    {
-	    	try {
-	    		bytesSent = udpClientChannel.write(outByteBuffer);
-	    	} catch (IOException e) {
-	    		// TODO Auto-generated catch block
-	    		e.printStackTrace();
-	    	} 	
-	    	return bytesSent; 		
+        return true;	
     }
     
     
