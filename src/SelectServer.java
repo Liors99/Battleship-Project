@@ -158,12 +158,6 @@ public class SelectServer {
                 		if (keyChannel == udpChannel)
                 		{
                 			command = receiveDatagram();
-                			System.out.println(command);
-                			if (command.equals("terminate\n"))
-                			{
-                				System.out.println("terminated");
-                                terminated = true;
-                			}
                 		}
                 		
                 		// Else if a TCP client socket channel is ready for reading
@@ -330,7 +324,7 @@ public class SelectServer {
 				e.printStackTrace();
 			}
 		}
-		return msg;
+		return msg + "\n";
     }
     
     private boolean readFromClientChannel() 
