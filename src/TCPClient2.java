@@ -66,13 +66,17 @@ class TCPClient2 {
 			// What we do now depends on the command we sent, if any
 			if (line.trim().equals("list"))
 			{
+				System.out.println("Yahoo");
 				tcpClient.receiveFileList();
 			}
-				
-            // Getting response from the server
-            line = tcpClient.inBuffer.readLine();
-            System.out.println("Server: " + line);
-             
+			
+			else
+			{
+				// Getting response from the server
+	            line = tcpClient.inBuffer.readLine();
+	            System.out.println("Server: " + line);
+			}
+              
             System.out.print("Please enter a message to be sent to the server ('logout' to terminate): ");
             line = tcpClient.inFromUser.readLine(); 
         }
