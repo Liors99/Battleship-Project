@@ -34,8 +34,6 @@ public class SelectServer {
     private CharsetEncoder encoder;
     private ByteBuffer inByteBuffer;
     private CharBuffer inCharBuffer;
-    private ByteBuffer outByteBuffer;
-    private CharBuffer outCharBuffer;
     private int bytesSent, bytesRecv;     // number of bytes sent or received
     
     // Selector and channels
@@ -148,12 +146,10 @@ public class SelectServer {
                 // or a ServerSocketChannel (TCP)
                 else if (key.isReadable()) 
                 {
-                		// First open input and output streams
+                		// First allocate inbound buffers, used by both UDP and TCP
                     inByteBuffer = ByteBuffer.allocateDirect(BUFFERSIZE);
                     inCharBuffer = CharBuffer.allocate(BUFFERSIZE);
-                    outByteBuffer = ByteBuffer.allocateDirect(BUFFERSIZE);
-                    outCharBuffer = CharBuffer.allocate(BUFFERSIZE);	
-                    
+                  
                 		// If there is a datagram waiting at the UDP socket, receive it.
                 		if (keyChannel == udpChannel)
                 		{
@@ -365,7 +361,10 @@ public class SelectServer {
         }
        
         // Write message to outward CharBuffer
-        	System.out.println("Our message is " + msg.getBytes().length + " bytes long");
+        int msgSize = msg.getBytes().length;
+        ByteBuffer outByteBuffer = ByteBuffer.allocateDirect(msgSize);
+        CharBuffer outCharBuffer = CharBuffer.allocate(msgSize);	
+        	System.out.println("Our message is " + msgSize + " bytes long");
         	System.out.println("Our buffer capacity is " + outCharBuffer.capacity() + "bytes");
     		outCharBuffer.clear();	// set position to zero and set limit to capacity
     		outCharBuffer.put(msg);
