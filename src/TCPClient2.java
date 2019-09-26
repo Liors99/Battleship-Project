@@ -77,7 +77,18 @@ class TCPClient2 {
 				
 				// Save file contents
 				String fileName = line.substring(3).trim() + "-" + tcpClient.portNumber;
-				System.out.println("File saved in " + fileName);
+				try 
+				{
+					BufferedWriter writer = new BufferedWriter(new FileWriter(fileName));
+				    writer.write(fileContents); 
+				    writer.close();
+				    System.out.println("File saved in " + fileName + "(" + 
+							fileContents.getBytes().length + " bytes)");
+				}
+				catch (IOException e)
+				{
+					e.printStackTrace();
+				}			
 			}
 			else
 			{
