@@ -364,8 +364,10 @@ public class SelectServer {
         int msgSize = msg.getBytes().length;
         ByteBuffer outByteBuffer = ByteBuffer.allocateDirect(msgSize);
         CharBuffer outCharBuffer = CharBuffer.allocate(msgSize);	
-        	System.out.println("Our message is " + msgSize + " bytes long");
+        /*	
+        System.out.println("Our message is " + msgSize + " bytes long");
         	System.out.println("Our buffer capacity is " + outCharBuffer.capacity() + "bytes");
+    		*/
     		outCharBuffer.clear();	// set position to zero and set limit to capacity
     		outCharBuffer.put(msg);
     		outCharBuffer.flip();	
@@ -375,6 +377,8 @@ public class SelectServer {
     		
     		// Send list of files to TCP client
     		bytesSent = sendToTCPClient(outByteBuffer);
+    		
+    		System.out.println("bytes sent : " + bytesSent);
     		
     		// error checking on bytes
     		if (bytesSent != msg.length())
