@@ -382,13 +382,7 @@ public class SelectServer {
 			} 
     		
     		// Do we need some error checking on bytesSent?
-    		if (bytesSent != outCharBuffer.capacity())
-    		{
-    			System.out.println("write() error, or connection closed");
-    			key.cancel();  // deregister the socket
-    			//continue;
-    			return false;
-    		}
+    		System.out.println("Just sent " + bytesSent + " bytes");
     	        
     	        return true;  		
     }
