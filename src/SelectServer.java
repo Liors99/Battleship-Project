@@ -179,6 +179,7 @@ public class SelectServer {
                             {
                             		// Put filename in CharBuffer
                             		System.out.println(file.getName());
+                            		System.out.println("It takes " + file.getName().getBytes().length + "bytes");
                             		outCharBuffer.flip();
                             		outCharBuffer.put(file.getName());
                             		outCharBuffer.flip();	// flip buffer: limit is set to current position and position to zero
