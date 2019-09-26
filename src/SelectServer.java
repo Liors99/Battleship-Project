@@ -182,8 +182,8 @@ public class SelectServer {
 	                    } 
 	                    else if (command.trim().startsWith("get"))
 	                    {
-	                    		// Remove any excess while spaces in the command
-	                    		System.out.println("TCP Client: get " + command.trim().substring(3).trim());
+	                    		// Remove any excess while spaces in the command; print instead of println
+	                    		System.out.print("TCP Client: get " + command.trim().substring(3).trim());
 	                    		boolean success = sendFileContents();
 	                    		if (!success)
 	                    		{
@@ -313,7 +313,7 @@ public class SelectServer {
         decoder.decode(inByteBuffer, inCharBuffer, false);
         inCharBuffer.flip();		
         command = inCharBuffer.toString();
-        System.out.println("TCP Client: " + command);
+        System.out.print("TCP Client: " + command); //do not need extra "\n" at end
         
         /*
         // Echo the message back
@@ -377,7 +377,7 @@ public class SelectServer {
 		}
 		catch (FileNotFoundException e)
 		{
-			sendToTCPClient("Error in opening file <filename>");
+			sendToTCPClient("Error in opening file " + fileName);
 			return false; // did not succeed 
 			
 		} catch (IOException e) {

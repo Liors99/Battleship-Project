@@ -89,26 +89,38 @@ class TCPClient2 {
     
     private void receiveFileList()
     {
-    		int bytesRead = 0;
-    		char[] charBuffer = null;
-    		
-    		try {
-				charBuffer = new char[BUFFERSIZE];
-				bytesRead = inBuffer.read(charBuffer, 0, charBuffer.length);
-				
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-    		
-    		// How do we check that we received the entire message?
-    		
-    		String fileList = new String(charBuffer);
+    		String fileList = receiveMsg();
     		System.out.println(fileList);
     }
     
     private void receiveFileContents()
     {
-    		
+    		String fileContents = receiveMsg();
+    		if (fileContents.equals("Error in opening file <filename>"))
+    			System.out.println(fileContents);
+    		else
+    		{
+    			//Save file contents
+    		}
+    }
+    
+    private String receiveMsg()
+    {
+    		//int bytesRead = 0;
+		char[] charBuffer = null;
+		
+		try {
+			charBuffer = new char[BUFFERSIZE];
+			//bytesRead = inBuffer.read(charBuffer, 0, charBuffer.length);
+			inBuffer.read(charBuffer, 0, charBuffer.length);
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		// How do we check that we received the entire message?
+		
+		return new String(charBuffer);
     }
 } 
