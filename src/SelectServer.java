@@ -183,7 +183,7 @@ public class SelectServer {
 	                    else if (command.trim().startsWith("get"))
 	                    {
 	                    		// Remove any excess while spaces in the command; print instead of println
-	                    		System.out.print("TCP Client: get " + command.trim().substring(3).trim());
+	                    		System.out.print("TCP Client: get " + command.trim().substring(3));
 	                    		boolean success = sendFileContents();
 	                    		if (!success)
 	                    		{
@@ -193,7 +193,7 @@ public class SelectServer {
 	                    }
 	                    else
 	                    {
-	                    		System.out.print("TCP Client : " + command.trim());
+	                    		System.out.print("TCP Client : " + command);
 	                    		String msg = "Unknown command: " + command;
 	                    		sendToTCPClient(msg);
 	                    }
