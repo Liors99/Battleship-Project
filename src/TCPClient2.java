@@ -13,6 +13,7 @@ class TCPClient2 {
 	
 	private static int BUFFERSIZE = 300;
 	
+	private int portNumber;
 	private Socket clientSocket;
 	private PrintWriter outBuffer; 
 	private InputStream inStream;
@@ -22,6 +23,7 @@ class TCPClient2 {
 	public TCPClient2(String add, int port) throws IOException
 	{
 		// Initialize a client socket connection to the server
+		portNumber = port;
         clientSocket = new Socket(add, port); 
         
         // Initialize input and an output stream for the connection(s)
@@ -66,11 +68,16 @@ class TCPClient2 {
 			// What we do now depends on the command we sent, if any
 			if (line.trim().equals("list"))
 			{
-				tcpClient.receiveFileList();
+				String fileList = tcpClient.receiveMsg();
+				System.out.print(fileList);
 			}
 			else if (line.trim().startsWith("get"))
 			{
-				tcpClient.receiveFileContents();
+				String fileContents = tcpClient.receiveMsg();
+				
+				// Save file contents
+				String fileName = line.substring(3).trim() + "-" + tcpClient.portNumber;
+				System.out.println("File saved in " + fileName);
 			}
 			else
 			{
@@ -89,19 +96,6 @@ class TCPClient2 {
         // Close the socket
         tcpClient.clientSocket.close();           
     } 
-    
-    private void receiveFileList()
-    {
-    		String fileList = receiveMsg();
-    		System.out.print(fileList);
-    }
-    
-    private void receiveFileContents()
-    {
-    		String fileContents = receiveMsg();
-    		System.out.print(fileContents);
-    
-    }
     
     private String receiveMsg()
     {
