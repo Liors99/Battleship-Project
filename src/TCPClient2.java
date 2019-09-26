@@ -86,12 +86,14 @@ class TCPClient2 {
 					BufferedWriter writer = new BufferedWriter(new FileWriter(fileName));
 				    writer.write(fileContents); 
 				    writer.close();
-				    System.out.println("File saved in " + fileName + "(" + 
+				    System.out.println("File saved in " + fileName + " (" + 
 							fileContents.getBytes().length + " bytes)");
 				}
 				catch (IOException e)
 				{
+					System.out.println("Could not write to " + fileName);
 					e.printStackTrace();
+					System.exit(1);
 				}			
 			}
 			else

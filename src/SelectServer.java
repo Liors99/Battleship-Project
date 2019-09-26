@@ -383,7 +383,7 @@ public class SelectServer {
 		}
 		catch (FileNotFoundException e)
 		{
-			sendToTCPClient("Error in opening file " + fileName);
+			sendToTCPClient("Error in opening file " + fileName + "\n");
 			return false; // did not succeed 
 			
 		} catch (IOException e) {
