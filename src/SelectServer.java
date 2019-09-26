@@ -379,9 +379,9 @@ public class SelectServer {
     		// error checking on bytes
     		if (bytesSent != msg.length())
     		{
-    			// Error message
-        		System.out.println("Sorry :(");
-        		// return false;
+    			System.out.println("write() error, or connection closed");
+    			key.cancel();
+            return false;    
         }
         
         return true;
