@@ -180,7 +180,7 @@ public class SelectServer {
                             		// Put filename in CharBuffer
                             		System.out.println(file.getName());
                             		System.out.println("It takes " + file.getName().getBytes().length + " bytes");
-                            		outCharBuffer.clear();
+                            		outCharBuffer.clear();	// set position to zero and set limit to capacity
                             		outCharBuffer.put(file.getName());
                             		outCharBuffer.flip();	// flip buffer: limit is set to current position and position to zero
                             		// Encode to ByteBuffer for transfer
@@ -380,7 +380,9 @@ public class SelectServer {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} 
-    		if (bytesSent != bytesRecv)
+    		
+    		// Do we need some error checking on bytesSent?
+    		if (bytesSent != outCharBuffer.capacity())
     		{
     			System.out.println("write() error, or connection closed");
     			key.cancel();  // deregister the socket
