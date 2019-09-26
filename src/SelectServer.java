@@ -185,6 +185,7 @@ public class SelectServer {
                             		outCharBuffer.flip();	// flip buffer: limit is set to current position and position to zero
                             		// Encode to ByteBuffer for transfer
                             		encoder.encode(outCharBuffer, outByteBuffer, false);
+                            		outCharBuffer.flip();
                             		
                             		if (keyChannel == udpChannel)
                             			sendToUDPClient(outByteBuffer);
@@ -372,8 +373,6 @@ public class SelectServer {
     
     private boolean sendToTCPClient(ByteBuffer outByteBuffer) 
     {
-    		outCharBuffer.flip();	// flip buffer: limit is set to current position and position to zero
-    		
     		try {
 				bytesSent = udpClientChannel.write(outByteBuffer);
 			} catch (IOException e) {
