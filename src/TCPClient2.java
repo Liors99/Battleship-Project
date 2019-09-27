@@ -129,7 +129,6 @@ class TCPClient2 {
 			{
 				bytesRead = inBuffer.read(charBuffer, 0, charBuffer.length);
 				System.out.println("Bytes read: " + bytesRead);
-				inBuffer.read(charBuffer, 0, charBuffer.length);
 				msg += new String(charBuffer);
 				System.out.println(msg);
 				done = (bytesRead < BUFFERSIZE);
