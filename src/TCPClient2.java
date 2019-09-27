@@ -131,6 +131,7 @@ class TCPClient2 {
 				System.out.println("Bytes read: " + bytesRead);
 				inBuffer.read(charBuffer, 0, charBuffer.length);
 				msg += new String(charBuffer);
+				System.out.println(msg);
 				done = (bytesRead < BUFFERSIZE);
 			}
 		} catch (IOException e) 
