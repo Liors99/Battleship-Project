@@ -7,7 +7,8 @@
 
 
 import java.io.*; 
-import java.net.*; 
+import java.net.*;
+import java.util.Arrays; 
 
 class TCPClient2 {
 	
@@ -123,13 +124,13 @@ class TCPClient2 {
 		
 		try 
 		{
-			charBuffer = new char[BUFFERSIZE/2]; // 2 bytes per character
+			charBuffer = new char[BUFFERSIZE]; 
 			boolean done = false;
 			while (!done)
 			{
 				bytesRead = inBuffer.read(charBuffer, 0, charBuffer.length);
-				System.out.println("Bytes read: " + bytesRead);
-				msg += new String(charBuffer);
+				//System.out.println("Bytes read: " + bytesRead);
+				msg += (new String(Arrays.copyOfRange(charBuffer, 0, bytesRead)));
 				done = (bytesRead < BUFFERSIZE);
 			}
 		} catch (IOException e) 
