@@ -281,7 +281,7 @@ public class SelectServer {
 			decoder.decode(inByteBuffer, inCharBuffer, false);
 			inCharBuffer.flip();	 // make buffer ready for get()	
 			msg = inCharBuffer.toString();
-			System.out.print("UDP Client: " + msg);
+			System.out.println("UDP Client: " + msg);
 			
 			// echo the message back
 			inByteBuffer.flip(); // make buffer ready for write()/get()
