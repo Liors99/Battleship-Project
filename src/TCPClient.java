@@ -7,9 +7,38 @@
 
 
 import java.io.*; 
-import java.net.*; 
+import java.net.*;
+import java.util.Arrays; 
 
-class TCPClient { 
+class TCPClient {
+	
+	private static int BUFFERSIZE = 8 * 1024;
+	
+	private int portNumber;
+	private Socket clientSocket;
+	private PrintWriter outBuffer; 
+	private InputStream inStream;
+	private BufferedReader inBuffer;
+	private BufferedReader inFromUser;
+	
+	public TCPClient(String add, int port) throws IOException
+	{
+		// Initialize a client socket connection to the server
+		portNumber = port;
+        clientSocket = new Socket(add, port); 
+        
+        // Initialize input and an output stream for the connection(s)
+        outBuffer = new PrintWriter(clientSocket.getOutputStream(), true);
+        
+        // Break this up into multiple steps so we can see how many bytes
+        // are available at the input stream at any given time
+        inStream = clientSocket.getInputStream();
+        // Make the in buffer capacity 8 KB
+        inBuffer = new BufferedReader(
+        					new	InputStreamReader(inStream), BUFFERSIZE); 
+        inFromUser = new BufferedReader(
+						new InputStreamReader(System.in)); 
+	}
 
     public static void main(String args[]) throws Exception 
     { 
@@ -19,39 +48,100 @@ class TCPClient {
             System.exit(1);
         }
 
-        // Initialize a client socket connection to the server
-        Socket clientSocket = new Socket(args[0], Integer.parseInt(args[1])); 
-
-        // Initialize input and an output stream for the connection(s)
-        DataOutputStream outBuffer = 
-          new DataOutputStream(clientSocket.getOutputStream()); 
-        BufferedReader inBuffer = 
-          new BufferedReader(new
-          InputStreamReader(clientSocket.getInputStream())); 
+        // Make instance of TCP client
+        TCPClient tcpClient = new TCPClient(args[0], Integer.parseInt(args[1]));
 
         // Initialize user input stream
         String line; 
-        BufferedReader inFromUser = 
-        new BufferedReader(new InputStreamReader(System.in)); 
+        
 
         // Get user input and send to the server
         // Display the echo meesage from the server
         System.out.print("Please enter a message to be sent to the server ('logout' to terminate): ");
-        line = inFromUser.readLine(); 
+        
+        line = tcpClient.inFromUser.readLine(); 
+        
+        // Request-response loop
         while (!line.equals("logout"))
         {
             // Send to the server
-            outBuffer.writeBytes(line + '\n'); 
-            
-            // Getting response from the server
-            line = inBuffer.readLine();
-            System.out.println("Server: " + line);
-             
+			tcpClient.outBuffer.println(line);
+			
+			// What we do now depends on the command we sent, if any
+			if (line.trim().equals("list"))
+			{
+				String fileList = tcpClient.receiveMsg();
+				System.out.print(fileList);
+			}
+			else if (line.trim().startsWith("get"))
+			{
+				String fileContents = tcpClient.receiveMsg();
+				
+				//System.out.println("File contents:");
+				//System.out.println(fileContents);
+				
+				// Save file contents
+				String fileName = line.substring(3).trim() + "-" + tcpClient.portNumber;
+				try 
+				{
+					//System.out.println("Will save in " + fileName);
+					BufferedWriter writer = new BufferedWriter(new FileWriter(fileName));
+				    writer.write(fileContents); 
+				    writer.close();
+				    System.out.println("File saved in " + fileName + " (" + 
+							fileContents.getBytes().length + " bytes)");
+				}
+				catch (IOException e)
+				{
+					System.out.println("Could not write to " + fileName);
+					e.printStackTrace();
+					System.exit(1);
+				}			
+			}
+			else
+			{
+				if (!line.equals("terminate"))
+				{
+					// Getting response from the server
+		            line = tcpClient.inBuffer.readLine();
+		            System.out.println("Server: " + line);
+				}
+			}
+              
             System.out.print("Please enter a message to be sent to the server ('logout' to terminate): ");
-            line = inFromUser.readLine(); 
+            line = tcpClient.inFromUser.readLine(); 
         }
 
         // Close the socket
-        clientSocket.close();           
+        tcpClient.clientSocket.close();           
     } 
+    
+    private String receiveMsg()
+    {
+    		int bytesRead = 0;
+		char[] charBuffer = null;
+		String msg = "";
+		
+		try 
+		{
+			charBuffer = new char[BUFFERSIZE]; 
+			boolean done = false;
+			while (!done)
+			{
+				bytesRead = inBuffer.read(charBuffer, 0, charBuffer.length);
+				//System.out.println("Bytes read: " + bytesRead);
+				msg += (new String(Arrays.copyOfRange(charBuffer, 0, bytesRead)));
+				done = (bytesRead < BUFFERSIZE);
+			}
+		} catch (IOException e) 
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		// How do we check that we received the entire message?
+		// Use first 2 bytes of message to contain message size
+		
+		return msg;
+    }
 } 
