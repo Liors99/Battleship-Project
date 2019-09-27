@@ -11,7 +11,7 @@ import java.net.*;
 
 class TCPClient2 {
 	
-	private static int BUFFERSIZE = 300;
+	private static int BUFFERSIZE = 8 * 1024;
 	
 	private int portNumber;
 	private Socket clientSocket;
@@ -32,8 +32,9 @@ class TCPClient2 {
         // Break this up into multiple steps so we can see how many bytes
         // are available at the input stream at any given time
         inStream = clientSocket.getInputStream();
+        // Make the in buffer capacity 8 KB
         inBuffer = new BufferedReader(
-        					new	InputStreamReader(inStream)); 
+        					new	InputStreamReader(inStream), BUFFERSIZE); 
         inFromUser = new BufferedReader(
 						new InputStreamReader(System.in)); 
 	}
@@ -75,14 +76,14 @@ class TCPClient2 {
 			{
 				String fileContents = tcpClient.receiveMsg();
 				
-				System.out.println("File contents:");
-				System.out.println(fileContents);
+				//System.out.println("File contents:");
+				//System.out.println(fileContents);
 				
 				// Save file contents
 				String fileName = line.substring(3).trim() + "-" + tcpClient.portNumber;
 				try 
 				{
-					System.out.println("Will save in " + fileName);
+					//System.out.println("Will save in " + fileName);
 					BufferedWriter writer = new BufferedWriter(new FileWriter(fileName));
 				    writer.write(fileContents); 
 				    writer.close();
@@ -116,15 +117,23 @@ class TCPClient2 {
     
     private String receiveMsg()
     {
-    		//int bytesRead = 0;
+    		int bytesRead = 0;
 		char[] charBuffer = null;
+		String msg = "";
 		
-		try {
-			charBuffer = new char[BUFFERSIZE];
-			//bytesRead = inBuffer.read(charBuffer, 0, charBuffer.length);
-			inBuffer.read(charBuffer, 0, charBuffer.length);
-			
-		} catch (IOException e) {
+		try 
+		{
+			charBuffer = new char[BUFFERSIZE/2]; // 2 bytes per character
+			boolean done = false;
+			while (!done)
+			{
+				bytesRead = inBuffer.read(charBuffer, 0, charBuffer.length);
+				inBuffer.read(charBuffer, 0, charBuffer.length);
+				msg += new String(charBuffer);
+				done = (bytesRead < BUFFERSIZE);
+			}
+		} catch (IOException e) 
+		{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -132,6 +141,6 @@ class TCPClient2 {
 		// How do we check that we received the entire message?
 		// Use first 2 bytes of message to contain message size
 		
-		return new String(charBuffer);
+		return msg;
     }
 } 
