@@ -248,7 +248,9 @@ public class SelectServer {
 			e.printStackTrace();
 		}
         
-        System.out.println("Accept connection from " + udpClientChannel.socket().toString());
+        System.out.println("Accepted a connection from " + 
+        						udpClientChannel.socket().getInetAddress().toString() +
+        							":" + udpClientChannel.socket().getPort());
         
         // Register the new connection for read operation
         try {
