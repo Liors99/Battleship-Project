@@ -46,7 +46,7 @@ class Client {
     { 
         if (args.length != 2)
         {
-            System.out.println("Usage: TCPClient <Server IP> <Server Port>");
+            System.out.println("Usage: Client <Server IP> <Server Port>");
             System.exit(1);
         }
 
@@ -55,24 +55,34 @@ class Client {
         
         
         int res= getUserLoginSignup();
+        
+        /*
         if(res == 0) {
         	// Do signup protocol stuff
         }
-        else if(res == 1) {
+        
+        */
+        
+        if(res == 1 || res == 0) {
+        	Login();
         	res = getJoinObserve();
         	if(res == 0) {
-        		
+        		// Observe stuff
+        		observeRequest();
         	}
         	else if(res == 1) {
         		//Wait to connect to game
-        		
+        		joinRequest();
         		System.out.println("Joined a game!");
+        		
+        		
         		//Pre-game phase (placing ships)
         		while(receiveMsg() == "Pre") {
         			PlaceShip();
         		}
         		
         		//Mid-game phase 
+        		HitShip();
         	}
         }
         
@@ -83,12 +93,64 @@ class Client {
     }
     
     
+    private static void joinRequest() throws IOException {
+    	int id = 1;
+    	int flag = 0;
+    	byte protocolByte = (byte) id;
+    	byte flagByte = (byte) flag;
+    	
+    	byte[] data = new byte[2];
+    	data[0] = protocolByte;
+    	data[1] = flagByte;
+    	
+    	SendMessage(data);
+    }
+    
+    private static void observeRequest() throws IOException {
+    	int id = 1;
+    	int flag = 1;
+    	byte protocolByte = (byte) id;
+    	byte flagByte = (byte) flag;
+    	
+    	byte[] data = new byte[2];
+    	data[0] = protocolByte;
+    	data[1] = flagByte;
+    	
+    	SendMessage(data);
+    }
+    
+    private static void Login() throws IOException {
+    	System.out.println("Enter Login information: <usnername> <password>");
+    	String[] splitted_input = inFromUser.readLine().split("\\s+");
+    	
+    	byte[] username = splitted_input[0].getBytes();
+    	byte[] password = splitted_input[1].getBytes();
+    	
+    	int id = 0;
+    	int flag = 1;
+    	byte protocolByte = (byte) id;
+    	byte flagByte = (byte) flag;
+    	
+    	
+    	
+    	byte[] data = new byte[2+username.length+password.length];
+    	data[0] = protocolByte;
+    	data[1] = flagByte;
+    	System.arraycopy(username, 2, data,  0, username.length);
+    	int pos = 2 + username.length;
+    	System.arraycopy(password, pos+1, data,  0, username.length);
+    	
+    	SendMessage(data);
+    	
+    	
+    	
+    }
     private static void PlaceShip() throws NumberFormatException, IOException {
     	
     	boolean valid = false;
     	
     	while(!valid) {
-    		System.out.println("Enter a ship to place: <Number> <[X,Y]> <[X,Y]>");
+    		System.out.println("Enter a ship to place: <Number> <X,Y> <X,Y>");
         	String[] splitted_input = inFromUser.readLine().split("\\s+");
         	
         	
@@ -96,19 +158,73 @@ class Client {
         	int x =  Integer.parseInt(splitted_input[1]);
         	int y =  Integer.parseInt(splitted_input[2]);
         	
-        	Move userMove= new Move();
         	
-        	if(userMove.setCol(x) && userMove.setRow(y) && userMove.setValue(ship_n)) {
-        		valid = true;
+        	Move userMove = new Move();
+        	if(userMove.setCol(x) && userMove.setRow(y)) {
+	    		valid = true;
+	    	}
+        	else {
+        		continue;
         	}
+        	
+        	//Use vlad's code here to check position and send to server
+        	
+        	int id = 2;
+        	int flag = 1;
+        	byte protocolByte = (byte) id;
+        	byte flagByte = (byte) flag;
+        	
+        	
+        	byte[] data = new byte[2+3];
+        	data[0] = protocolByte;
+        	data[1] = flagByte;
+        	data[2] = (byte)ship_n;
+        	data[3] = (byte)x;
+        	data[4] = (byte)y;
+        	
+        	SendMessage(data);
+        	
     	}
     	
     	
     }
     
     
-    private static void HitShip() {
+    private static void HitShip() throws IOException {
     	
+    	boolean valid = false;
+    	
+    	while(!valid) {
+	    	System.out.println("Enter a position to hit: <X> <Y>");
+	    	String[] splitted_input = inFromUser.readLine().split("\\s+");
+	    	int x =  Integer.parseInt(splitted_input[0]);
+	    	int y =  Integer.parseInt(splitted_input[1]);
+	    	
+	    	Move userMove= new Move();
+	    	userMove.setCol(x);
+	    	userMove.setRow(y);
+	    	
+	    	//Vlad's function here.
+	    	
+	    	if(userMove.setCol(x) && userMove.setRow(y)) {
+	    		valid = true;
+	    	}
+	    	
+	    	
+	    	int id = 2;
+        	int flag = 2;
+        	byte protocolByte = (byte) id;
+        	byte flagByte = (byte) flag;
+        	
+        	
+        	byte[] data = new byte[2+2];
+        	data[0] = protocolByte;
+        	data[1] = flagByte;
+        	data[2] = (byte)x;
+        	data[3] = (byte)y;
+        	
+        	SendMessage(data);
+    	}
     	
     	
     }
@@ -117,9 +233,9 @@ class Client {
     private static int getUserLoginSignup() throws IOException {
        while(true) {
     	   System.out.println("Enter one of the following number: ");
-           
            System.out.print("0: Signup ");
            System.out.println("1: Login");
+           
     	   int res= getUserResponse(0 , 1);
     	   switch (res) {
 	        case 0:
@@ -159,67 +275,14 @@ class Client {
         }
     }
     
-    private void SendMessage(String msg) throws IOException {
-    	 // Initialize user input stream
-        String line; 
+    private static void SendMessage(byte[] msg) throws IOException {
         
 
-        // Get user input and send to the server
-        // Display the echo meesage from the server
-        System.out.print("Please enter a message to be sent to the server ('logout' to terminate): ");
-        
-        line = tcpClient.inFromUser.readLine(); 
-        
-        // Request-response loop
-        while (!line.equals("logout"))
-        {
-            // Send to the server
-			tcpClient.outBuffer.println(line);
+    	// Send to the server
+    	tcpClient.outBuffer.write(msg);
+    	tcpClient.outBuffer.flush();
 			
-			// What we do now depends on the command we sent, if any
-			if (line.trim().equals("list"))
-			{
-				String fileList = tcpClient.receiveMsg();
-				System.out.print(fileList);
-			}
-			else if (line.trim().startsWith("get"))
-			{
-				String fileContents = tcpClient.receiveMsg();
-				
-				//System.out.println("File contents:");
-				//System.out.println(fileContents);
-				
-				// Save file contents
-				String fileName = line.substring(3).trim() + "-" + tcpClient.portNumber;
-				try 
-				{
-					//System.out.println("Will save in " + fileName);
-					BufferedWriter writer = new BufferedWriter(new FileWriter(fileName));
-				    writer.write(fileContents); 
-				    writer.close();
-				    System.out.println("File saved in " + fileName + " (" + 
-							fileContents.getBytes().length + " bytes)");
-				}
-				catch (IOException e)
-				{
-					System.out.println("Could not write to " + fileName);
-					e.printStackTrace();
-					System.exit(1);
-				}			
-			}
-			else
-			{
-				if (!line.equals("terminate"))
-				{
-					// Getting response from the server
-		            line = tcpClient.inBuffer.readLine();
-		            System.out.println("Server: " + line);
-				}
-			}
-              
-            System.out.print("Please enter a message to be sent to the server ('logout' to terminate): ");
-            line = tcpClient.inFromUser.readLine(); 
-        }
+
     }
     
     private static String receiveMsg()
