@@ -8,27 +8,29 @@
 
 import java.io.*; 
 import java.net.*;
+import java.nio.ByteBuffer;
 import java.util.Arrays; 
 
-class TCPClient {
+class Client {
 	
 	private static int BUFFERSIZE = 8 * 1024;
 	
 	private int portNumber;
 	private Socket clientSocket;
-	private PrintWriter outBuffer; 
+	private DataOutputStream outBuffer; 
 	private InputStream inStream;
-	private BufferedReader inBuffer;
-	private BufferedReader inFromUser;
+	private static BufferedReader inBuffer;
+	private static BufferedReader inFromUser;
+	private static Client tcpClient;
 	
-	public TCPClient(String add, int port) throws IOException
+	public Client(String add, int port) throws IOException
 	{
 		// Initialize a client socket connection to the server
 		portNumber = port;
         clientSocket = new Socket(add, port); 
         
         // Initialize input and an output stream for the connection(s)
-        outBuffer = new PrintWriter(clientSocket.getOutputStream(), true);
+        outBuffer = new DataOutputStream(clientSocket.getOutputStream());
         
         // Break this up into multiple steps so we can see how many bytes
         // are available at the input stream at any given time
@@ -49,9 +51,116 @@ class TCPClient {
         }
 
         // Make instance of TCP client
-        TCPClient tcpClient = new TCPClient(args[0], Integer.parseInt(args[1]));
+        tcpClient = new Client(args[0], Integer.parseInt(args[1]));
+        
+        
+        int res= getUserLoginSignup();
+        if(res == 0) {
+        	// Do signup protocol stuff
+        }
+        else if(res == 1) {
+        	res = getJoinObserve();
+        	if(res == 0) {
+        		
+        	}
+        	else if(res == 1) {
+        		//Wait to connect to game
+        		
+        		System.out.println("Joined a game!");
+        		//Pre-game phase (placing ships)
+        		while(receiveMsg() == "Pre") {
+        			PlaceShip();
+        		}
+        		
+        		//Mid-game phase 
+        	}
+        }
+        
+        
 
-        // Initialize user input stream
+        // Close the socket
+        tcpClient.clientSocket.close();           
+    }
+    
+    
+    private static void PlaceShip() throws NumberFormatException, IOException {
+    	
+    	boolean valid = false;
+    	
+    	while(!valid) {
+    		System.out.println("Enter a ship to place: <Number> <[X,Y]> <[X,Y]>");
+        	String[] splitted_input = inFromUser.readLine().split("\\s+");
+        	
+        	
+        	int ship_n =  Integer.parseInt(splitted_input[0]);
+        	int x =  Integer.parseInt(splitted_input[1]);
+        	int y =  Integer.parseInt(splitted_input[2]);
+        	
+        	Move userMove= new Move();
+        	
+        	if(userMove.setCol(x) && userMove.setRow(y) && userMove.setValue(ship_n)) {
+        		valid = true;
+        	}
+    	}
+    	
+    	
+    }
+    
+    
+    private static void HitShip() {
+    	
+    	
+    	
+    }
+
+    
+    private static int getUserLoginSignup() throws IOException {
+       while(true) {
+    	   System.out.println("Enter one of the following number: ");
+           
+           System.out.print("0: Signup ");
+           System.out.println("1: Login");
+    	   int res= getUserResponse(0 , 1);
+    	   switch (res) {
+	        case 0:
+	        	return 0;
+	        case 1:
+	        	return 1;
+	        case -1:
+	    		System.out.println("Not a valid option");
+	    		continue;
+	        	
+    	   }
+       }
+       
+        
+    }
+    
+    private static int getJoinObserve() throws IOException {
+    	while(true) {
+     	   System.out.println("Enter one of the following number: ");
+            
+           System.out.print("0: Join a game ");
+           System.out.println("1: Observe a game");
+           System.out.println("2: Logout");
+     	   int res= getUserResponse(0 , 1);
+     	   switch (res) {
+ 	        case 0:
+ 	        	return 0;
+ 	        case 1:
+ 	        	return 1;
+ 	        case 2:
+ 	        	return 2;
+ 	        case -1:
+ 	    		System.out.println("Not a valid option");
+ 	    		continue;
+ 	        	
+     	   }
+        }
+    }
+    
+    private void SendMessage(String msg) throws IOException {
+    	 // Initialize user input stream
         String line; 
         
 
@@ -111,14 +220,12 @@ class TCPClient {
             System.out.print("Please enter a message to be sent to the server ('logout' to terminate): ");
             line = tcpClient.inFromUser.readLine(); 
         }
-
-        // Close the socket
-        tcpClient.clientSocket.close();           
-    } 
+    }
     
-    private String receiveMsg()
+    private static String receiveMsg()
     {
-    		int bytesRead = 0;
+    	
+    	int bytesRead = 0;
 		char[] charBuffer = null;
 		String msg = "";
 		
@@ -143,5 +250,17 @@ class TCPClient {
 		// Use first 2 bytes of message to contain message size
 		
 		return msg;
+    }
+    
+    
+    private static int getUserResponse(int i , int j) throws IOException {
+    	int res = Integer.parseInt(inFromUser.readLine());
+    	
+    	if(res < i || res > j) {
+    		return -1;
+    	}
+    	
+    	return res;
+    	
     }
 } 
