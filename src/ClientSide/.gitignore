@@ -1,2 +1,5 @@
 /Client.class
 /Move.class
+/GameState.class
+/ObserverGameState.class
+/PlayerGameState.class

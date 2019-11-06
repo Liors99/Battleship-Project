@@ -1,3 +1,4 @@
+package ClientSide;
 public class ObserverGameState extends GameState{
     ObserverGameState(){super();}
     ObserverGameState(int[][] board1, int[][] board2){

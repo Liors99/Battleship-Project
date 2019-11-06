@@ -6,3 +6,7 @@
 /UDPServer.class
 /Client.class
 /Move.class
+/GameState.class
+/Main.class
+/ObserverGameState.class
+/PlayerGameState.class

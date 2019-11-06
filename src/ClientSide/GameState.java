@@ -1,3 +1,4 @@
+package ClientSide;
 public class GameState {
     private int[][] Player1Board; //the client unless observer
     private int[][] Player2Board; //the enemy
@@ -50,6 +51,9 @@ public class GameState {
         displayBoard(getPlayer1Board());
         displayBoard(getPlayer2Board());
     }
+    
+    //TODO
+    public boolean placeShipPlayer1Board(int x1, int y1, int x2, int y2) {return false;}
 
     /**
      * updates clients [aka board1, for observer abstraction] board
@@ -87,6 +91,22 @@ public class GameState {
         Player1Board = player1Board;
     }
 
+    public boolean isShipAtPlayer1Board(Move Mv) {
+    	if(Player1Board[Mv.getRow()][Mv.getCol()]==1) {
+    		return true;
+    	}else {
+    		return false;
+    	}
+    }
+    
+    public boolean isShipAtPlayer2Board(Move Mv) {
+    	if(Player2Board[Mv.getRow()][Mv.getCol()]==1) {
+    		return true;
+    	}else {
+    		return false;
+    	}
+    }
+    
     public int[][] getPlayer2Board() {
         return Player2Board;
     }
