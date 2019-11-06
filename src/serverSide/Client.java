@@ -5,14 +5,16 @@ public class Client {
 	private static final int NO_GAMEROOM = -1;
 	
 	private String username;
+	private String password;
 	//private boolean isOnline;
 	private boolean isPlayer;
 	private boolean isObserver;
 	private int gameRoomId;
 	
-	public Client()
+	public Client(String username, String password)
 	{
-		this.username = "";
+		this.username = username;
+		this.password = password;
 		//this.isOnline = true;
 		this.isPlayer = false;
 		this.isObserver = false;

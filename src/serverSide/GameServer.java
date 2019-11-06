@@ -306,18 +306,25 @@ public class GameServer {
     
     private void handleClientLoginSignup(SocketChannel clientChannel, Message msg, int usernameLength) 
     {
-    			//Get username and password
-    			//Create new client and add to hashmap
-			 Client client = new Client();
-			 clients.put(clientChannel, client);
-			 clientSockets.put(client, clientChannel);
-			//Add the client to the waiting room
-			 waitingRoom.activateClient(client);	
-			 //Message to send back if successful
-			 Message reply = new Message();
-			 reply.setProtocolId(SERVER_ID);
-			 reply.setFlag(LOGIN_SIGNUP_SUCCESS);
-			 sendToClient(client, reply);
+	    	//Get username and password
+	    	byte[] bytes = msg.getData().getBytes();
+	    	byte[] usernameBytes = Arrays.copyOfRange(bytes, 0, 8);    	
+	    	byte[] passwordBytes = Arrays.copyOfRange(bytes, 8, bytes.length);
+	    	String username = new String(usernameBytes);
+	    	String password = new String(passwordBytes);
+	    	System.out.println("Username: " + username);
+	    	System.out.println("Password: " + password);
+	    	//Create new client and add to hashmap
+	    	Client client = new Client(username, password);
+	    	clients.put(clientChannel, client);
+	    	clientSockets.put(client, clientChannel);
+	    	//Add the client to the waiting room
+	    	waitingRoom.activateClient(client);	
+	    	//Message to send back if successful
+	    	Message reply = new Message();
+	    	reply.setProtocolId(SERVER_ID);
+	    	reply.setFlag(LOGIN_SIGNUP_SUCCESS);
+	    	sendToClient(client, reply);
 		
 	}
 
