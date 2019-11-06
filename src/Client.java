@@ -18,10 +18,23 @@ class Client {
 	private int portNumber;
 	private Socket clientSocket;
 	private DataOutputStream outBuffer; 
-	private InputStream inStream;
-	private static BufferedReader inBuffer;
+	private static InputStream inStream;
+	private static DataInputStream inBuffer;
 	private static BufferedReader inFromUser;
 	private static Client tcpClient;
+	
+	
+	//Flags and IDs
+	private static final int JOIN_ID = 1; 
+	private static final int JOIN_FLAG = 0; 
+	private static final int OBSERVE_ID = 1;
+	private static final int OBSERVE_FLAG = 1;
+	private static final int LOGIN_ID = 0;
+	private static final int LOGIN_FLAG = 1; 
+	private static final int PLACE_ID = 2;
+	private static final int PLACE_FLAG = 1; 
+	private static final int HIT_ID = 2; 
+	private static final int HIT_FLAG = 2; 
 	
 	public Client(String add, int port) throws IOException
 	{
@@ -36,8 +49,8 @@ class Client {
         // are available at the input stream at any given time
         inStream = clientSocket.getInputStream();
         // Make the in buffer capacity 8 KB
-        inBuffer = new BufferedReader(
-        					new	InputStreamReader(inStream), BUFFERSIZE); 
+        inBuffer = new DataInputStream(
+				new BufferedInputStream(inStream));
         inFromUser = new BufferedReader(
 						new InputStreamReader(System.in)); 
 	}
@@ -69,6 +82,8 @@ class Client {
         	if(res == 0) {
         		// Observe stuff
         		observeRequest();
+        		
+        		//Wait for server reply
         	}
         	else if(res == 1) {
         		//Wait to connect to game
@@ -77,9 +92,9 @@ class Client {
         		
         		
         		//Pre-game phase (placing ships)
-        		while(receiveMsg() == "Pre") {
-        			PlaceShip();
-        		}
+        		//while(receiveMsg() == "Pre") {
+        		PlaceShip();
+        		//}
         		
         		//Mid-game phase 
         		HitShip();
@@ -94,8 +109,8 @@ class Client {
     
     
     private static void joinRequest() throws IOException {
-    	int id = 1;
-    	int flag = 0;
+    	int id = JOIN_ID;
+    	int flag = JOIN_FLAG;
     	byte protocolByte = (byte) id;
     	byte flagByte = (byte) flag;
     	
@@ -107,8 +122,8 @@ class Client {
     }
     
     private static void observeRequest() throws IOException {
-    	int id = 1;
-    	int flag = 1;
+    	int id = OBSERVE_ID;
+    	int flag = OBSERVE_FLAG;
     	byte protocolByte = (byte) id;
     	byte flagByte = (byte) flag;
     	
@@ -120,25 +135,28 @@ class Client {
     }
     
     private static void Login() throws IOException {
-    	System.out.println("Enter Login information: <usnername> <password>");
-    	String[] splitted_input = inFromUser.readLine().split("\\s+");
+    	String[] splitted_input = getUserMsg("Enter Login information: <usnername> <password>", 2);
     	
     	byte[] username = splitted_input[0].getBytes();
     	byte[] password = splitted_input[1].getBytes();
     	
-    	int id = 0;
-    	int flag = 1;
+    	int id = LOGIN_ID;
+    	int flag = LOGIN_FLAG;
     	byte protocolByte = (byte) id;
     	byte flagByte = (byte) flag;
     	
     	
-    	
-    	byte[] data = new byte[2+username.length+password.length];
+    	byte[] data = new byte[2+4+username.length+password.length];
     	data[0] = protocolByte;
     	data[1] = flagByte;
-    	System.arraycopy(username, 2, data,  0, username.length);
-    	int pos = 2 + username.length;
-    	System.arraycopy(password, pos+1, data,  0, username.length);
+    	int pos =2;
+    	byte[] len = ByteBuffer.allocate(4).putInt(username.length).array();
+    	System.arraycopy(len, 0, data,  pos, len.length);
+    	pos+=4;
+    	
+    	System.arraycopy(username, 0, data,  pos, username.length);
+    	pos += username.length;
+    	System.arraycopy(password, 0, data,  pos, password.length);
     	
     	SendMessage(data);
     	
@@ -148,41 +166,50 @@ class Client {
     private static void PlaceShip() throws NumberFormatException, IOException {
     	
     	boolean valid = false;
-    	
+    	int ship_n;
+    	int x;
+    	int y;
     	while(!valid) {
-    		System.out.println("Enter a ship to place: <Number> <X,Y> <X,Y>");
-        	String[] splitted_input = inFromUser.readLine().split("\\s+");
-        	
-        	
-        	int ship_n =  Integer.parseInt(splitted_input[0]);
-        	int x =  Integer.parseInt(splitted_input[1]);
-        	int y =  Integer.parseInt(splitted_input[2]);
-        	
-        	
-        	Move userMove = new Move();
-        	if(userMove.setCol(x) && userMove.setRow(y)) {
-	    		valid = true;
-	    	}
-        	else {
+    		String[] splitted_input = getUserMsg("Enter a ship to place: <Number> <X,Y> <X,Y>", 3);
+        	try {
+	        	ship_n =  Integer.parseInt(splitted_input[0]);
+	        	x =  Integer.parseInt(splitted_input[1]);
+	        	y =  Integer.parseInt(splitted_input[2]);
+	        	
+	        	Move userMove = new Move();
+	        	if(userMove.setCol(x) && userMove.setRow(y)) {
+		    		valid = true;
+		    	}
+	        	else {
+	        		continue;
+	        	}
+	        	
+	        	//Use vlad's code here to check position and send to server
+	        	
+	        	int id = PLACE_ID;
+	        	int flag = PLACE_FLAG;
+	        	byte protocolByte = (byte) id;
+	        	byte flagByte = (byte) flag;
+	        	
+	        	
+	        	byte[] data = new byte[2+3];
+	        	data[0] = protocolByte;
+	        	data[1] = flagByte;
+	        	data[2] = (byte)ship_n;
+	        	data[3] = (byte)x;
+	        	data[4] = (byte)y;
+	        	
+	        	SendMessage(data);
+	        	
+	        	
+	        	
+        	}
+        	catch(Exception e) {
         		continue;
         	}
         	
-        	//Use vlad's code here to check position and send to server
-        	
-        	int id = 2;
-        	int flag = 1;
-        	byte protocolByte = (byte) id;
-        	byte flagByte = (byte) flag;
         	
         	
-        	byte[] data = new byte[2+3];
-        	data[0] = protocolByte;
-        	data[1] = flagByte;
-        	data[2] = (byte)ship_n;
-        	data[3] = (byte)x;
-        	data[4] = (byte)y;
-        	
-        	SendMessage(data);
         	
     	}
     	
@@ -193,37 +220,45 @@ class Client {
     private static void HitShip() throws IOException {
     	
     	boolean valid = false;
+    	int x;
+    	int y;
     	
     	while(!valid) {
-	    	System.out.println("Enter a position to hit: <X> <Y>");
-	    	String[] splitted_input = inFromUser.readLine().split("\\s+");
-	    	int x =  Integer.parseInt(splitted_input[0]);
-	    	int y =  Integer.parseInt(splitted_input[1]);
+	    	String[] splitted_input = getUserMsg("Enter a position to hit: <X> <Y>", 2);
 	    	
-	    	Move userMove= new Move();
-	    	userMove.setCol(x);
-	    	userMove.setRow(y);
+	    	try {
+		    	x =  Integer.parseInt(splitted_input[0]);
+		    	y =  Integer.parseInt(splitted_input[1]);
 	    	
-	    	//Vlad's function here.
 	    	
-	    	if(userMove.setCol(x) && userMove.setRow(y)) {
-	    		valid = true;
+		    	Move userMove= new Move();
+		    	userMove.setCol(x);
+		    	userMove.setRow(y);
+		    	
+		    	//Vlad's function here.
+		    	
+		    	if(userMove.setCol(x) && userMove.setRow(y)) {
+		    		valid = true;
+		    	}
+		    	
+		    	
+		    	int id = HIT_ID;
+	        	int flag = HIT_FLAG;
+	        	byte protocolByte = (byte) id;
+	        	byte flagByte = (byte) flag;
+	        	
+	        	
+	        	byte[] data = new byte[2+2];
+	        	data[0] = protocolByte;
+	        	data[1] = flagByte;
+	        	data[2] = (byte)x;
+	        	data[3] = (byte)y;
+	        	
+	        	SendMessage(data);
 	    	}
-	    	
-	    	
-	    	int id = 2;
-        	int flag = 2;
-        	byte protocolByte = (byte) id;
-        	byte flagByte = (byte) flag;
-        	
-        	
-        	byte[] data = new byte[2+2];
-        	data[0] = protocolByte;
-        	data[1] = flagByte;
-        	data[2] = (byte)x;
-        	data[3] = (byte)y;
-        	
-        	SendMessage(data);
+	    	catch(Exception e) {
+	    		continue;
+	    	}
     	}
     	
     	
@@ -233,7 +268,7 @@ class Client {
     private static int getUserLoginSignup() throws IOException {
        while(true) {
     	   System.out.println("Enter one of the following number: ");
-           System.out.print("0: Signup ");
+           System.out.println("0: Signup ");
            System.out.println("1: Login");
            
     	   int res= getUserResponse(0 , 1);
@@ -256,8 +291,8 @@ class Client {
     	while(true) {
      	   System.out.println("Enter one of the following number: ");
             
-           System.out.print("0: Join a game ");
-           System.out.println("1: Observe a game");
+           System.out.println("0: Observe a game ");
+           System.out.println("1: Join a game");
            System.out.println("2: Logout");
      	   int res= getUserResponse(0 , 1);
      	   switch (res) {
@@ -285,45 +320,69 @@ class Client {
 
     }
     
-    private static String receiveMsg()
+    
+    //Needs to be worked on
+    private static void receiveMsg()
     {
-    	
-    	int bytesRead = 0;
-		char[] charBuffer = null;
-		String msg = "";
+
 		
-		try 
-		{
-			charBuffer = new char[BUFFERSIZE]; 
-			boolean done = false;
-			while (!done)
-			{
-				bytesRead = inBuffer.read(charBuffer, 0, charBuffer.length);
-				//System.out.println("Bytes read: " + bytesRead);
-				msg += (new String(Arrays.copyOfRange(charBuffer, 0, bytesRead)));
-				done = (bytesRead < BUFFERSIZE);
-			}
-		} catch (IOException e) 
+    	
+    	try {
+    		byte[] inBytes = new byte[BUFFERSIZE];
+    		StringBuilder strBuilder = new StringBuilder();
+    		int bytesRead = 0;
+    		
+	    	int protocolId = Character.getNumericValue(inStream.read());
+	    	int flag = inStream.read();
+	    	
+	    	boolean doneReading = false;
+    		while(!doneReading)
+    		{
+    			bytesRead = inStream.read(inBytes);
+    			strBuilder.append(new String(inBytes));
+    			doneReading = (bytesRead < BUFFERSIZE);
+    		}
+    	
+    	
+		} 
+    		catch (IOException e) 
 		{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		// How do we check that we received the entire message?
-		// Use first 2 bytes of message to contain message size
-		
-		return msg;
     }
     
     
     private static int getUserResponse(int i , int j) throws IOException {
-    	int res = Integer.parseInt(inFromUser.readLine());
-    	
-    	if(res < i || res > j) {
+    	try {
+	    	int res = Integer.parseInt(inFromUser.readLine());
+	    	
+	    	if(res < i || res > j) {
+	    		return -1;
+	    	}
+	    	
+	    	return res;
+    	}
+    	catch(Exception e) {
     		return -1;
     	}
+    }
+    
+    private static String[] getUserMsg(String msg, int args) throws IOException {
     	
-    	return res;
+    	boolean valid = false;
+    	String[] splitted_input = null;
     	
+    	while(!valid) {
+    	
+	    	System.out.println(msg);
+	    	splitted_input = inFromUser.readLine().split("\\s+");
+	    	
+	    	if(splitted_input.length == args) {
+	    		valid = true;
+	    	}
+    	}
+    	
+    	return splitted_input;
     }
 } 
