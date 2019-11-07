@@ -216,6 +216,7 @@ class Client {
     	int ship_n;
     	int x1,y1,x2,y2;
     	while(!valid) {
+    		PlayerState.printAvaliableShips(); //prints avaliable ships
     		String[] splitted_input = getUserMsg("Enter a ship to place: <Number> <X> <Y> <X> <Y>", 5);
         	try {
 	        	ship_n =  Integer.parseInt(splitted_input[0]);
@@ -236,8 +237,12 @@ class Client {
 	        	
 	        	
 	        	//Use vlad's code here to check position and send to server
-	        	valid = true; // FOR VLAD!!!! CHANGE AFTER INPUT HAS BEEN PARSED
-	        	
+
+
+
+	        	valid = PlayerState.placeShipPlayer1Board(ship_n, x1, y1, x2, y2); // return if successfully placed. ship_n assumed to be 0 for destroyer, coords from 0-9 inclusive
+	        	PlayerState.displayBoards();
+
 	        	int id = PLACE_ID;
 	        	int flag = PLACE_FLAG;
 	        	byte protocolByte = (byte) id;

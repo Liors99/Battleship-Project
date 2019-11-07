@@ -189,8 +189,6 @@ public class GameState {
     public boolean placeShipPlayer1Board(int id, int x1, int y1, int x2, int y2) {
         boolean shipPlaced = true;
 
-
-
         char dir = shipDir(x1, y1, x2, y2);
         if (dir == 'F'){
             diagShip();
