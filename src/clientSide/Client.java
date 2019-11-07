@@ -157,7 +157,8 @@ class Client {
     	
     	SendMessage(data);
     	
-    	return waitForACK(REPLY_JOIN_ID,REPLY_JOIN_ACK_FLAG);
+    	//return waitForACK(REPLY_JOIN_ID,REPLY_JOIN_ACK_FLAG);
+    	return true;
     }
     
     private static boolean observeRequest() throws IOException {
@@ -172,7 +173,8 @@ class Client {
     	
     	SendMessage(data);
     	
-    	return waitForACK(REPLY_JOIN_ID,REPLY_OBS_ACK_FLAG);
+    	//return waitForACK(REPLY_JOIN_ID,REPLY_OBS_ACK_FLAG);
+    	return true;
     }
     
     private static void Login() throws IOException {
@@ -252,7 +254,7 @@ class Client {
 	        	
 	        	SendMessage(data);
 	        	
-	        	valid = waitForACK(REPLY_SHIP_ID, REPLY_SHIP_PLACE_ACK_FLAG);
+	        	//valid = waitForACK(REPLY_SHIP_ID, REPLY_SHIP_PLACE_ACK_FLAG);
 	        	
         	}
         	catch(Exception e) {
@@ -313,7 +315,8 @@ class Client {
 	        	
 	        	SendMessage(data);
 	        	
-	        	server_ACK = waitForACK(REPLY_SHIP_ID,REPLY_SHIP_HIT_FLAG);
+	        	server_ACK= true;
+	        	//server_ACK = waitForACK(REPLY_SHIP_ID,REPLY_SHIP_HIT_FLAG);
 	    	}
 	    	catch(Exception e) {
 	    		continue;

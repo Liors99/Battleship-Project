@@ -1,4 +1,4 @@
-package ClientSide;
+package clientSide;
 public class GameState {
     private int[][] Player1Board; //the client unless observer
     private int[][] Player2Board; //the enemy
