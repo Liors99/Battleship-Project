@@ -130,16 +130,17 @@ public class WaitingRoom {
 			Client player2 = playerQueue.remove();
 			GameRoom game = new GameRoom(this.server, this, games.size(), player1, player2);
 			//Add game to list of active games
-			games.put(game.getGameId(), game);
+			games.put(game.getGameID(), game);
 			//Modify players' statuses
-			player1.setPlayer(game.getGameId());
-			player2.setPlayer(game.getGameId());			
+			player1.setPlayer(game.getGameID());
+			player2.setPlayer(game.getGameID());			
 			//Create 'join success' message to send to clients
 			Message joinSuccess = new Message();
 			joinSuccess.setProtocolId(WAITING_ROOM_ID);
 			joinSuccess.setFlag(GAME_JOIN_SUCCESS);
 			server.sendToClient(player1, joinSuccess);
 			server.sendToClient(player2, joinSuccess);
+			System.out.println("New game started");
 		}
 	}
 

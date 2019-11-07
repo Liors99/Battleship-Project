@@ -6,6 +6,14 @@ public class Message {
 	private Client client;
 	private String data;
 	
+	public Message(int protocol, int newFlag, Client newClient, String newData)
+	{
+		this.protocolId = protocol;
+		this.flag = newFlag; 
+		this.client = newClient; 
+		this.data = newData; 
+	}
+
 	public Message() 
 	{
 		this.protocolId = -1;
