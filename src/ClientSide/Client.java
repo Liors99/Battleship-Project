@@ -53,6 +53,13 @@ class Client {
 	private static final int REPLY_JOIN_NAK_FLAG = 1;
 	private static final int REPLY_OBS_ACK_FLAG = 2;
 	private static final int REPLY_OBS_NACK_FLAG = 3;
+	private static final int REPLY_LIST_ACK = 4;
+	private static final int REPLY_LIST_NACK = 5;
+	
+	private static final int REPLY_SHIP_ID = 2;
+	private static final int REPLY_SHIP_PLACE_ACK_FLAG = 0;
+	private static final int REPLY_SHIP_PLACE_NACK_FLAG = 2;
+	private static final int REPLY_SHIP_HIT_FLAG = 1;
 	
 	public Client(String add, int port) throws IOException
 	{
@@ -108,6 +115,7 @@ class Client {
         	else if(res == 1) {
         		//Wait to connect to game
         		joinRequest();
+        		while(receiveMsg()[0]!= 1);
         		System.out.println("Joined a game!");
         		
         		
@@ -155,30 +163,34 @@ class Client {
     }
     
     private static void Login() throws IOException {
-    	String[] splitted_input = getUserMsg("Enter Login information: <usnername> <password>", 2);
-    	
-    	byte[] username = splitted_input[0].getBytes();
-    	byte[] password = splitted_input[1].getBytes();
-    	
-    	int id = LOGIN_ID;
-    	int flag = LOGIN_FLAG;
-    	byte protocolByte = (byte) id;
-    	byte flagByte = (byte) flag;
-    	
-    	
-    	byte[] data = new byte[2+4+username.length+password.length];
-    	data[0] = protocolByte;
-    	data[1] = flagByte;
-    	int pos =2;
-    	byte[] len = ByteBuffer.allocate(4).putInt(username.length).array();
-    	System.arraycopy(len, 0, data,  pos, len.length);
-    	pos+=4;
-    	
-    	System.arraycopy(username, 0, data,  pos, username.length);
-    	pos += username.length;
-    	System.arraycopy(password, 0, data,  pos, password.length);
-    	
-    	SendMessage(data);
+    	boolean valid = false;
+    	while(!valid) {
+	    	String[] splitted_input = getUserMsg("Enter Login information: <usnername> <password>", 2);
+	    	
+	    	byte[] username = splitted_input[0].getBytes();
+	    	byte[] password = splitted_input[1].getBytes();
+	    	
+	    	int id = LOGIN_ID;
+	    	int flag = LOGIN_FLAG;
+	    	byte protocolByte = (byte) id;
+	    	byte flagByte = (byte) flag;
+	    	
+	    	
+	    	byte[] data = new byte[2+4+username.length+password.length];
+	    	data[0] = protocolByte;
+	    	data[1] = flagByte;
+	    	int pos =2;
+	    	byte[] len = ByteBuffer.allocate(4).putInt(username.length).array();
+	    	System.arraycopy(len, 0, data,  pos, len.length);
+	    	pos+=4;
+	    	
+	    	System.arraycopy(username, 0, data,  pos, username.length);
+	    	pos += username.length;
+	    	System.arraycopy(password, 0, data,  pos, password.length);
+	    	
+	    	SendMessage(data);
+	    	valid = waitForACK(REPLY_LOGIN_ID, REPLY_LOGIN_ACK_FLAG);
+    	}
     	
     	
     	
@@ -375,6 +387,7 @@ class Client {
     			strBuilder.append(new String(inBytes));
     			doneReading = (bytesRead < BUFFERSIZE);
     		}
+    		
     	
     	
 		} 
@@ -419,5 +432,13 @@ class Client {
     	}
     	
     	return splitted_input;
+    }
+    
+    private static boolean waitForACK(int ID, int FLAG) {
+    	int[] data = null;
+    	while( data[0]!= ID) {
+    		data = receiveMsg();
+    	}
+    	return data[1] == FLAG;
     }
 } 
