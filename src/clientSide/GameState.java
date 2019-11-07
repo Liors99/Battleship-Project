@@ -286,6 +286,40 @@ public class GameState {
         return shipPlaced;
     }
 
+
+    /**
+     * useful for observer
+     * assumes the placement is correct and does not perform any checks of any kind
+     * places a ship if possible
+     * prints useful message to stdout
+     * @param x1 of first side
+     * @param y1 of first side
+     * @param x2 of second side
+     * @param y2 of second side
+     * @return false if unable to place ship
+     */
+    public boolean placeShipPlayer2Board(int id, int x1, int y1, int x2, int y2) {
+        boolean shipPlaced = true;
+
+        char dir = shipDir(x1, y1, x2, y2);
+        if (dir == 'F'){
+            diagShip();
+        }
+        //place ship
+        if(dir=='v'){
+            for(int i=y1;i<=y2;i++){
+                Player2Board[i][x2] = 1;
+            }
+        }else{
+            for(int i=x1;i<=x2;i++){
+                Player2Board[y1][i] = 1;
+            }
+        }
+
+        return shipPlaced;
+    }
+
+
     /**
      * updates clients [aka board1, for observer abstraction] board
      * @param mv
