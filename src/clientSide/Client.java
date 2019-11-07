@@ -236,6 +236,7 @@ class Client {
 	        	
 	        	
 	        	//Use vlad's code here to check position and send to server
+	        	valid = true; // FOR VLAD!!!! CHANGE AFTER INPUT HAS BEEN PARSED
 	        	
 	        	int id = PLACE_ID;
 	        	int flag = PLACE_FLAG;
@@ -253,6 +254,9 @@ class Client {
 	        	data[7] = (byte)y2;
 	        	
 	        	SendMessage(data);
+	        	
+	        	
+	        	
 	        	
 	        	//valid = waitForACK(REPLY_SHIP_ID, REPLY_SHIP_PLACE_ACK_FLAG);
 	        	
