@@ -7,10 +7,16 @@ public class ShipGamePiece
     int xPOS;
     int yPOS;
     boolean vertical; 
+    int[] hitspots; 
 
     public ShipGamePiece(int shipSize)
     {
         size = shipSize; 
+        hitspots = new int[shipSize];
+        for(int i : hitspots)
+        {
+            hitspots[i] = 0;
+        }
         isSunk = false; 
     }
 
@@ -20,6 +26,13 @@ public class ShipGamePiece
     public void setSize(int size) {
         this.size = size;
     }
+
+    public void shipWasHit()
+    {
+        //Add someting to update the internal array hitspots - which is supposed to mimick the board 
+        //except it's just an array of the ship 
+    }
+
 
     /**
      * IS THIS NEEDED 

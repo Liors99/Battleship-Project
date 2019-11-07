@@ -7,18 +7,21 @@ public class PlayerFleetBoard
     char[][] board = new char[8][8]; 
     ShipGamePiece[] pieces = new ShipGamePiece[5];
     int numOfShipsLeft;    
+    int shipSunk; 
 
     private int DESTROYER_SHIP_ID = 0; 
     private int SUBMARINE_SHIP_ID = 1; 
     private int CRUISER_SHIP_ID = 2; 
     private int BATTLESHIP_SHIP_ID = 3; 
     private int CARRIER_SHIP_ID = 4; 
+    private int TOTAL_SHIPS = 5; 
 
     /** Constructors */
     public PlayerFleetBoard(Client player)
     {
         user = player; 
-        numOfShipsLeft = 5;        
+        numOfShipsLeft = TOTAL_SHIPS;        
+        shipSunk = 0; 
     }
 
     /** Indicates if there are ships that still need to be placed */
@@ -94,7 +97,12 @@ public class PlayerFleetBoard
     {
         if(board[X][Y] == '1')
         {
-            board[X][Y] = 'H';  
+            board[X][Y] = 'H'; 
+            //Check if the ship has sunk 
+            if()
+            {
+
+            }
             return 0; 
         }
         else
@@ -103,5 +111,9 @@ public class PlayerFleetBoard
         }
     }
 
+    public boolean allShipsSunk()
+    {
+        return TOTAL_SHIPS == shipSunk; 
+    }    
 
 }

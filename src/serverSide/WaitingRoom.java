@@ -140,6 +140,7 @@ public class WaitingRoom {
 			joinSuccess.setFlag(GAME_JOIN_SUCCESS);
 			server.sendToClient(player1, joinSuccess);
 			server.sendToClient(player2, joinSuccess);
+			System.out.println("New game started");
 		}
 	}
 
