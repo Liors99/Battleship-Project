@@ -3,6 +3,12 @@ public class GameState {
     private int[][] Player1Board; //the client unless observer
     private int[][] Player2Board; //the enemy
     private boolean gameOver;
+    
+    private final int DESTROYER_ID = 0;
+    private final int SUBMARINE_ID = 1;
+    private final int CRUISER_ID = 2;
+    private final int BATTLESHIP_ID = 3;
+    private final int CARRIER_ID = 4;
 
     private int Destroyers;
     private int dLength;
@@ -53,23 +59,32 @@ public class GameState {
      *              miss is 3
      */
     private void displayBoard(int[][] board){
+    	int c=0;
+    	System.out.print("  ");
+    	for(int k=0;k<10;k++) {
+    		System.out.print(" "+k);
+    	}
+    	System.out.println();
         for(int[] row : board){
+        	System.out.print(c+" ");
             for(int i : row){
                 switch(i) {
                     case 0:
-                        System.out.print('.');
+                        System.out.print(" .");
                         break;
                     case 1:
-                        System.out.print('+');
+                        System.out.print(" +");
                         break;
                     case 2:
-                        System.out.print('X');
+                        System.out.print(" X");
                         break;
                     case 3:
-                        System.out.print('0');
+                        System.out.print(" 0");
                         break;
                 }
+                
             }
+            c++;
             System.out.println();
         }
         System.out.println();
@@ -77,29 +92,29 @@ public class GameState {
 
     public void printAvaliableShips(){
         if(Destroyers != 0){
-            System.out.println("Destroyers Avaliable " + Destroyers);
+            System.out.println("Destroyers Avaliable " + Destroyers + " Length: "+ dLength + " ID: "+ DESTROYER_ID);
         }else{
             System.out.println("No Destroyers Left");
         }
         if(Submarines != 0){
-            System.out.println("Submarines Avaliable " + Submarines);
+            System.out.println("Submarines Avaliable " + Submarines + " Length: "+ sLength + " ID: "+ SUBMARINE_ID);
         }else{
-            System.out.println("No Destroyers Left");
+            System.out.println("No Submarines Left");
         }
         if(Cruisers != 0){
-            System.out.println("Cruisers Avaliable " + Cruisers);
+            System.out.println("Cruisers Avaliable " + Cruisers + " Length: "+ cLength + " ID: "+ CRUISER_ID);
         }else{
-            System.out.println("No Destroyers Left");
+            System.out.println("No Cruisers Left");
         }
         if(Battleship != 0){
-            System.out.println("Battleship Avaliable " + Battleship);
+            System.out.println("Battleship Avaliable " + Battleship + " Length: "+ bLength + " ID: "+ BATTLESHIP_ID);
         }else{
-            System.out.println("No Destroyers Left");
+            System.out.println("No Battleship Left");
         }
         if(Carrier != 0){
-            System.out.println("Carrier Avaliable " + Carrier);
+            System.out.println("Carrier Avaliable " + Carrier + " Length: "+ CLength + " ID: "+ CARRIER_ID);
         }else{
-            System.out.println("No Destroyers Left");
+            System.out.println("No Carrier Left");
         }
     }
 
@@ -108,21 +123,23 @@ public class GameState {
      * @return
      */
     public boolean shipsAvaliable(){
-        if(Destroyers != 0 &&
-                Submarines != 0 &&
-                Cruisers != 0 &&
-                Battleship != 0 &&
+        if(Destroyers != 0 ||
+                Submarines != 0 ||
+                Cruisers != 0 ||
+                Battleship != 0 ||
                 Carrier != 0
         ){
-            return false;
-        }else{
             return true;
+        }else{
+            return false;
         }
     }
 
     public void displayBoards(){
+    	System.out.println("Your board:");
         displayBoard(getPlayer1Board());
-        System.out.println();
+        System.out.println("___________________________________________________");
+        System.out.println("Enemy board:");
         displayBoard(getPlayer2Board());
     }
 
@@ -192,6 +209,7 @@ public class GameState {
         char dir = shipDir(x1, y1, x2, y2);
         if (dir == 'F'){
             diagShip();
+            return false;
         }
         if(!checkValidity(dir, x1, y1, x2, y2)){
             return false;
@@ -233,6 +251,7 @@ public class GameState {
                 break;
             default:
                 System.out.println("Unknown ship id: " + id);
+                return false;
         }
         //checked if space occupied
         if(dir == 'v'){
