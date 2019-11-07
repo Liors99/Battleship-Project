@@ -1,4 +1,4 @@
-package clientSide;
+package ClientSide;
 
 public class Move {
 	
@@ -7,7 +7,7 @@ public class Move {
 	
 	private int col;
 	private int row;
-	private int value;
+	private int value = 3;
 	
 	public int getCol() {
 		return col;
