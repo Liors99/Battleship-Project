@@ -1,4 +1,4 @@
-package ClientSide;
+package clientSide;
 public class PlayerGameState extends GameState {
 
     /**

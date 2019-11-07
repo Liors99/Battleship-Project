@@ -1,4 +1,4 @@
-package ClientSide;
+package clientSide;
 /*
  * A simple TCP client that sends messages to a server and display the message
    from the server. 
@@ -108,35 +108,44 @@ class Client {
         	res = getJoinObserve();
         	if(res == 0) {
         		// Observe stuff
-        		observeRequest();
-        		
-        		//Wait for server reply
+        		if(!observeRequest()) {
+        			System.out.println("Failed to observe game, closing client");
+        			tcpClient.clientSocket.close(); 
+        		}
+        		else {
+        			//Observe stuff
+        		}
         	}
         	else if(res == 1) {
         		//Wait to connect to game
-        		joinRequest();
-        		while(receiveMsg()[0]!= 1);
-        		System.out.println("Joined a game!");
+        		if(!joinRequest()) {
+        			System.out.println("Failed to join game, closing client");
+        			tcpClient.clientSocket.close(); 
+        		}
+        		else {
+        			System.out.println("Joined a game!");
+            		//Pre-game phase (placing ships)
+            		PlaceShip();
+            		
+            		//Mid-game phase 
+            		HitShip();
+            		
+            		tcpClient.clientSocket.close();   
+        		}
         		
         		
-        		//Pre-game phase (placing ships)
-        		//while(receiveMsg() == "Pre") {
-        		PlaceShip();
-        		//}
         		
-        		//Mid-game phase 
-        		HitShip();
         	}
         }
         
         
 
         // Close the socket
-        tcpClient.clientSocket.close();           
+        //tcpClient.clientSocket.close();           
     }
     
     
-    private static void joinRequest() throws IOException {
+    private static boolean joinRequest() throws IOException {
     	int id = JOIN_ID;
     	int flag = JOIN_FLAG;
     	byte protocolByte = (byte) id;
@@ -147,9 +156,11 @@ class Client {
     	data[1] = flagByte;
     	
     	SendMessage(data);
+    	
+    	return waitForACK(REPLY_JOIN_ID,REPLY_JOIN_ACK_FLAG);
     }
     
-    private static void observeRequest() throws IOException {
+    private static boolean observeRequest() throws IOException {
     	int id = OBSERVE_ID;
     	int flag = OBSERVE_FLAG;
     	byte protocolByte = (byte) id;
@@ -160,6 +171,8 @@ class Client {
     	data[1] = flagByte;
     	
     	SendMessage(data);
+    	
+    	return waitForACK(REPLY_JOIN_ID,REPLY_OBS_ACK_FLAG);
     }
     
     private static void Login() throws IOException {
@@ -239,7 +252,7 @@ class Client {
 	        	
 	        	SendMessage(data);
 	        	
-	        	
+	        	valid = waitForACK(REPLY_SHIP_ID, REPLY_SHIP_PLACE_ACK_FLAG);
 	        	
         	}
         	catch(Exception e) {
@@ -258,10 +271,11 @@ class Client {
     private static void HitShip() throws IOException {
     	
     	boolean valid = false;
+    	boolean server_ACK= false;
     	int x;
     	int y;
     	
-    	while(!valid) {
+    	while(!valid && !server_ACK) {
 	    	String[] splitted_input = getUserMsg("Enter a position to hit: <X> <Y>", 2);
 	    	
 	    	try {
@@ -298,6 +312,8 @@ class Client {
 	        	data[3] = (byte)y;
 	        	
 	        	SendMessage(data);
+	        	
+	        	server_ACK = waitForACK(REPLY_SHIP_ID,REPLY_SHIP_HIT_FLAG);
 	    	}
 	    	catch(Exception e) {
 	    		continue;
@@ -359,8 +375,6 @@ class Client {
     	// Send to the server
     	tcpClient.outBuffer.write(msg);
     	tcpClient.outBuffer.flush();
-			
-
     }
     
     
@@ -374,20 +388,15 @@ class Client {
     		StringBuilder strBuilder = new StringBuilder();
     		int bytesRead = 0;
     		
-	    	int protocolId = Character.getNumericValue(inStream.read());
+	    	int protocolId = inStream.read();
 	    	int flag = inStream.read();
 	    	
 	    	result[0]= protocolId;
 	    	result[1]=flag;
 	    	
-	    	boolean doneReading = false;
-    		while(!doneReading)
-    		{
-    			bytesRead = inStream.read(inBytes);
-    			strBuilder.append(new String(inBytes));
-    			doneReading = (bytesRead < BUFFERSIZE);
-    		}
-    		
+	    	System.out.println("Recieved PROTOCOL ID: " + protocolId);
+	    	System.out.println("Recieved PROTOCL FLAG: "+flag);
+	    	
     	
     	
 		} 
@@ -401,6 +410,13 @@ class Client {
     }
     
     
+    /**
+     * Checks that the user's response when choosing is valid
+     * @param i
+     * @param j
+     * @return
+     * @throws IOException
+     */
     private static int getUserResponse(int i , int j) throws IOException {
     	try {
 	    	int res = Integer.parseInt(inFromUser.readLine());
@@ -416,6 +432,13 @@ class Client {
     	}
     }
     
+    /**
+     * Verifies that the user's input matches the number of parameters required
+     * @param msg
+     * @param args
+     * @return
+     * @throws IOException
+     */
     private static String[] getUserMsg(String msg, int args) throws IOException {
     	
     	boolean valid = false;
@@ -434,11 +457,17 @@ class Client {
     	return splitted_input;
     }
     
+    /**
+     * Gets ACK from server
+     * @param ID - protocol ID
+     * @param FLAG - protocol flag
+     * @return True if ACK recieved, False otherwise
+     */
     private static boolean waitForACK(int ID, int FLAG) {
-    	int[] data = null;
-    	while( data[0]!= ID) {
+    	int[] data = new int[2];
+    	do {
     		data = receiveMsg();
-    	}
+    	} while( data[0]!= ID);
     	return data[1] == FLAG;
     }
 } 

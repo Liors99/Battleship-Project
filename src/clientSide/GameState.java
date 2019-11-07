@@ -1,4 +1,4 @@
-package ClientSide;
+package clientSide;
 public class GameState {
     private int[][] Player1Board; //the client unless observer
     private int[][] Player2Board; //the enemy
@@ -45,6 +45,7 @@ public class GameState {
         }
         System.out.println();
     }
+    
 
 
     public void displayBoards(){
@@ -80,7 +81,8 @@ public class GameState {
     public void updatePlayer2Board(Move mv){
         Player2Board[mv.getRow()][mv.getCol()] = mv.getValue();
     }
-
+    
+    
     public  boolean isGameOver(){return false;}
 
     public int[][] getPlayer1Board() {

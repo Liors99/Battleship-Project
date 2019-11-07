@@ -264,7 +264,8 @@ public class GameServer {
         		System.out.println("; Flag: " + flag);
         		msg.setFlag(flag);
         		
-    			if (msg.getFlag() == SIGN_UP_FLAG || msg.getFlag() == LOGIN_FLAG) 
+        		if (msg.getProtocolId() == SERVER_ID && 
+                        (msg.getFlag() == SIGN_UP_FLAG || msg.getFlag() == LOGIN_FLAG))
     				usernameLength = inByteBuffer.getInt();
         		
         		//Get the data
@@ -308,8 +309,8 @@ public class GameServer {
     {
 	    	//Get username and password
 	    	byte[] bytes = msg.getData().getBytes();
-	    	byte[] usernameBytes = Arrays.copyOfRange(bytes, 0, 8);    	
-	    	byte[] passwordBytes = Arrays.copyOfRange(bytes, 8, bytes.length);
+	    	byte[] usernameBytes = Arrays.copyOfRange(bytes, 0, usernameLength);    	
+	    	byte[] passwordBytes = Arrays.copyOfRange(bytes, usernameLength, bytes.length);
 	    	String username = new String(usernameBytes);
 	    	String password = new String(passwordBytes);
 	    	System.out.println("Username: " + username);
