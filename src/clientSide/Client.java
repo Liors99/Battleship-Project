@@ -242,7 +242,9 @@ class Client {
 
 	        	valid = PlayerState.placeShipPlayer1Board(ship_n, x1, y1, x2, y2); // return if successfully placed. ship_n assumed to be 0 for destroyer, coords from 0-9 inclusive
 	        	PlayerState.displayBoards();
-
+				if(!valid){
+					continue; // the ship placement failed.
+				}
 	        	int id = PLACE_ID;
 	        	int flag = PLACE_FLAG;
 	        	byte protocolByte = (byte) id;
