@@ -31,8 +31,8 @@ public class GameRoom
     private int FAILURE_SHIP_PLACEMENT_FLAG = 2; 
     private int HIT_SHIP_REQUEST_FLAG = 2; 
     private int PROTOCOL_SHIP_PLACEMENT_COMPLETE = 3; 
-    private int FLAG_SHIPS_PLACED_ONE_PLAYER = 0; 
-    private int FLAG_SHIPS_PLACED_BOTH_PLAYERS = 1;
+    //private int FLAG_SHIPS_PLACED_ONE_PLAYER = 0; 
+    private int FLAG_SHIPS_PLACED_BOTH_PLAYERS = 0;
 
     private int HIT_REPLY_PROTOCOL_ID = 4; 
     private int HIT_REPLY_TARGET_FLAG = 0; 
@@ -101,17 +101,9 @@ public class GameRoom
                     response = new Message(GAMEROOM_ID, SUCCESS_SHIP_PLACEMENT_FLAG, assocClient, ""); 
                     server.sendToClient(assocClient, response);
                 }
-                else
-                {
-                    if(finishedPlacingShips(assocClient))   //Both players have finished placing ships 
-                    {
-                        communicateToAllPlayersStart();     //Tell all players that they're done 
-                    } 
-                    else        //One player is finished placing ships 
-                    {
-                        response = new Message(PROTOCOL_SHIP_PLACEMENT_COMPLETE,FLAG_SHIPS_PLACED_ONE_PLAYER, assocClient, "");
-                        server.sendToClient(assocClient, response); 
-                    }
+                else if(allPlayersfinishedPlacingShips()) //Both players have finished placing ships 
+                {      
+                		communicateToAllPlayersStart();     //Tell all players that they're done 
                 }
                 
             }
@@ -148,21 +140,16 @@ public class GameRoom
 
     //updatePlayerTurn() method.
 
-    public boolean finishedPlacingShips(Client client)
+    private boolean allPlayersfinishedPlacingShips()
     {
-        boolean both = false;
-        PlayerFleetBoard board1; 
-        PlayerFleetBoard board2;  
+        PlayerFleetBoard board;   
         for (Client player : players.keySet())
         {
-            if(player != client)
-            {
-                board1 = players.get(player); 
-                board2 = players.get(client);
-                both = !(board1.shipsRemaining() || board2.shipsRemaining());
-            }
+        		board = players.get(player); 
+            if (board.shipsRemaining())
+            		return false;          
         }
-        return both; 
+        return true; 
     }
 
     public int checkHit(Client target, int X, int Y)
@@ -257,6 +244,7 @@ public class GameRoom
 
     public void communicateToAllPlayersStart()
     {
+    		System.out.println("All players have placed ships");
         Message msg; 
         for (Client player : players.keySet())
         {
