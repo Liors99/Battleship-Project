@@ -34,12 +34,16 @@ public class GameState {
         bLength = 4;
         CLength = 5;
     }
-
-    GameState(){
-        initShips();
+    
+    public void resetGame() {
+    	initShips();
         Player1Board =new int[10][10];
         Player2Board = new int[10][10];
         gameOver = false;
+    }
+
+    GameState(){
+        resetGame();
     }
 
     GameState(int[][] board1, int[][] board2)
@@ -365,7 +369,28 @@ public class GameState {
         Player2Board[mv.getRow()][mv.getCol()] = mv.getValue();
     }
 
-    public  boolean isGameOver(){return false;}
+    public boolean isGameOver(){
+    	boolean isOver = true;
+    	l1:
+    	for(int[] row : Player1Board) {
+    		for(int ship : row) {
+    			if(ship==1) {
+    				isOver = false;
+    				
+    				break l1;
+    			}
+    		}
+
+    	}
+    	if(isOver) {
+    		resetGame();
+			System.out.println("GAMEOVER!");
+    	}
+    	
+    	
+    	
+    	return isOver;
+    	}
 
     public int[][] getPlayer1Board() {
         return Player1Board;
