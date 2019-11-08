@@ -1,3 +1,4 @@
+package serverSide;
 /*
  * A simple TCP client that sends messages to a server and display the message
    from the server. 
