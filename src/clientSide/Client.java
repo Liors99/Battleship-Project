@@ -256,7 +256,7 @@ class Client {
 					continue; // the ship placement failed.
 				}
 				
-				PlayerState.displayBoards();
+				//PlayerState.displayBoards();
 				
 	        	int id = PLACE_ID;
 	        	int flag = PLACE_FLAG;
