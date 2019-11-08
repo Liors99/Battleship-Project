@@ -220,12 +220,13 @@ class Client {
     
     private static void Logout() throws IOException {
     	byte[] data = new byte[2];
-    	data[0]=LOG_ID;
-    	data[1] = LOGOUT_FLAG;
+    	data[0]=(byte)LOG_ID;
+    	data[1] = (byte)LOGOUT_FLAG;
     	
     	SendMessage(data);
     	
     	waitForACK(REPLY_LOGIN_ID,REPLY_LOGOUT_ACK_FLAG);
+    	tcpClient.clientSocket.close();
     	preLoginPhase();
     	
     	

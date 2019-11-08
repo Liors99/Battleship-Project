@@ -56,6 +56,10 @@ public class Client {
 		this.isObserver = false;
 	}
 	
+	public String getUsername() {
+		return this.username;
+	}
+	
 }
 
 

@@ -344,18 +344,20 @@ public class GameServer {
     				reply.setProtocolId(SERVER_ID);
     				reply.setFlag(LOGOUT_SUCCESS);
     				sendToClient(client, reply);
+    				
+    				try {
+    					clientChannel.socket().close();
+    				} catch (IOException e) {
+    					// TODO Auto-generated catch block
+    					e.printStackTrace();
+    				}
     			}	
     		}
     		else if (msg.getProtocolId() == WAITING_ROOM_ID)
     			waitingRoom.handleMessage(msg);
     		else if (msg.getProtocolId() == GAME_ROOM_ID)
     			waitingRoom.forwardMessageToGameRoom(msg);
-    		try {
-				clientChannel.socket().close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+    		
 	}
 
     /*
@@ -365,6 +367,7 @@ public class GameServer {
     {
 		//Identify socket channel
 		SocketChannel tcpClientChannel = clientSockets.get(client);
+		System.out.println("Sending message to :" + client.getUsername());
 		
 		//Decompose message
 		byte protocolByte = (byte) msg.getProtocolId();
@@ -408,6 +411,7 @@ public class GameServer {
     		System.out.println("Length of bytes sent: " + msgSize);
         return true;	
     }
+	
     
     
 }
