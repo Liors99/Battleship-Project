@@ -292,7 +292,7 @@ public class GameServer {
         		System.out.println("Data: " + msg.getData());
         		
         		//Handle message
-        		if (msg.getFlag() == SIGN_UP_FLAG || msg.getFlag() == LOGIN_FLAG) 
+        		if (msg.getProtocolId() == SERVER_ID && (msg.getFlag() == SIGN_UP_FLAG || msg.getFlag() == LOGIN_FLAG))
         			handleClientLoginSignup(tcpClientChannel, msg, usernameLength);
         		else
         			handleMessage(tcpClientChannel, msg);
@@ -339,12 +339,6 @@ public class GameServer {
     				waitingRoom.deactiviateClient(client);
     				//Send message to client that has been closed?
     				clients.remove(clientChannel);
-    				try {
-						clientChannel.socket().close();
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
     				//Message to send back if logout successful
     				Message reply = new Message();
     				reply.setProtocolId(SERVER_ID);
@@ -355,7 +349,13 @@ public class GameServer {
     		else if (msg.getProtocolId() == WAITING_ROOM_ID)
     			waitingRoom.handleMessage(msg);
     		else if (msg.getProtocolId() == GAME_ROOM_ID)
-    			waitingRoom.forwardMessageToGameRoom(msg);			
+    			waitingRoom.forwardMessageToGameRoom(msg);
+    		try {
+				clientChannel.socket().close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 	}
 
     /*

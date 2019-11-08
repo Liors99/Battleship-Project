@@ -32,8 +32,9 @@ class Client {
 	private static final int JOIN_FLAG = 0; 
 	private static final int OBSERVE_ID = 1;
 	private static final int OBSERVE_FLAG = 1;
-	private static final int LOGIN_ID = 0;
-	private static final int LOGIN_FLAG = 1; 
+	private static final int LOG_ID = 0;
+	private static final int LOGIN_FLAG = 1;
+	private static final int LOGOUT_FLAG = 2;
 	private static final int PLACE_ID = 2;
 	private static final int PLACE_FLAG = 1; 
 	private static final int HIT_ID = 2; 
@@ -62,6 +63,10 @@ class Client {
 	private static final int REPLY_SHIP_PLACE_NACK_FLAG = 2;
 	private static final int REPLY_SHIP_HIT_FLAG = 1;
 	
+	private static final int FINISHED_PLACING_ID=3;
+	private static final int FINISHED_PLACING_ACK_FLAG=0;
+	private static final int FINISHED_PLACING_NACK_FLAG=1;
+	
 	public Client(String add, int port) throws IOException
 	{
 		// Initialize a client socket connection to the server
@@ -77,11 +82,13 @@ class Client {
         // Make the in buffer capacity 8 KB
         inBuffer = new DataInputStream(
 				new BufferedInputStream(inStream));
-        inFromUser = new BufferedReader(
-						new InputStreamReader(System.in));
         
 	}
 
+	
+	private static String add;
+	private static int port;
+	
     public static void main(String args[]) throws Exception 
     { 
         if (args.length != 2)
@@ -90,69 +97,59 @@ class Client {
             System.exit(1);
         }
 
-        // Make instance of TCP client
-        tcpClient = new Client(args[0], Integer.parseInt(args[1]));
-        PlayerState = new PlayerGameState();
+        add= args[0];
+        port = Integer.parseInt(args[1]);
+    	
         
+        inFromUser = new BufferedReader(
+				new InputStreamReader(System.in));
         
-        int res= getUserLoginSignup();
+        preLoginPhase();
         
-        /*
-        if(res == 0) {
-        	// Do signup protocol stuff
-        }
-        
-        */
-        
-        if(res == 1 || res == 0) {
-        	Login();
-        	res = getJoinObserve();
-        	if(res == 0) {
-        		// Observe stuff
-        		if(!observeRequest()) {
-        			System.out.println("Failed to observe game, closing client");
-        			tcpClient.clientSocket.close(); 
-        		}
-        		else {
-        			//Observe stuff
-        		}
-        	}
-        	else if(res == 1) {
-        		//Wait to connect to game
-        		/*
-        		if(!joinRequest()) {
-        			System.out.println("Failed to join game, closing client");
-        			tcpClient.clientSocket.close(); 
-        		}
-        		*/
-        		//else {
-        			joinRequest();
-        			System.out.println("Joined a game!");
-            		//Pre-game phase (placing ships)
-        			while(PlayerState.shipsAvaliable())
-        				PlaceShip();
-            		
-            		//Mid-game phase 
-        			
-            		HitShip();
-            		
-            		tcpClient.clientSocket.close();   
-        		//}
-        		
-        		
-        		
-        	}
-        }
-        
-        
-
-        // Close the socket
         //tcpClient.clientSocket.close();           
     }
     
     
-    private void preJoinPhase() {
+    private static void preLoginPhase() throws IOException {
+    	int res= getUserLoginSignup();
+    	// Make instance of TCP client
+        tcpClient = new Client(add , port);
+        PlayerState = new PlayerGameState();
     	
+        if(res == 1 || res == 0) {
+
+        	Login();
+        	res = getJoinObserve();
+        	if(res == 0) {
+        		observeRequest();
+        	}
+        	else if(res == 1) {
+    			joinRequest();
+    			System.out.println("Joined a game!");
+    			
+    			
+        		//Pre-game phase (placing ships)
+    			preGamePhase();
+        		
+        		//Mid-game phase 
+    			
+        		HitShip();
+        		
+        		tcpClient.clientSocket.close();   
+        	}
+        	else {
+        		Logout();
+        	}
+        }
+        
+    }
+    
+    private static void preGamePhase() throws NumberFormatException, IOException {
+    	while(PlayerState.shipsAvaliable()) {
+			PlaceShip();
+    	}
+    	
+    	waitForACK(FINISHED_PLACING_ID, FINISHED_PLACING_ACK_FLAG);
     }
     
     private static void joinRequest() throws IOException {
@@ -169,10 +166,9 @@ class Client {
     	
     	System.out.println("Trying to connect to server....");
     	waitForACK(REPLY_JOIN_ID,REPLY_JOIN_ACK_FLAG);
-    	//return true;
     }
     
-    private static boolean observeRequest() throws IOException {
+    private static void observeRequest() throws IOException {
     	int id = OBSERVE_ID;
     	int flag = OBSERVE_FLAG;
     	byte protocolByte = (byte) id;
@@ -184,8 +180,7 @@ class Client {
     	
     	SendMessage(data);
     	
-    	//return waitForACK(REPLY_JOIN_ID,REPLY_OBS_ACK_FLAG);
-    	return true;
+    	waitForACK(REPLY_JOIN_ID,REPLY_OBS_ACK_FLAG);
     }
     
     private static void Login() throws IOException {
@@ -196,7 +191,7 @@ class Client {
 	    	byte[] username = splitted_input[0].getBytes();
 	    	byte[] password = splitted_input[1].getBytes();
 	    	
-	    	int id = LOGIN_ID;
+	    	int id = LOG_ID;
 	    	int flag = LOGIN_FLAG;
 	    	byte protocolByte = (byte) id;
 	    	byte flagByte = (byte) flag;
@@ -218,6 +213,20 @@ class Client {
 	    	valid = waitForACK(REPLY_LOGIN_ID, REPLY_LOGIN_ACK_FLAG);
     	}
     	
+    	
+    	
+    }
+    
+    
+    private static void Logout() throws IOException {
+    	byte[] data = new byte[2];
+    	data[0]=LOG_ID;
+    	data[1] = LOGOUT_FLAG;
+    	
+    	SendMessage(data);
+    	
+    	waitForACK(REPLY_LOGIN_ID,REPLY_LOGOUT_ACK_FLAG);
+    	preLoginPhase();
     	
     	
     }
@@ -348,6 +357,7 @@ class Client {
            System.out.println("1: Login");
            
     	   int res= getUserResponse(0 , 1);
+    	   
     	   switch (res) {
 	        case 0:
 	        	return 0;
@@ -355,7 +365,7 @@ class Client {
 	        	return 1;
 	        case -1:
 	    		System.out.println("Not a valid option");
-	    		continue;
+	    		//continue;
 	        	
     	   }
        }
@@ -409,7 +419,6 @@ class Client {
     		int flag = -1;
     		
     		if(inStream.available()>0) {
-    			System.out.println("GOT NEW DATA!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
     			protocolId = inStream.read();
     	    	flag = inStream.read();
     	    	
@@ -429,6 +438,8 @@ class Client {
 	    		result[2]=-1;
 	    		result[3]=-1;
 	    	}
+	    	
+
 	    	
 	    	
 	    	TimeUnit.MICROSECONDS.sleep(1);
@@ -457,7 +468,9 @@ class Client {
      */
     private static int getUserResponse(int i , int j) throws IOException {
     	try {
-	    	int res = Integer.parseInt(inFromUser.readLine());
+    		String user_input = inFromUser.readLine();
+    		
+	    	int res = Integer.parseInt(user_input);
 	    	
 	    	if(res < i || res > j) {
 	    		return -1;
