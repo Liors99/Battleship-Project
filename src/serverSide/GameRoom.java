@@ -53,8 +53,13 @@ public class GameRoom
     		game.handleMessage(msg);
     		PlayerFleetBoard playerBoard = game.playerBoards.get(player1);
     		playerBoard.printBoard();
-    		System.out.println("Hello?");
     		msg.setData("30333");
+    		game.handleMessage(msg);
+    		playerBoard.printBoard();
+    		msg.setData("20222");
+    		game.handleMessage(msg);
+    		playerBoard.printBoard();
+    		msg.setData("10121");
     		game.handleMessage(msg);
     		playerBoard.printBoard();
     		
@@ -185,7 +190,6 @@ public class GameRoom
     public void placeShip(PlayerFleetBoard board, String data)
     {
         if(board.shipsRemaining()){
-            boolean vertical = false; 
             char charID = data.charAt(0); 
             char charX = data.charAt(1); 
             char charY = data.charAt(2); 
@@ -199,28 +203,25 @@ public class GameRoom
 
             System.out.println("Placing " + charID + " from " + X1 + "," + Y1 + " to " + X2 + "," + Y2);
             
-            if(X1 == X2) vertical = false; 
-            else if (Y1 == Y2) vertical = true;
-
             if(shipNum == DESTROYER_SHIP_ID)
             {
-                board.placeShip(DESTROYER_SHIP_ID, X1, Y1, vertical);
+                board.placeShip(DESTROYER_SHIP_ID, X1, Y1, X2, Y2);
             }
             else if(shipNum == SUBMARINE_SHIP_ID)
             {
-                board.placeShip(SUBMARINE_SHIP_ID, X1, Y1, vertical);
+                board.placeShip(SUBMARINE_SHIP_ID, X1, Y1, X2, Y2);
             }
             else if(shipNum == CRUISER_SHIP_ID)
             {
-                board.placeShip(CRUISER_SHIP_ID, X1, Y1, vertical);
+                board.placeShip(CRUISER_SHIP_ID, X1, Y1, X2, Y2);
             }
             else if(shipNum == BATTLESHIP_SHIP_ID)
             {
-                board.placeShip(BATTLESHIP_SHIP_ID, X1, Y1, vertical);
+                board.placeShip(BATTLESHIP_SHIP_ID, X1, Y1, X2, Y2);
             }
             else if(shipNum == CARRIER_SHIP_ID)
             {
-                board.placeShip(CARRIER_SHIP_ID, X1, Y1, vertical);
+                board.placeShip(CARRIER_SHIP_ID, X1, Y1, X2, Y2);
             }
         
         }

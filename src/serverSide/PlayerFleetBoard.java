@@ -41,19 +41,12 @@ public class PlayerFleetBoard
     }
 
 
-    public void placeShip(int shipID, int x, int y, boolean vertical)
+    public void placeShip(int shipID, int x1, int y1, int x2, int y2)
     {	
 	    	int shipSize = shipSizes[shipID];
-	    	if(vertical)
-	    	{
-	    		for(int i = y; i < (y + shipSize); i++)
-	    			board[x][i] = '1'; 
-	    	}
-	    	else
-	    	{
-	    		for(int i = x; i < (x + shipSize); i++)
-	    			board[i][y] = '1';
-	    	}
+	    	for(int i = y1; i <= y2; i++)
+	    		for (int j = x1; j <= x2; j++)
+	    			board[i][j] = '1'; 
 	    	numOfShipsLeftToPlace--;
     }
 
