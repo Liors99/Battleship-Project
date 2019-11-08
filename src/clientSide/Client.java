@@ -10,7 +10,8 @@ package clientSide;
 import java.io.*; 
 import java.net.*;
 import java.nio.ByteBuffer;
-import java.util.Arrays; 
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit; 
 
 class Client {
 	
@@ -118,21 +119,25 @@ class Client {
         	}
         	else if(res == 1) {
         		//Wait to connect to game
+        		/*
         		if(!joinRequest()) {
         			System.out.println("Failed to join game, closing client");
         			tcpClient.clientSocket.close(); 
         		}
-        		else {
+        		*/
+        		//else {
+        			joinRequest();
         			System.out.println("Joined a game!");
             		//Pre-game phase (placing ships)
         			while(PlayerState.shipsAvaliable())
         				PlaceShip();
             		
             		//Mid-game phase 
+        			
             		HitShip();
             		
             		tcpClient.clientSocket.close();   
-        		}
+        		//}
         		
         		
         		
@@ -146,7 +151,11 @@ class Client {
     }
     
     
-    private static boolean joinRequest() throws IOException {
+    private void preJoinPhase() {
+    	
+    }
+    
+    private static void joinRequest() throws IOException {
     	int id = JOIN_ID;
     	int flag = JOIN_FLAG;
     	byte protocolByte = (byte) id;
@@ -158,8 +167,9 @@ class Client {
     	
     	SendMessage(data);
     	
-    	//return waitForACK(REPLY_JOIN_ID,REPLY_JOIN_ACK_FLAG);
-    	return true;
+    	System.out.println("Trying to connect to server....");
+    	waitForACK(REPLY_JOIN_ID,REPLY_JOIN_ACK_FLAG);
+    	//return true;
     }
     
     private static boolean observeRequest() throws IOException {
@@ -360,7 +370,7 @@ class Client {
            System.out.println("0: Observe a game ");
            System.out.println("1: Join a game");
            System.out.println("2: Logout");
-     	   int res= getUserResponse(0 , 1);
+     	   int res= getUserResponse(0 , 2);
      	   switch (res) {
  	        case 0:
  	        	return 0;
@@ -386,23 +396,44 @@ class Client {
     
     
     //Needs to be worked on
-    private static int[] receiveMsg()
+    private static int[] receiveMsg() throws InterruptedException
     {    	
-    	int[] result = new int[2];
+    	int[] result = new int[4];
     	
     	try {
     		byte[] inBytes = new byte[BUFFERSIZE];
     		StringBuilder strBuilder = new StringBuilder();
     		int bytesRead = 0;
     		
-	    	int protocolId = inStream.read();
-	    	int flag = inStream.read();
+    		int protocolId = -1;
+    		int flag = -1;
+    		
+    		if(inStream.available()>0) {
+    			System.out.println("GOT NEW DATA!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+    			protocolId = inStream.read();
+    	    	flag = inStream.read();
+    	    	
+    	    	System.out.println("Recieved PROTOCOL ID: " + protocolId);
+    	    	System.out.println("Recieved PROTOCL FLAG: "+flag);
+    		}
+    		
+    		result[0]=protocolId;
+    		result[1]=flag;
 	    	
-	    	result[0]= protocolId;
-	    	result[1]=flag;
 	    	
-	    	System.out.println("Recieved PROTOCOL ID: " + protocolId);
-	    	System.out.println("Recieved PROTOCL FLAG: "+flag);
+	    	if(inStream.available()>0) {
+		    	result[2]=inStream.read();
+		    	result[3]=inStream.read();
+	    	}
+	    	else {
+	    		result[2]=-1;
+	    		result[3]=-1;
+	    	}
+	    	
+	    	
+	    	TimeUnit.MICROSECONDS.sleep(1);
+	    	//System.out.println("Recieved PROTOCOL ID: " + protocolId);
+	    	//System.out.println("Recieved PROTOCL FLAG: "+flag);
 	    	
     	
     	
@@ -471,9 +502,14 @@ class Client {
      * @return True if ACK recieved, False otherwise
      */
     private static boolean waitForACK(int ID, int FLAG) {
-    	int[] data = new int[2];
+    	
+    	int[] data = new int[4];
     	do {
-    		data = receiveMsg();
+    		try {
+				data= receiveMsg();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
     	} while( data[0]!= ID);
     	return data[1] == FLAG;
     }

@@ -136,11 +136,11 @@ public class GameState {
     }
 
     public void displayBoards(){
-    	System.out.println("Your board:");
-        displayBoard(getPlayer1Board());
-        System.out.println("___________________________________________________");
-        System.out.println("Enemy board:");
+    	System.out.println("Enemy board:");
         displayBoard(getPlayer2Board());
+        System.out.println("___________________________________________________");
+        System.out.println("Your board:");
+        displayBoard(getPlayer1Board());
     }
 
     private char shipDir(int x1, int y1, int x2, int y2){
