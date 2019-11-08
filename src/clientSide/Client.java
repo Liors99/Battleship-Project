@@ -133,7 +133,8 @@ class Client {
         		
         		//Mid-game phase 
     			
-        		HitShip();
+    			gamePhase();
+        		
         		
         		tcpClient.clientSocket.close();   
         	}
@@ -150,7 +151,12 @@ class Client {
 			PlaceShip();
     	}
     	
+    	PlayerState.displayBoards();
     	waitForACK(FINISHED_PLACING_ID, FINISHED_PLACING_ACK_FLAG);
+    }
+    
+    private static void gamePhase() throws IOException {
+    	HitShip();
     }
     
     private static void joinRequest() throws IOException {
@@ -272,14 +278,10 @@ class Client {
 	        	data[3] = (byte)x1;
 	        	data[4] = (byte)y1;
 	        	data[5] = (byte)x2;
-	        	data[7] = (byte)y2;
+	        	data[6] = (byte)y2;
 	        	
 	        	SendMessage(data);
-	        
-	        	
-	        	
-	        	
-	        	//valid = waitForACK(REPLY_SHIP_ID, REPLY_SHIP_PLACE_ACK_FLAG);
+	        	waitForACK(REPLY_SHIP_ID, REPLY_SHIP_PLACE_ACK_FLAG);
 	        	
         	}
         	catch(Exception e) {
