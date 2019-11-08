@@ -59,13 +59,25 @@ class Client {
 	private static final int REPLY_LIST_NACK = 5;
 	
 	private static final int REPLY_SHIP_ID = 2;
+	
 	private static final int REPLY_SHIP_PLACE_ACK_FLAG = 0;
 	private static final int REPLY_SHIP_PLACE_NACK_FLAG = 2;
 	private static final int REPLY_SHIP_HIT_FLAG = 1;
 	
 	private static final int FINISHED_PLACING_ID=3;
+	
 	private static final int FINISHED_PLACING_ACK_FLAG=0;
 	private static final int FINISHED_PLACING_NACK_FLAG=1;
+	
+	private static final int REPLY_TURN_ID = 2;
+	private static final int REPLY_TURN_FLAG = 6;
+	
+	private static final int REPLY_HIT_ID = 4;
+	private static final int REPLY_HIT_THIS_FLAG=0;
+	private static final int REPLY_HIT_ENEMY_FLAG=0;
+	private static final int REPLY_HIT_NACK=0;
+	private static final int REPLY_HIT_ACK=1;
+	
 	
 	public Client(String add, int port) throws IOException
 	{
@@ -110,7 +122,7 @@ class Client {
     }
     
     
-    private static void preLoginPhase() throws IOException {
+    private static void preLoginPhase() throws IOException, InterruptedException {
     	int res= getUserLoginSignup();
     	// Make instance of TCP client
         tcpClient = new Client(add , port);
@@ -156,8 +168,12 @@ class Client {
     	waitForACK(FINISHED_PLACING_ID, FINISHED_PLACING_ACK_FLAG);
     }
     
-    private static void gamePhase() throws IOException {
-    	HitShip();
+    private static void gamePhase() throws IOException, InterruptedException {
+    	while(!PlayerState.isGameOver()) {
+	    	waitForTurn();
+	    	HitShip();
+	    	getHitShip();
+    	}
     }
     
     private static void joinRequest() throws IOException {
@@ -226,7 +242,7 @@ class Client {
     }
     
     
-    private static void Logout() throws IOException {
+    private static void Logout() throws IOException, InterruptedException {
     	byte[] data = new byte[2];
     	data[0]=(byte)LOG_ID;
     	data[1] = (byte)LOGOUT_FLAG;
@@ -298,6 +314,25 @@ class Client {
     	
     }
     
+    private static void getHitShip() throws InterruptedException {
+    	int[] ship_cor = getHit();
+    	if(ship_cor[1] == REPLY_HIT_THIS_FLAG) {
+    		Move hitMove = new Move();
+    		hitMove.setCol(ship_cor[2]);
+    		hitMove.setRow(ship_cor[3]);
+    		
+    		if(ship_cor[3] == 0) {
+    			hitMove.setValue(3);
+    		}
+    		else if(ship_cor[3] == 1) {
+    			hitMove.setValue(2);
+    		}
+    		
+    		PlayerState.updatePlayer1Board(hitMove);
+    	}
+    	
+    }
+    
     
     private static void HitShip() throws IOException {
     	
@@ -324,10 +359,6 @@ class Client {
 		    	if(!valid) {
 		    		continue;
 		    	}
-		    	else {
-		    		PlayerState.updatePlayer2Board(userMove);
-		    	}
-		    	
 		    	
 		    	
 		    	int id = HIT_ID;
@@ -344,7 +375,22 @@ class Client {
 	        	
 	        	SendMessage(data);
 	        	
-	        	server_ACK= true;
+	        	int[] ship_cor = getHit();
+	        	if(ship_cor[1] == REPLY_HIT_ENEMY_FLAG) {
+	        		if(ship_cor[4] == REPLY_HIT_ACK) {
+	        			userMove.setValue(2);
+	        		}
+	        		else {
+	        			userMove.setValue(3);
+	        		}
+	        		PlayerState.updatePlayer2Board(userMove);
+	        	}
+	        	else {
+	        		System.out.println("Recieved wrong confirmation, try again:");
+	        		continue;
+	        	}
+	        	
+	        	//server_ACK= true;
 	        	//server_ACK = waitForACK(REPLY_SHIP_ID,REPLY_SHIP_HIT_FLAG);
 	    	}
 	    	catch(Exception e) {
@@ -414,7 +460,7 @@ class Client {
     //Needs to be worked on
     private static int[] receiveMsg() throws InterruptedException
     {    	
-    	int[] result = new int[4];
+    	int[] result = new int[5];
     	
     	try {
     		byte[] inBytes = new byte[BUFFERSIZE];
@@ -439,10 +485,12 @@ class Client {
 	    	if(inStream.available()>0) {
 		    	result[2]=inStream.read();
 		    	result[3]=inStream.read();
+		    	result[4]=inStream.read();
 	    	}
 	    	else {
 	    		result[2]=-1;
 	    		result[3]=-1;
+	    		result[4]=-1;
 	    	}
 	    	
 
@@ -522,7 +570,7 @@ class Client {
      */
     private static boolean waitForACK(int ID, int FLAG) {
     	
-    	int[] data = new int[4];
+    	int[] data = new int[5];
     	do {
     		try {
 				data= receiveMsg();
@@ -531,5 +579,30 @@ class Client {
 			}
     	} while( data[0]!= ID);
     	return data[1] == FLAG;
+    }
+    
+    /**
+     * Player waits for turn
+     * @throws InterruptedException
+     */
+    private static void waitForTurn() throws InterruptedException {
+    	int[] data = new int[5];
+    	do {
+    		data= receiveMsg();
+    	}while(data[0]!= REPLY_TURN_ID && data[1]!= REPLY_TURN_FLAG);
+    }
+    
+    /**
+     * Gets the hit coordiantes and the type 
+     * @return
+     * @throws InterruptedException
+     */
+    private static int[] getHit() throws InterruptedException {
+    	int[] data = new int[5];
+    	do {
+    		data = receiveMsg();
+    	}while(data[0]!=REPLY_HIT_ID);
+    	
+    	return data;
     }
 } 
