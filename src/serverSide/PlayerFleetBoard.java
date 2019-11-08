@@ -93,21 +93,21 @@ public class PlayerFleetBoard
 
     }
 
-    public int checkBoard(int X, int Y)
+    public boolean checkBoard(int X, int Y)
     {
         if(board[X][Y] == '1')
         {
             board[X][Y] = 'H'; 
             //Check if the ship has sunk 
-            if()
+            /**if()
             {
 
-            }
-            return 0; 
+            }*/
+            return true; 
         }
         else
         {
-            return -1; 
+            return false; 
         }
     }
 

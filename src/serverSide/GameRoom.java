@@ -20,7 +20,11 @@ public class GameRoom
     private int SUBMARINE_SHIP_ID = 1; 
     private int CRUISER_SHIP_ID = 2; 
     private int BATTLESHIP_SHIP_ID = 3; 
-    private int CARRIER_SHIP_ID = 4; 
+    private int CARRIER_SHIP_ID = 4;
+    
+    private int PROTOCOL_ID_GAME_LOGOUT = 0; 
+    private int FLAG_LOGOUT_SUCCESSFUL = 2; 
+
     private int GAMEROOM_ID = 2; 
     private int SHIP_PLACEMENT_REQUEST_FLAG = 1; 
     private int SUCCESS_SHIP_PLACEMENT_FLAG = 0;
@@ -79,73 +83,59 @@ public class GameRoom
         int protocolID = msg.getProtocolId(); 
         int flag = msg.getFlag();
         String data = msg.getData(); 
-       
-        /** Placeship request */
+        PlayerFleetBoard board = players.get(assocClient);
+        
+        /** Ship placement request */
         if(protocolID == GAMEROOM_ID && flag == SHIP_PLACEMENT_REQUEST_FLAG)
         {
-            try {
-                PlayerFleetBoard board = players.get(assocClient);
-                updategame(board, data, flag);
+            try
+            {
+                shipPlacement(board, data);
                 Message response = new Message(GAMEROOM_ID, SUCCESS_SHIP_PLACEMENT_FLAG, assocClient, ""); 
                 server.sendToClient(assocClient, response);
-            } catch (Exception e) {
+            }
+            catch(Exception e)
+            {
                 Message response = new Message(GAMEROOM_ID, FAILURE_SHIP_PLACEMENT_FLAG, assocClient, "");
                 server.sendToClient(assocClient, response);
             }
-            
         }
-        /** Hit ship request 
-         * 
-         * data XY 
-         * 
-        */
+        /** Hit ship request */
         else if(protocolID == GAMEROOM_ID && flag == HIT_SHIP_REQUEST_FLAG)
         {
-            //Have to consider if it's they're turn 
-
-                PlayerFleetBoard board = players.get(assocClient);
-                //change this method to be its own method 
-                updategame(board, data, flag);
-
-                communicateToAllPlayersHit(assocClient, X, Y, Hit);
-                 
-
-            //If it's not their turn then it fails 
-
+            if(playerTurn.equals(assocClient))
+            {
+                char charX = data.charAt(0); 
+                char charY = data.charAt(1);
+                Client target = null; 
+                for(Client player : players.keySet())
+                {
+                    if(player != assocClient) target = player; 
+                }
+                int hit = checkHit(target, Character.getNumericValue(charX), Character.getNumericValue(charY));
+                communicateToAllPlayersHit(assocClient, Character.getNumericValue(charX), Character.getNumericValue(charY), hit);
+            }
+            else
+            {
+                //failure
+            }
         }
-        /** Chat message to general audience */
-        else if(protocolID == 3 && flag == 0)
-        {
-            
-
-        }
-        /** Chat message to game room */
-        else if(protocolID == 3 && flag == 1)
-        {
-
-            
-        }
-        /** Chat message to specific persion */
-        else if(protocolID == 3 && flag == 2)
-        {
-
-            
-        }
-        
-
 
     }
 
-
-    public void updategame(PlayerFleetBoard board, String data, int flag)
+    public int checkHit(Client target, int X, int Y)
     {
-       
-        boolean vertical = false; 
+        PlayerFleetBoard board = players.get(target);
+        if (board.checkBoard(X, Y)) 
+            return 1; 
+        else 
+            return 0;   //it's a miss 
+    }
 
-        /** Ship placement request */
-        if(flag == SHIP_PLACEMENT_REQUEST_FLAG)
-        {
-            if(board.shipsRemaining()){
+    public void shipPlacement(PlayerFleetBoard board, String data)
+    {
+        if(board.shipsRemaining()){
+            boolean vertical = false; 
             char charID = data.charAt(0); 
             char charX = data.charAt(1); 
             char charY = data.charAt(2); 
@@ -156,9 +146,9 @@ public class GameRoom
             charY = data.charAt(4); 
             int X2 = Character.getNumericValue(charX);
             int Y2 = Character.getNumericValue(charY);
-            
+
             if(X1 == X2) vertical = false; 
-            else if (Y1 == Y2) vertical = true; 
+            else if (Y1 == Y2) vertical = true;
 
             if(shipNum == DESTROYER_SHIP_ID)
             {
@@ -180,54 +170,31 @@ public class GameRoom
             {
                 board.placeShip(CARRIER_SHIP_ID, X1, Y1, vertical);
             }
-            }
-            else 
-            {
-                /** there are no ships left to push */
-            }
+        
         }
-        /** Hit request */
-        else if(flag == HIT_SHIP_REQUEST_FLAG)
-        {
-            char charX = data.charAt(0); 
-            char charY = data.charAt(1); 
-            int hit = board.checkBoard(Character.getNumericValue(charX), Character.getNumericValue(charY));
-            if(hit < -1)
-            {
-                /** it missed */
-            }
-            else
-            {
-                /** it hit  */
-            }
+        else{
+            //failed 
         }
-
     }
 
-
     public void sendChatMessage(Message Msg){}
-   
-    /** if the player has logged out (message sent to Server), 
-     * the server needs to be able to communicate to the GameRoom instance, 
-     * “tell every player and observer the game has ended because another player quit”.
-     * where client is the one who is quitting 
-     * (so you don’t have to communicate to them that they have quit)
-    */
     
     public void communicateToAllPlayerQuit(Client quitClient){
 
         gameOver = true; 
-        for(int i=0; i<observers.size(); i++)
+        Message msg;
+        for (Client player : players.keySet())
         {
-            Client removed = observers.remove(i); 
-        }
-        
-        
-        /** Have to implement the closing for players */
+            if (player != quitClient){
+                msg = new Message(PROTOCOL_ID_GAME_LOGOUT,FLAG_LOGOUT_SUCCESSFUL, player, "");
+                server.sendToClient(player, msg);
+            }
+        }    
+        players = null;     
+        /** Have to implement the closing for observers */
 
     } 
 
-    
     public void communicateToAllPlayersHit(Client source, int x, int y, int hit)
     {
         Message msg;
@@ -241,11 +208,11 @@ public class GameRoom
                 msg = new Message(HIT_REPLY_PROTOCOL_ID, HIT_REPLY_TARGET_FLAG, source, data);
             server.sendToClient(player, msg);
         }
+
+        /** Have to implement for observers */
         
     }
 
-    
-    
     public PlayerFleetBoard getPlayerFleetBoard(Client client)
     {
         return players.get(client);
