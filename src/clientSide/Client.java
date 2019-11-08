@@ -152,6 +152,7 @@ class Client {
     	}
     	
     	PlayerState.displayBoards();
+    	System.out.println("Waiting for a the other player to finish placing ships....");
     	waitForACK(FINISHED_PLACING_ID, FINISHED_PLACING_ACK_FLAG);
     }
     
@@ -171,7 +172,7 @@ class Client {
     	
     	SendMessage(data);
     	
-    	System.out.println("Trying to connect to server....");
+    	System.out.println("Trying to find a game....");
     	waitForACK(REPLY_JOIN_ID,REPLY_JOIN_ACK_FLAG);
     }
     
@@ -260,6 +261,7 @@ class Client {
 
 	        	valid = PlayerState.placeShipPlayer1Board(ship_n, x1, y1, x2, y2); // return if successfully placed. ship_n assumed to be 0 for destroyer, coords from 0-9 inclusive
 				if(!valid){
+					System.out.println("Invalid move!");
 					continue; // the ship placement failed.
 				}
 				
