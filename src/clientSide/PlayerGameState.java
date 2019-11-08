@@ -22,7 +22,7 @@ public class PlayerGameState extends GameState {
     /**
      *
      * @return if the game is over as clients ships are gone.
-     */
+     
     @Override
     public boolean isGameOver() {
         boolean shipExists = false;
@@ -37,4 +37,5 @@ public class PlayerGameState extends GameState {
         }
        return !shipExists;
     }
+    */
 }

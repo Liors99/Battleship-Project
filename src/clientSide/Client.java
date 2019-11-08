@@ -145,6 +145,7 @@ class Client {
     }
     
     private static void preGamePhase() throws NumberFormatException, IOException {
+    	//PlayerState.isGameOver();
     	while(PlayerState.shipsAvaliable()) {
 			PlaceShip();
     	}
