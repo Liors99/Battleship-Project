@@ -30,6 +30,9 @@ public class GameRoom
     private int SUCCESS_SHIP_PLACEMENT_FLAG = 0;
     private int FAILURE_SHIP_PLACEMENT_FLAG = 2; 
     private int HIT_SHIP_REQUEST_FLAG = 2; 
+    private int PROTOCOL_SHIP_PLACEMENT_COMPLETE = 3; 
+    private int FLAG_SHIPS_PLACED_ONE_PLAYER = 0; 
+    private int FLAG_SHIPS_PLACED_BOTH_PLAYERS = 1;
 
     private int HIT_REPLY_PROTOCOL_ID = 4; 
     private int HIT_REPLY_TARGET_FLAG = 0; 
@@ -76,7 +79,7 @@ public class GameRoom
         observers.remove(index); 
     }
     
-    /** Something has to be changed with the server responses */
+    /** Still W.I.P */
     public void handleMessage(Message msg)
     {
         Client assocClient = msg.getClient(); 
@@ -91,8 +94,26 @@ public class GameRoom
             try
             {
                 shipPlacement(board, data);
-                Message response = new Message(GAMEROOM_ID, SUCCESS_SHIP_PLACEMENT_FLAG, assocClient, ""); 
-                server.sendToClient(assocClient, response);
+                Message response;
+                boolean moreShips = board.shipsRemaining(); 
+                if(moreShips)
+                { 
+                    response = new Message(GAMEROOM_ID, SUCCESS_SHIP_PLACEMENT_FLAG, assocClient, ""); 
+                    server.sendToClient(assocClient, response);
+                }
+                else
+                {
+                    if(finishedPlacingShips(assocClient))   //Both players have finished placing ships 
+                    {
+                        communicateToAllPlayersStart();     //Tell all players that they're done 
+                    } 
+                    else        //One player is finished placing ships 
+                    {
+                        response = new Message(PROTOCOL_SHIP_PLACEMENT_COMPLETE,FLAG_SHIPS_PLACED_ONE_PLAYER, assocClient, "");
+                        server.sendToClient(assocClient, response); 
+                    }
+                }
+                
             }
             catch(Exception e)
             {
@@ -113,6 +134,9 @@ public class GameRoom
                     if(player != assocClient) target = player; 
                 }
                 int hit = checkHit(target, Character.getNumericValue(charX), Character.getNumericValue(charY));
+                //check if you have sunk the last ship 
+                //if you have sunk the last ship then end the game 
+                //else 
                 communicateToAllPlayersHit(assocClient, Character.getNumericValue(charX), Character.getNumericValue(charY), hit);
             }
             else
@@ -120,7 +144,25 @@ public class GameRoom
                 //failure
             }
         }
+    }
 
+    //updatePlayerTurn() method.
+
+    public boolean finishedPlacingShips(Client client)
+    {
+        boolean both = false;
+        PlayerFleetBoard board1; 
+        PlayerFleetBoard board2;  
+        for (Client player : players.keySet())
+        {
+            if(player != client)
+            {
+                board1 = players.get(player); 
+                board2 = players.get(client);
+                both = !(board1.shipsRemaining() || board2.shipsRemaining());
+            }
+        }
+        return both; 
     }
 
     public int checkHit(Client target, int X, int Y)
@@ -213,6 +255,16 @@ public class GameRoom
         
     }
 
+    public void communicateToAllPlayersStart()
+    {
+        Message msg; 
+        for (Client player : players.keySet())
+        {
+            msg = new Message(PROTOCOL_SHIP_PLACEMENT_COMPLETE,FLAG_SHIPS_PLACED_BOTH_PLAYERS, player, "");
+            server.sendToClient(player, msg);
+        }
+    }
+
     public PlayerFleetBoard getPlayerFleetBoard(Client client)
     {
         return players.get(client);
@@ -233,9 +285,7 @@ public class GameRoom
         else return player2;      
     }
 
-    /**
-     * @return the gameID
-     */
+
     public int getGameID() {
         return gameID;
     }
