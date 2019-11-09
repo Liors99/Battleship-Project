@@ -272,9 +272,6 @@ class Client {
 	        	x2 =  Integer.parseInt(splitted_input[3]);
 	        	y2 =  Integer.parseInt(splitted_input[4]);
 	        	
-
-
-
 	        	valid = PlayerState.placeShipPlayer1Board(ship_n, x1, y1, x2, y2); // return if successfully placed. ship_n assumed to be 0 for destroyer, coords from 0-9 inclusive
 				if(!valid){
 					System.out.println("Invalid move!");
@@ -288,17 +285,28 @@ class Client {
 	        	byte protocolByte = (byte) id;
 	        	byte flagByte = (byte) flag;
 	        	
+	        	//Send move as string
+	        	String dataString = "";
+	        	for (String input : splitted_input)
+	        		dataString = dataString + input;
 	        	
-	        	byte[] data = new byte[2+5];
-	        	data[0] = protocolByte;
-	        	data[1] = flagByte;
-	        	data[2] = (byte)ship_n;
-	        	data[3] = (byte)x1;
-	        	data[4] = (byte)y1;
-	        	data[5] = (byte)x2;
-	        	data[6] = (byte)y2;
+	        	//byte[] data = new byte[2+5];
+	        	byte outBytes[] = new byte[2+dataString.getBytes().length];
+	        	outBytes[0] = protocolByte;
+	        	outBytes[1] = flagByte;
 	        	
-	        	SendMessage(data);
+	        	//Convert data string to byte array
+	        	byte[] data = dataString.getBytes();
+	        for (int i = 0; i < data.length; i++)
+	        		outBytes[2+i] = data[i];
+	        	
+	        	//data[2] = (byte)ship_n;
+	        	//data[3] = (byte)x1;
+	        	//data[4] = (byte)y1;
+	        	//data[5] = (byte)x2;
+	        	//data[6] = (byte)y2;
+	        	
+	        	SendMessage(outBytes);
 	        	waitForACK(REPLY_SHIP_ID, REPLY_SHIP_PLACE_ACK_FLAG);
 	        	
         	}
