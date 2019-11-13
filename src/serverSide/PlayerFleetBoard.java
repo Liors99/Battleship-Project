@@ -53,19 +53,8 @@ public class PlayerFleetBoard
     public boolean checkBoard(int X, int Y)
     {
         if(board[X][Y] == '1')
-        {
-            board[X][Y] = 'H'; 
-            //Check if the ship has sunk 
-            /**if()
-            {
-
-            }*/
             return true; 
-        }
-        else
-        {
-            return false; 
-        }
+        return false; 
     }
     
     public void printBoard()

@@ -394,7 +394,7 @@ class Client {
 	        		PlayerState.updatePlayer2Board(userMove);
 	        	}
 	        	else {
-	        		System.out.println("Recieved wrong confirmation, try again:");
+	        		System.out.println("Received wrong confirmation, try again:");
 	        		continue;
 	        	}
 	        	
@@ -482,8 +482,8 @@ class Client {
     			protocolId = inStream.read();
     	    	flag = inStream.read();
     	    	
-    	    	System.out.println("Recieved PROTOCOL ID: " + protocolId);
-    	    	System.out.println("Recieved PROTOCL FLAG: "+flag);
+    	    	System.out.println("Received PROTOCOL ID: " + protocolId);
+    	    	System.out.println("Received PROTOCOL FLAG: "+flag);
     		}
     		
     		result[0]=protocolId;

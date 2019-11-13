@@ -367,7 +367,7 @@ public class GameServer {
     {
 		//Identify socket channel
 		SocketChannel tcpClientChannel = clientSockets.get(client);
-		System.out.println("Sending message to :" + client.getUsername());
+		System.out.println("Sending message to: " + client.getUsername());
 		
 		//Decompose message
 		byte protocolByte = (byte) msg.getProtocolId();

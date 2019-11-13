@@ -135,7 +135,7 @@ public class GameRoom
             catch(Exception e)
             {
                 Message response = new Message(GAMEROOM_ID, FAILURE_SHIP_PLACEMENT_FLAG, assocClient, "");
-                //server.sendToClient(assocClient, response);
+                server.sendToClient(assocClient, response);
             }
         }
         /** Hit ship request */
@@ -178,13 +178,17 @@ public class GameRoom
         return true; 
     }
 
-    public int checkHit(Client target, int X, int Y)
+    public int checkHit(Client target, int x, int y)
     {
+    		System.out.println("Checking if move is a hit on " + target.getUsername() + "...");
         PlayerFleetBoard board = playerBoards.get(target);
-        if (board.checkBoard(X, Y)) 
-            return 1; 
-        else 
-            return 0;   //it's a miss 
+        if (board.checkBoard(x, y)) 
+        {
+        		System.out.println("It's a hit on " + target.getUsername() + " at " + x + "," + y);
+            return 1;
+        }
+        System.out.println("It's a miss on " + target.getUsername() + " at " + x + "," + y);
+        return 0;   //it's a miss 
     }
 
     public void placeShip(PlayerFleetBoard board, String data)
