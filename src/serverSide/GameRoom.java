@@ -119,13 +119,9 @@ public class GameRoom
             try
             {
                 placeShip(board, data);
-                Message response;
-                boolean moreShips = board.shipsRemaining(); 
-                if(moreShips)
-                { 
-                    response = new Message(GAMEROOM_ID, SUCCESS_SHIP_PLACEMENT_FLAG, assocClient, ""); 
-                    server.sendToClient(assocClient, response);
-                }
+                Message response = new Message(GAMEROOM_ID, SUCCESS_SHIP_PLACEMENT_FLAG, assocClient, ""); 
+                server.sendToClient(assocClient, response);
+                
                 if(allPlayersFinishedPlacingShips()) //Both players have finished placing ships 
                 {      
                 		communicateToAllPlayersStart();     //Tell all players that they're done 
