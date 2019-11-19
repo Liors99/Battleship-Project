@@ -157,6 +157,7 @@ public class GameServer {
 		    			// If a TCP client socket channel is ready for reading
 		    			if (keyChannel instanceof SocketChannel)
 		    			{
+							System.out.println("- - - - - Server Received Message From Client - - - - - - - ");
 		    				readFromClient();
 		    			}
 		    		} 
@@ -267,14 +268,41 @@ public class GameServer {
         		if (msg.getProtocolId() == SERVER_ID && 
                         (msg.getFlag() == SIGN_UP_FLAG || msg.getFlag() == LOGIN_FLAG))
     				usernameLength = inByteBuffer.getInt();
-        		
+				
+				String data = "";
+
+				if(msg.getProtocolId() == GAME_ROOM_ID && msg.getFlag() == 1){
+					Integer shipID = (inByteBuffer.get() & 0xFF);
+					System.out.print("Ship ID: "+shipID);	
+					Integer X1 = (inByteBuffer.get() & 0xFF);
+					System.out.print("; X1: "+X1);	
+					Integer Y1 = (inByteBuffer.get() & 0xFF);
+					System.out.print("; Y1: "+Y1);	
+					Integer X2 = (inByteBuffer.get() & 0xFF);
+					System.out.print("; X2: "+X2);	
+					Integer Y2 = (inByteBuffer.get() & 0xFF);
+					System.out.println("; Y2:"+Y2);		
+					data = shipID.toString()+X1.toString()+Y1.toString()+X2.toString()+Y2.toString(); 	
+				}
+				if(msg.getProtocolId() == GAME_ROOM_ID && msg.getFlag() == 2){
+					Integer X1 = (inByteBuffer.get() & 0xFF);
+					System.out.print("X1 : "+X1);	
+					Integer Y1 = (inByteBuffer.get() & 0xFF);
+					System.out.print("; Y1: "+Y1);	
+					data = X1.toString()+Y1.toString(); 	
+				}
+
+				System.out.println("The int following the Byte for the protocol and byte for flag: "+usernameLength);
+				
         		//Get the data
         		decoder.decode(inByteBuffer, inCharBuffer, false); //advances pointer
-        		inCharBuffer.flip();
+				inCharBuffer.flip();
         		//StringBuilder for data section
         		StringBuilder strBuilder = new StringBuilder();
         		strBuilder.append(inCharBuffer.toString());
-        		
+				
+				
+
         		//If not done reading message
         		while(!doneReading)
         		{
@@ -285,11 +313,18 @@ public class GameServer {
         			inCharBuffer.flip();
         			strBuilder.append(inCharBuffer.toString());
         			doneReading = (bytesRead < BUFFERSIZE);
-        		}
-        		
+				}
+				
+				
         		//Get the data section (payload)
-        		msg.setData(strBuilder.toString());
-        		System.out.println("Data: " + msg.getData());
+				msg.setData(strBuilder.toString());
+				
+				if(msg.getProtocolId() == 2 && msg.getFlag() == 1)
+				{
+					msg.setData(data);
+				}
+
+        		System.out.println("Data: "+ msg.getData());
         		
         		//Handle message
         		if (msg.getProtocolId() == SERVER_ID && (msg.getFlag() == SIGN_UP_FLAG || msg.getFlag() == LOGIN_FLAG))
@@ -367,8 +402,10 @@ public class GameServer {
     {
 		//Identify socket channel
 		SocketChannel tcpClientChannel = clientSockets.get(client);
-		System.out.println("Sending message to :" + client.getUsername());
-		
+		System.out.println("Sending message to: " + client.getUsername());
+		System.out.println("Protocol Byte: "+msg.getProtocolId());
+		System.out.println("Flag Byte: "+msg.getFlag());
+
 		//Decompose message
 		byte protocolByte = (byte) msg.getProtocolId();
 		byte flagByte = (byte) msg.getFlag();

@@ -9,7 +9,7 @@ public class ShipGamePiece
     boolean vertical; 
     int[] hitspots; 
 
-    public ShipGamePiece(int shipSize)
+    public ShipGamePiece(int shipSize, int x, int y, boolean vert)
     {
         size = shipSize; 
         hitspots = new int[shipSize];
@@ -18,14 +18,11 @@ public class ShipGamePiece
             hitspots[i] = 0;
         }
         isSunk = false; 
+        xPOS = x; 
+        yPOS = y; 
+        vertical = vert;
     }
 
-    /**
-     * @param size the size to set
-     */
-    public void setSize(int size) {
-        this.size = size;
-    }
 
     public void shipWasHit()
     {
@@ -42,15 +39,7 @@ public class ShipGamePiece
         return size;
     }
 
-    /**
-     * @param x the position to set horizontally 
-     * @param y the position to set vertically 
-     */
-    public void setPosition(int x, int y) {
-        this.xPOS = x;
-        this.yPOS = y; 
-    }
-
+  
     /**
      * @return the xPosition
      */
@@ -75,15 +64,6 @@ public class ShipGamePiece
      */
     public void setSunk(boolean isSunk) {
         this.isSunk = isSunk;
-    }
-
-    
-    /**
-     * @param orientation the orientation to set
-     */
-    public void setOrientation(boolean vert)
-    {
-        vertical = vert; 
     }
 
     /**

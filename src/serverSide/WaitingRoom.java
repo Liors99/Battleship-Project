@@ -56,7 +56,7 @@ public class WaitingRoom {
 		playerQueue.add(client);
 	}
 
-	public void handleMessage(Message msg) {
+	public void handleMessage(Message msg){
 		
 		Client client = msg.getClient();
 		
@@ -145,7 +145,7 @@ public class WaitingRoom {
 	}
 
 	public void forwardMessageToGameRoom(Message msg) {
-		
+
 		int gameRoomId = msg.getGameRoomId();
 		GameRoom game = games.get(gameRoomId); //need to wrap in Integer?
 		game.handleMessage(msg);
