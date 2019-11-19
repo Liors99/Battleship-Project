@@ -4,116 +4,78 @@ public class PlayerFleetBoard
 {
     Client user; 
     GameRoom gameRoom;                      //Do I need this? 
-    char[][] board = new char[8][8]; 
-    ShipGamePiece[] pieces = new ShipGamePiece[5];
-    int numOfShipsLeft;    
-    int shipSunk; 
+    char[][] board = new char[10][10]; 
+    int numOfShipsLeftToPlace;    
 
-    private int DESTROYER_SHIP_ID = 0; 
-    private int SUBMARINE_SHIP_ID = 1; 
-    private int CRUISER_SHIP_ID = 2; 
-    private int BATTLESHIP_SHIP_ID = 3; 
-    private int CARRIER_SHIP_ID = 4; 
-    private int TOTAL_SHIPS = 5; 
+    private static final int DESTROYER_SHIP_ID = 0; 
+    private static final int SUBMARINE_SHIP_ID = 1; 
+    private static final int CRUISER_SHIP_ID = 2; 
+    private static final int BATTLESHIP_SHIP_ID = 3; 
+    private static final int CARRIER_SHIP_ID = 4; 
+    
+    private static final int TOTAL_SHIPS = 5; 
 
+    private static final int DESTROYER_SHIP_LENGTH = 2;
+    private static final int SUBMARINE_SHIP_LENGTH = 3;
+    private static final int CRUISER_SHIP_LENGTH = 3;
+    private static final int BATTLESHIP_SHIP_LENGTH = 4;
+    private static final int CARRIER_SHIP_LENGTH = 5;
+    private int[] shipSizes = new int[] 
+    		{DESTROYER_SHIP_LENGTH,SUBMARINE_SHIP_LENGTH,CRUISER_SHIP_LENGTH,BATTLESHIP_SHIP_LENGTH,CARRIER_SHIP_LENGTH};
     /** Constructors */
     public PlayerFleetBoard(Client player)
     {
         user = player; 
-        numOfShipsLeft = TOTAL_SHIPS;        
-        shipSunk = 0; 
+        numOfShipsLeftToPlace = TOTAL_SHIPS;    
+        //Initialize board
+        for (int i = 0; i < board.length; i++)
+        		for (int j = 0; j < board[0].length; j++)
+        			board[i][j] = '0';
     }
 
     /** Indicates if there are ships that still need to be placed */
     public boolean shipsRemaining()
     {
-        if(numOfShipsLeft > 0) return true; 
-        else return false; 
+    		System.out.println("Number of ships remaining: " + numOfShipsLeftToPlace);
+        return numOfShipsLeftToPlace > 0;
     }
 
 
-    /** This method puts the ships on the board */
-    public void updateBoard(int X, int Y, int size, boolean vert)
-    {   
-        if(vert)
-        {
-            for(int i = Y; i < (Y+size); i++)
-            {
-                board[X][i] = '1'; 
-            }
-        }
-        else
-        {
-            for(int i = X; i < (X+size); i++)
-            {
-                board[i][Y] = '1'; 
-            }
-        }
-
+    public void placeShip(int shipID, int x1, int y1, int x2, int y2)
+    {	
+	    	int shipSize = shipSizes[shipID];
+	    	for(int i = y1; i <= y2; i++)
+	    		for (int j = x1; j <= x2; j++)
+	    			board[i][j] = '1'; 
+	    	numOfShipsLeftToPlace--;
     }
 
-    public void placeShip(int shipID, int X, int Y, boolean vertical)
-    {
-
-        if(shipID == DESTROYER_SHIP_ID)
-        {
-           pieces[DESTROYER_SHIP_ID].setOrientation(vertical); 
-           pieces[DESTROYER_SHIP_ID].setSize(2);
-           pieces[DESTROYER_SHIP_ID].setPosition(X, Y);
-
-        }
-        else if(shipID == SUBMARINE_SHIP_ID)
-        {
-            pieces[SUBMARINE_SHIP_ID].setOrientation(vertical); 
-            pieces[SUBMARINE_SHIP_ID].setSize(3);
-            pieces[SUBMARINE_SHIP_ID].setPosition(X, Y);  
-        }
-        else if(shipID == CRUISER_SHIP_ID)
-        {
-            pieces[CRUISER_SHIP_ID].setOrientation(vertical); 
-            pieces[CRUISER_SHIP_ID].setSize(3);
-            pieces[CRUISER_SHIP_ID].setPosition(X, Y);  
-        }
-        else if(shipID == BATTLESHIP_SHIP_ID)
-        {
-            pieces[BATTLESHIP_SHIP_ID].setOrientation(vertical); 
-            pieces[BATTLESHIP_SHIP_ID].setSize(4);
-            pieces[BATTLESHIP_SHIP_ID].setPosition(X, Y);  
-        }
-        else if(shipID == CARRIER_SHIP_ID)
-        {
-            pieces[CARRIER_SHIP_ID].setOrientation(vertical); 
-            pieces[CARRIER_SHIP_ID].setSize(5);
-            pieces[CARRIER_SHIP_ID].setPosition(X, Y); 
-            
-        }
-
-        updateBoard(X, Y, pieces[shipID].getSize(), vertical); 
-        numOfShipsLeft--; 
-
-    }
-
-    public int checkBoard(int X, int Y)
+    public boolean checkBoard(int X, int Y)
     {
         if(board[X][Y] == '1')
         {
             board[X][Y] = 'H'; 
             //Check if the ship has sunk 
-            if()
+            /**if()
             {
 
-            }
-            return 0; 
+            }*/
+            return true; 
         }
         else
         {
-            return -1; 
+            return false; 
         }
     }
-
-    public boolean allShipsSunk()
+    
+    public void printBoard()
     {
-        return TOTAL_SHIPS == shipSunk; 
-    }    
+    		for (int x = 0; x < board.length; x++)
+    		{
+    			for (int y = 0; y < board[0].length; y++)
+    				System.out.print(board[x][y] + " ");
+    			System.out.println("");
+    		}
+    }
 
 }
