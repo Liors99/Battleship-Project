@@ -6,6 +6,7 @@ public class PlayerFleetBoard
     GameRoom gameRoom;                      //Do I need this? 
     char[][] board = new char[10][10]; 
     int numOfShipsLeftToPlace;    
+    int totalHitsSuffered;
 
     private static final int DESTROYER_SHIP_ID = 0; 
     private static final int SUBMARINE_SHIP_ID = 1; 
@@ -22,11 +23,15 @@ public class PlayerFleetBoard
     private static final int CARRIER_SHIP_LENGTH = 5;
     private int[] shipSizes = new int[] 
     		{DESTROYER_SHIP_LENGTH,SUBMARINE_SHIP_LENGTH,CRUISER_SHIP_LENGTH,BATTLESHIP_SHIP_LENGTH,CARRIER_SHIP_LENGTH};
+    private static final int MAX_HITS_GAME_OVER = 17; //total of each ship's length
+    
+    
     /** Constructors */
     public PlayerFleetBoard(Client player)
     {
         user = player; 
-        numOfShipsLeftToPlace = TOTAL_SHIPS;    
+        numOfShipsLeftToPlace = TOTAL_SHIPS;   
+        totalHitsSuffered = 0;
         //Initialize board
         for (int i = 0; i < board.length; i++)
         		for (int j = 0; j < board[0].length; j++)
@@ -34,14 +39,24 @@ public class PlayerFleetBoard
     }
 
     /** Indicates if there are ships that still need to be placed */
-    public boolean shipsRemaining()
+    public boolean shipsRemainingToPlace()
     {
         return numOfShipsLeftToPlace > 0;
     }
     
-    public void printShipsRemaining()
+    public void printShipsRemainingToPlace()
     {
     		System.out.println("Number of ships remaining for " + user.getUsername() + ": " + numOfShipsLeftToPlace);
+    }
+    
+    public boolean allShipsSunk()
+    {
+    		if (totalHitsSuffered == MAX_HITS_GAME_OVER)
+    		{
+    			System.out.println("All of " + user.getUsername() + "'s ships have been sunk");
+    			return true;
+    		}
+    		return false;
     }
 
 
@@ -58,7 +73,12 @@ public class PlayerFleetBoard
     public boolean checkBoard(int X, int Y)
     {	
         if(board[Y][X] == '1')
-            return true; 
+        {
+        		//It's a hit
+        		totalHitsSuffered++;
+            return true;
+        }
+        //It's a miss
         return false; 
     }
     
