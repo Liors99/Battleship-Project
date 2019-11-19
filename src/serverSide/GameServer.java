@@ -378,14 +378,11 @@ public class GameServer {
 		byte[] outBytes = new byte[2 + dataBytes.length];
 		outBytes[0] = protocolByte;
 		outBytes[1] = flagByte;
-		//Copy data bytes over
-		//System.out.println(outBytes[0]);
-		//System.out.println(outBytes[1]);
-		for (int i = 0; i < dataBytes.length; i++)
-		{
-			//outBytes[2 + i] = dataBytes[i];
-			System.out.println(outBytes[2+i]);
-		}
+		System.arraycopy(dataBytes, 0, outBytes,  2, dataBytes.length);
+		System.out.println("Sent PROTOCOL ID: " + outBytes[0]);
+		System.out.println("Sent PROTOCOL FLAG: " + outBytes[1]);
+		if (dataBytes.length > 0)
+			System.out.println("Sent data section: " + new String(outBytes, 2, dataBytes.length));
 		
     		// Write message to client socket 
     		int bytesSent = 0;

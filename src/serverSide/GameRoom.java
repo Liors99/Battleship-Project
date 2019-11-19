@@ -251,21 +251,21 @@ public class GameRoom
     public void communicateToAllPlayersHit(Client source, int x, int y, int hit)
     {
         Message msg;
-        String data = Integer.toString(x)+Integer.toString(y)+Integer.toString(hit);
+        String data = Integer.toString(x) + Integer.toString(y) + Integer.toString(hit);
         System.out.println("Data that should be sent for Hit: "+ data);
         for (Client player : playerBoards.keySet())
         {
             if (player == source)
-                msg = new Message(HIT_REPLY_PROTOCOL_ID, HIT_REPLY_SOURCE_FLAG, source, data);
+                msg = new Message(HIT_REPLY_PROTOCOL_ID, HIT_REPLY_SOURCE_FLAG, player, data);
             else 
-                msg = new Message(HIT_REPLY_PROTOCOL_ID, HIT_REPLY_TARGET_FLAG, targetPlayer, data);
+                msg = new Message(HIT_REPLY_PROTOCOL_ID, HIT_REPLY_TARGET_FLAG, player, data);
             server.sendToClient(player, msg);
         }
         
         //And now set turn to next player
 		Client temp = targetPlayer;
-		targetPlayer = source;
-		source = temp;
+		targetPlayer = sourcePlayer;
+		sourcePlayer = temp;
         //And tell the next player it is their turn
         communicateToPlayerTurn();
 
@@ -288,7 +288,9 @@ public class GameRoom
 
     private void communicateToPlayerTurn() 
     {
+    		System.out.println("=========================================================");
     		System.out.println("It is " + sourcePlayer.getUsername() + "'s turn");
+    		System.out.println("=========================================================");
     		Message msg = new Message(GAMEROOM_ID, PLAYER_TURN_FLAG, sourcePlayer, "");
     		server.sendToClient(sourcePlayer, msg);
 	}

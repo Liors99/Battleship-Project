@@ -66,17 +66,17 @@ class Client {
 	
 	private static final int FINISHED_PLACING_ID=3;
 	
-	private static final int FINISHED_PLACING_ACK_FLAG=0;
-	private static final int FINISHED_PLACING_NACK_FLAG=1;
+	private static final int FINISHED_PLACING_ACK_FLAG = 0;
+	private static final int FINISHED_PLACING_NACK_FLAG = 1;
 	
 	private static final int REPLY_TURN_ID = 2;
 	private static final int REPLY_TURN_FLAG = 6;
 	
 	private static final int REPLY_HIT_ID = 4;
-	private static final int REPLY_HIT_THIS_FLAG=0;
-	private static final int REPLY_HIT_ENEMY_FLAG=0;
-	private static final int REPLY_HIT_NACK=0;
-	private static final int REPLY_HIT_ACK=1;
+	private static final int REPLY_HIT_THIS_FLAG = 0;
+	private static final int REPLY_HIT_ENEMY_FLAG = 1;
+	private static final int REPLY_HIT_NACK = 0; //a miss
+	private static final int REPLY_HIT_ACK = 1; //a hit
 	
 	
 	public Client(String add, int port) throws IOException
@@ -168,12 +168,21 @@ class Client {
     	waitForACK(FINISHED_PLACING_ID, FINISHED_PLACING_ACK_FLAG);
     }
     
-    private static void gamePhase() throws IOException, InterruptedException {
-    	while(!PlayerState.isGameOver()) {
-	    	waitForTurn();
-	    	HitShip();
-	    	getHitShip();
-    	}
+    private static void gamePhase() throws IOException, InterruptedException 
+    {
+	    	while(!PlayerState.isGameOver()) {
+	    		int[] data = receiveMsg();
+	    		int protocolId = data[0];
+	    		int flag = data[1];
+	    		if (data[0] == REPLY_TURN_ID && data[1] == REPLY_TURN_FLAG) //it's my turn
+	    		{
+	    			HitShip();
+	    		}
+	    		else if (data[0] == REPLY_HIT_ID && data[1] == REPLY_HIT_THIS_FLAG)
+	    		{
+	    			getHitShip(data);
+	    		}
+	    	}
     }
     
     private static void joinRequest() throws IOException {
@@ -318,26 +327,25 @@ class Client {
     	
     }
     
-    private static void getHitShip() throws InterruptedException {
-    	int[] ship_cor = getHit();
-    	if(ship_cor[1] == REPLY_HIT_THIS_FLAG) {
+    private static void getHitShip(int[] data) throws InterruptedException 
+    {
     		Move hitMove = new Move();
-    		hitMove.setCol(ship_cor[2]);
-    		hitMove.setRow(ship_cor[3]);
+    		hitMove.setCol(data[2]);
+    		hitMove.setRow(data[3]);
     		
-    		if(ship_cor[3] == 0) {
-    			hitMove.setValue(3);
-    		}
-    		else if(ship_cor[3] == 1) {
+    		if (data[4] == REPLY_HIT_ACK)
+    		{
+    			System.out.println("You have been hit at " + data[2] + "," + data[3]);
     			hitMove.setValue(2);
     		}
-    		
+    		else if (data[3] == REPLY_HIT_NACK)
+    		{
+    			System.out.println("You have survived an attempted hit at " + data[2] + "," + data[3]);
+    			hitMove.setValue(3);
+    		}  	
     		PlayerState.updatePlayer1Board(hitMove);
     	}
-    	
-    }
-    
-    
+    	   
     private static void HitShip() throws IOException {
     	
     	boolean valid = false;
@@ -489,9 +497,13 @@ class Client {
     		result[1]=flag;
     		
 	    	if(protocolId == REPLY_HIT_ID) {
-		    	result[2]=inStream.read();
-		    	result[3]=inStream.read();
-		    	result[4]=inStream.read();
+		    	result[2] = Character.getNumericValue(((char) inStream.read()));
+		    	result[3] = Character.getNumericValue(((char) inStream.read()));
+		    	result[4] = Character.getNumericValue(((char) inStream.read()));
+		    	
+		    	System.out.println("Received data[2]: " + result[2]);
+		    	System.out.println("Received data[3]: " + result[3]);
+		    	System.out.println("Received data[4]: " + result[4]);
 	    	}
 	    	else {
 	    		result[2]=-1;
@@ -587,16 +599,7 @@ class Client {
     	return data[1] == FLAG;
     }
     
-    /**
-     * Player waits for turn
-     * @throws InterruptedException
-     */
-    private static void waitForTurn() throws InterruptedException {
-    	int[] data = new int[5];
-    	do {
-    		data= receiveMsg();
-    	}while(data[0]!= REPLY_TURN_ID && data[1]!= REPLY_TURN_FLAG);
-    }
+    
     
     /**
      * Gets the hit coordiantes and the type 
