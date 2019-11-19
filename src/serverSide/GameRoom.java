@@ -11,7 +11,8 @@ public class GameRoom
     int gameID; 
     boolean gameOver; 
     HashMap<Client, PlayerFleetBoard> playerBoards = new HashMap<Client, PlayerFleetBoard>();
-    Client playerTurn; 
+    Client sourcePlayer; 
+    Client targetPlayer;
     static List<Client> observers = new ArrayList<Client>();  
     static Time duration; 
     GameServer server;
@@ -37,6 +38,8 @@ public class GameRoom
     private static final int HIT_REPLY_PROTOCOL_ID = 4; 
     private static final int HIT_REPLY_TARGET_FLAG = 0; 
     private static final int HIT_REPLY_SOURCE_FLAG = 1; 
+    
+    private static final int PLAYER_TURN_FLAG = 6;
 
 
     public static void main(String[] args)
@@ -77,7 +80,7 @@ public class GameRoom
         PlayerFleetBoard board2 = new PlayerFleetBoard(player2); 
         playerBoards.put(player1, board1);
         playerBoards.put(player2, board2);  
-        playerTurn = createStartingPlayer(player1, player2);
+        createStartingPlayer(player1, player2);
 
     }
 
@@ -137,20 +140,15 @@ public class GameRoom
         /** Hit ship request */
         else if(protocolID == GAMEROOM_ID && flag == HIT_SHIP_REQUEST_FLAG)
         {
-            if(playerTurn.equals(assocClient))
+            if(assocClient == sourcePlayer)
             {
                 char charX = data.charAt(0); 
                 char charY = data.charAt(1);
-                Client target = null; 
-                for(Client player : playerBoards.keySet())
-                {
-                    if(player != assocClient) target = player; 
-                }
-                int hit = checkHit(target, Character.getNumericValue(charX), Character.getNumericValue(charY));
+                int hit = checkHit(targetPlayer, Character.getNumericValue(charX), Character.getNumericValue(charY));
                 //check if you have sunk the last ship 
                 //if you have sunk the last ship then end the game 
                 //else 
-                communicateToAllPlayersHit(assocClient, Character.getNumericValue(charX), Character.getNumericValue(charY), hit);
+                communicateToAllPlayersHit(sourcePlayer, Character.getNumericValue(charX), Character.getNumericValue(charY), hit);
             }
             else
             {
@@ -252,15 +250,22 @@ public class GameRoom
     {
         Message msg;
         String data = Integer.toString(x)+Integer.toString(y)+Integer.toString(hit);
-        System.out.println("Data that should be sent for Hit: "+data);
+        System.out.println("Data that should be sent for Hit: "+ data);
         for (Client player : playerBoards.keySet())
         {
             if (player == source)
                 msg = new Message(HIT_REPLY_PROTOCOL_ID, HIT_REPLY_SOURCE_FLAG, source, data);
             else 
-                msg = new Message(HIT_REPLY_PROTOCOL_ID, HIT_REPLY_TARGET_FLAG, source, data);
+                msg = new Message(HIT_REPLY_PROTOCOL_ID, HIT_REPLY_TARGET_FLAG, targetPlayer, data);
             server.sendToClient(player, msg);
         }
+        
+        //And now set turn to next player
+		Client temp = targetPlayer;
+		targetPlayer = source;
+		source = temp;
+        //And tell the next player it is their turn
+        communicateToPlayerTurn();
 
         /** Have to implement for observers */
         
@@ -275,9 +280,18 @@ public class GameRoom
             msg = new Message(PROTOCOL_SHIP_PLACEMENT_COMPLETE,FLAG_SHIPS_PLACED_BOTH_PLAYERS, player, "");
             server.sendToClient(player, msg);
         }
+        //Send to starting player that it is their turn
+        communicateToPlayerTurn();
     }
 
-    public PlayerFleetBoard getPlayerFleetBoard(Client client)
+    private void communicateToPlayerTurn() 
+    {
+    		Message msg = new Message(GAMEROOM_ID, PLAYER_TURN_FLAG, sourcePlayer, "");
+    		server.sendToClient(sourcePlayer, msg);
+	}
+
+
+	public PlayerFleetBoard getPlayerFleetBoard(Client client)
     {
         return playerBoards.get(client);
     }
@@ -289,12 +303,20 @@ public class GameRoom
     }
 
     /** Randomly chooses a client to start the game - "50/50" odds */
-    public Client createStartingPlayer(Client player1, Client player2)
+    public void createStartingPlayer(Client player1, Client player2)
     {
         Random random = new Random(); 
         int randomnumber = random.nextInt(100); 
-        if((randomnumber % 2) == 0) return player1; 
-        else return player2;      
+        if((randomnumber % 2) == 0) 
+        	{
+        		sourcePlayer = player1;
+        		targetPlayer = player2;
+        	}
+        else 
+        	{
+        		sourcePlayer = player2;
+        		targetPlayer = player1;
+        	}
     }
 
 
