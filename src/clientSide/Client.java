@@ -221,10 +221,10 @@ class Client {
 	    	byte flagByte = (byte) flag;
 	    	
 	    	
-	    	byte[] data = new byte[2+4+username.length+password.length];
+	    	byte[] data = new byte[2 + 4 + username.length + password.length];
 	    	data[0] = protocolByte;
 	    	data[1] = flagByte;
-	    	int pos =2;
+	    	int pos = 2;
 	    	byte[] len = ByteBuffer.allocate(4).putInt(username.length).array();
 	    	System.arraycopy(len, 0, data,  pos, len.length);
 	    	pos+=4;
@@ -312,11 +312,7 @@ class Client {
         	}
         	catch(Exception e) {
         		continue;
-        	}
-        	
-        	
-        	
-        	
+        	}   	
     	}
     	
     	
@@ -368,6 +364,9 @@ class Client {
 		    		continue;
 		    	}
 		    	
+		    	byte[] xByte = splitted_input[0].getBytes();
+		    	byte[] yByte = splitted_input[1].getBytes();
+		    	
 		    	
 		    	int id = HIT_ID;
 	        	int flag = HIT_FLAG;
@@ -375,11 +374,11 @@ class Client {
 	        	byte flagByte = (byte) flag;
 	        	
 	        	
-	        	byte[] data = new byte[2+2];
+	        	byte[] data = new byte[2 + xByte.length + yByte.length];
 	        	data[0] = protocolByte;
 	        	data[1] = flagByte;
-	        	data[2] = (byte)x;
-	        	data[3] = (byte)y;
+	        	System.arraycopy(xByte, 0, data,  2, xByte.length);
+		    	System.arraycopy(yByte, 0, data,  2 + xByte.length, yByte.length);
 	        	
 	        	SendMessage(data);
 	        	
@@ -488,9 +487,8 @@ class Client {
     		
     		result[0]=protocolId;
     		result[1]=flag;
-	    	
-	    	
-	    	if(inStream.available()>0) {
+    		
+	    	if(protocolId == REPLY_HIT_ID) {
 		    	result[2]=inStream.read();
 		    	result[3]=inStream.read();
 		    	result[4]=inStream.read();

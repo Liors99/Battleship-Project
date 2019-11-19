@@ -52,10 +52,11 @@ public class PlayerFleetBoard
 	    		for (int j = x1; j <= x2; j++)
 	    			board[i][j] = '1'; 
 	    	numOfShipsLeftToPlace--;
+	    	printBoard();
     }
 
     public boolean checkBoard(int X, int Y)
-    {
+    {	
         if(board[X][Y] == '1')
             return true; 
         return false; 

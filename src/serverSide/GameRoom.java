@@ -176,7 +176,7 @@ public class GameRoom
 
     public int checkHit(Client target, int x, int y)
     {
-    		System.out.println("Checking if move is a hit on " + target.getUsername() + "...");
+    		System.out.println("Checking if move " + x + "," + y + " is a hit on " + target.getUsername() + "...");
         PlayerFleetBoard board = playerBoards.get(target);
         if (board.checkBoard(x, y)) 
         {
