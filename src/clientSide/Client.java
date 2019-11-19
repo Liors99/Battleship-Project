@@ -70,6 +70,10 @@ class Client {
 	private static final int FINISHED_PLACING_NACK_FLAG = 1;
 	
 	private static final int REPLY_TURN_ID = 2;
+	
+	private static final int REPLY_END_QUIT = 3;
+	private static final int REPLY_END_WON = 4;
+	private static final int REPLY_END_LOST = 5;
 	private static final int REPLY_TURN_FLAG = 6;
 	
 	private static final int REPLY_HIT_ID = 4;
@@ -170,6 +174,8 @@ class Client {
     
     private static void gamePhase() throws IOException, InterruptedException 
     {
+    		boolean isWon= false;
+    		
 	    	while(!PlayerState.isGameOver()) {
 	    		int[] data = receiveMsg();
 	    		int protocolId = data[0];
@@ -182,7 +188,24 @@ class Client {
 	    		{
 	    			getHitShip(data);
 	    		}
+	    		else if(data[0]==REPLY_TURN_ID && data[1] == REPLY_END_WON) {
+	    			isWon=true;
+	    			break;
+	    		}
+	    		else if(data[0]==REPLY_TURN_ID && data[1] == REPLY_END_LOST) {
+	    			break;
+	    		}
+	    		
 	    	}
+	    	
+	    	if(isWon) {
+	    		System.out.println("YOU WON THE GAME");
+	    	}
+	    	else {
+	    		System.out.println("YOU LOST THE GAME");
+	    	}
+	    	
+	    	getJoinObserve();
     }
     
     private static void joinRequest() throws IOException {
