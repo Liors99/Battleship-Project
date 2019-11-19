@@ -40,6 +40,10 @@ public class GameRoom
     private static final int HIT_REPLY_SOURCE_FLAG = 1; 
     
     private static final int PLAYER_TURN_FLAG = 6;
+    
+    private static final int PLAYER_WON_FLAG = 4;
+    private static final int PLAYER_LOST_FLAG = 5;
+    
 
 
     public static void main(String[] args)
@@ -145,36 +149,34 @@ public class GameRoom
                 char charX = data.charAt(0); 
                 char charY = data.charAt(1);
                 int hit = checkHit(targetPlayer, Character.getNumericValue(charX), Character.getNumericValue(charY));
-                //check if you have sunk the last ship 
-                //if you have sunk the last ship then end the game 
-                //else 
                 communicateToAllPlayersHit(sourcePlayer, Character.getNumericValue(charX), Character.getNumericValue(charY), hit);
-            }
-            else
-            {
-                //failure
+                //check if you have sunk the last ship 
+                PlayerFleetBoard targetBoard = playerBoards.get(targetPlayer);
+                if (targetBoard.allShipsSunk())
+                {
+                		this.gameOver = true;
+                		communicateToAllPlayersGameOver(sourcePlayer, targetPlayer);
+                }
             }
         }
     }
 
-    //updatePlayerTurn() method.
-
-    private boolean allPlayersFinishedPlacingShips()
+	private boolean allPlayersFinishedPlacingShips()
     {
         PlayerFleetBoard board;   
         for (Client player : playerBoards.keySet())
         {
         		board = playerBoards.get(player); 
-            if (board.shipsRemaining())
+            if (board.shipsRemainingToPlace())
             {
-            		board.printShipsRemaining();
+            		board.printShipsRemainingToPlace();
             		return false;
             }
         }
         return true; 
     }
 
-    public int checkHit(Client target, int x, int y)
+    private int checkHit(Client target, int x, int y)
     {
     		System.out.println("Checking if move " + x + "," + y + " is a hit on " + target.getUsername() + "...");
         PlayerFleetBoard board = playerBoards.get(target);
@@ -187,9 +189,9 @@ public class GameRoom
         return 0;   //it's a miss 
     }
 
-    public void placeShip(PlayerFleetBoard board, String data)
+    private void placeShip(PlayerFleetBoard board, String data)
     {
-        if(board.shipsRemaining()){
+        if(board.shipsRemainingToPlace()){
             char charID = data.charAt(0); 
             char charX = data.charAt(1); 
             char charY = data.charAt(2); 
@@ -230,7 +232,7 @@ public class GameRoom
         }
     }
 
-    public void sendChatMessage(Message Msg){}
+    private void sendChatMessage(Message Msg){}
     
     public void communicateToAllPlayerQuit(Client quitClient){
 
@@ -248,7 +250,7 @@ public class GameRoom
 
     } 
 
-    public void communicateToAllPlayersHit(Client source, int x, int y, int hit)
+    private void communicateToAllPlayersHit(Client source, int x, int y, int hit)
     {
         Message msg;
         String data = Integer.toString(x) + Integer.toString(y) + Integer.toString(hit);
@@ -273,7 +275,7 @@ public class GameRoom
         
     }
 
-    public void communicateToAllPlayersStart()
+    private void communicateToAllPlayersStart()
     {
     		System.out.println("All players have placed ships");
         Message msg; 
@@ -294,12 +296,18 @@ public class GameRoom
     		Message msg = new Message(GAMEROOM_ID, PLAYER_TURN_FLAG, sourcePlayer, "");
     		server.sendToClient(sourcePlayer, msg);
 	}
+    
 
-
-	public PlayerFleetBoard getPlayerFleetBoard(Client client)
+    private void communicateToAllPlayersGameOver(Client winner, Client loser) 
     {
-        return playerBoards.get(client);
-    }
+    		System.out.println("=========================================================");
+    		System.out.println("GAME OVER");
+    		System.out.println("=========================================================");
+		Message msgWinner = new Message(GAMEROOM_ID, PLAYER_WON_FLAG, winner, "");	
+		server.sendToClient(winner, msgWinner);
+		Message msgLoser = new Message(GAMEROOM_ID, PLAYER_LOST_FLAG, loser, "");	
+		server.sendToClient(loser, msgLoser);
+	}
 
     /** WHAT IS THIS SUPPOSED TO DO */
     public Time getRemainingTime()
