@@ -165,9 +165,11 @@ public class GameRoom
         for (Client player : playerBoards.keySet())
         {
         		board = playerBoards.get(player); 
-        		System.out.println(player.getUsername() + " has remaining: " + board.shipsRemaining());
             if (board.shipsRemaining())
-            		return false;          
+            {
+            		board.printShipsRemaining();
+            		return false;
+            }
         }
         return true; 
     }
@@ -286,6 +288,7 @@ public class GameRoom
 
     private void communicateToPlayerTurn() 
     {
+    		System.out.println("It is " + sourcePlayer.getUsername() + "'s turn");
     		Message msg = new Message(GAMEROOM_ID, PLAYER_TURN_FLAG, sourcePlayer, "");
     		server.sendToClient(sourcePlayer, msg);
 	}

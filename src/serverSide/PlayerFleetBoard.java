@@ -36,8 +36,12 @@ public class PlayerFleetBoard
     /** Indicates if there are ships that still need to be placed */
     public boolean shipsRemaining()
     {
-    		System.out.println("Number of ships remaining: " + numOfShipsLeftToPlace);
         return numOfShipsLeftToPlace > 0;
+    }
+    
+    public void printShipsRemaining()
+    {
+    		System.out.println("Number of ships remaining for " + user.getUsername() + ": " + numOfShipsLeftToPlace);
     }
 
 
