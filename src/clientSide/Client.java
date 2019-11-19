@@ -344,6 +344,7 @@ class Client {
     			hitMove.setValue(3);
     		}  	
     		PlayerState.updatePlayer1Board(hitMove);
+    		PlayerState.displayBoards();
     	}
     	   
     private static void HitShip() throws IOException {
@@ -393,9 +394,11 @@ class Client {
 	        	int[] ship_cor = getHit();
 	        	if(ship_cor[1] == REPLY_HIT_ENEMY_FLAG) {
 	        		if(ship_cor[4] == REPLY_HIT_ACK) {
+	        			System.out.println("You have successfully hit your opponent at "+x +"," + y);
 	        			userMove.setValue(2);
 	        		}
 	        		else {
+	        			System.out.println("You have missed your shot at "+x +"," + y);
 	        			userMove.setValue(3);
 	        		}
 	        		PlayerState.updatePlayer2Board(userMove);
@@ -404,6 +407,8 @@ class Client {
 	        		System.out.println("Received wrong confirmation, try again:");
 	        		continue;
 	        	}
+	        	
+	        	PlayerState.displayBoards();
 	        	
 	        	//server_ACK= true;
 	        	//server_ACK = waitForACK(REPLY_SHIP_ID,REPLY_SHIP_HIT_FLAG);
@@ -501,9 +506,9 @@ class Client {
 		    	result[3] = Character.getNumericValue(((char) inStream.read()));
 		    	result[4] = Character.getNumericValue(((char) inStream.read()));
 		    	
-		    	System.out.println("Received data[2]: " + result[2]);
-		    	System.out.println("Received data[3]: " + result[3]);
-		    	System.out.println("Received data[4]: " + result[4]);
+		    	//System.out.println("Received data[2]: " + result[2]);
+		    	//System.out.println("Received data[3]: " + result[3]);
+		    	//System.out.println("Received data[4]: " + result[4]);
 	    	}
 	    	else {
 	    		result[2]=-1;

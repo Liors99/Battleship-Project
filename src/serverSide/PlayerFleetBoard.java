@@ -57,7 +57,7 @@ public class PlayerFleetBoard
 
     public boolean checkBoard(int X, int Y)
     {	
-        if(board[X][Y] == '1')
+        if(board[Y][X] == '1')
             return true; 
         return false; 
     }
