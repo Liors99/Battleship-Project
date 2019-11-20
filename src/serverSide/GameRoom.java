@@ -298,7 +298,7 @@ public class GameRoom
 	}
     
 
-    private void communicateToAllPlayersGameOver(Client winner, Client loser) 
+    public void communicateToAllPlayersGameOver(Client winner, Client loser) 
     {
     		System.out.println("=========================================================");
     		System.out.println("GAME OVER");

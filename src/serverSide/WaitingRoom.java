@@ -142,6 +142,9 @@ public class WaitingRoom {
 			server.sendToClient(player1, joinSuccess);
 			server.sendToClient(player2, joinSuccess);
 			System.out.println("New game started");
+			
+			//Stuff for debugging to circumvent game play
+			game.communicateToAllPlayersGameOver(player1, player2);
 		}
 	}
 
