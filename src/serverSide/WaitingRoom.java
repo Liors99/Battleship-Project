@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.Set;
 
 public class WaitingRoom {
 	
@@ -151,7 +152,7 @@ public class WaitingRoom {
 		game.handleMessage(msg);
 	}
 	
-	public void alertGameHasEnded(int gameRoomId, ArrayList<Client> clients) 
+	public void alertGameHasEnded(int gameRoomId, Set<Client> clients) 
 	{
 		games.remove(gameRoomId);
 		for (Client client : clients)

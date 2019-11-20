@@ -157,6 +157,15 @@ public class GameRoom
                 		this.gameOver = true;
                 		communicateToAllPlayersGameOver(sourcePlayer, targetPlayer);
                 }
+                else
+                {
+                		//Set turn to next player
+            			Client temp = targetPlayer;
+            			targetPlayer = sourcePlayer;
+            			sourcePlayer = temp;
+                    //And tell the next player it is their turn
+                    communicateToPlayerTurn();
+                }
             }
         }
     }
@@ -263,16 +272,7 @@ public class GameRoom
                 msg = new Message(HIT_REPLY_PROTOCOL_ID, HIT_REPLY_TARGET_FLAG, player, data);
             server.sendToClient(player, msg);
         }
-        
-        //And now set turn to next player
-		Client temp = targetPlayer;
-		targetPlayer = sourcePlayer;
-		sourcePlayer = temp;
-        //And tell the next player it is their turn
-        communicateToPlayerTurn();
-
         /** Have to implement for observers */
-        
     }
 
     private void communicateToAllPlayersStart()
@@ -307,6 +307,7 @@ public class GameRoom
 		server.sendToClient(winner, msgWinner);
 		Message msgLoser = new Message(GAMEROOM_ID, PLAYER_LOST_FLAG, loser, "");	
 		server.sendToClient(loser, msgLoser);
+		waitingRoom.alertGameHasEnded(this.gameID, playerBoards.keySet());
 	}
 
     /** WHAT IS THIS SUPPOSED TO DO */

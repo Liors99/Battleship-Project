@@ -12,7 +12,7 @@ public class PlayerGameState extends GameState {
     }
 
     public boolean isValidMove(Move mv){
-        if(this.getPlayer1Board()[mv.getRow()][ mv.getCol()] > 1){ //if there is a hit;miss there already
+        if(this.getPlayer2Board()[mv.getRow()][ mv.getCol()] > 1){ //if there is a hit;miss there already
             return false;
         }
 

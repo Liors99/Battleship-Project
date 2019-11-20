@@ -76,6 +76,7 @@ public class PlayerFleetBoard
         {
         		//It's a hit
         		totalHitsSuffered++;
+        		System.out.println(user.getUsername() + " has suffered " + totalHitsSuffered + " hits");
             return true;
         }
         //It's a miss

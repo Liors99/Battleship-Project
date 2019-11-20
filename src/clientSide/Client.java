@@ -24,7 +24,7 @@ class Client {
 	private static DataInputStream inBuffer;
 	private static BufferedReader inFromUser;
 	private static Client tcpClient;
-	private static PlayerGameState PlayerState;
+	private static PlayerGameState playerState;
 	
 	
 	//Flags and IDs
@@ -130,7 +130,7 @@ class Client {
     	int res= getUserLoginSignup();
     	// Make instance of TCP client
         tcpClient = new Client(add , port);
-        PlayerState = new PlayerGameState();
+        playerState = new PlayerGameState();
     	
         if(res == 1 || res == 0) {
 
@@ -163,11 +163,11 @@ class Client {
     
     private static void preGamePhase() throws NumberFormatException, IOException {
     	//PlayerState.isGameOver();
-    	while(PlayerState.shipsAvaliable()) {
+    	while(playerState.shipsAvaliable()) {
 			PlaceShip();
     	}
     	
-    	PlayerState.displayBoards();
+    	playerState.displayBoards();
     	System.out.println("Waiting for a the other player to finish placing ships....");
     	waitForACK(FINISHED_PLACING_ID, FINISHED_PLACING_ACK_FLAG);
     }
@@ -176,7 +176,7 @@ class Client {
     {
     		boolean isWon= false;
     		
-	    	while(!PlayerState.isGameOver()) {
+	    	while(!playerState.isGameOver()) {
 	    		int[] data = receiveMsg();
 	    		int protocolId = data[0];
 	    		int flag = data[1];
@@ -242,7 +242,7 @@ class Client {
     private static void Login() throws IOException {
     	boolean valid = false;
     	while(!valid) {
-	    	String[] splitted_input = getUserMsg("Enter Login information: <usnername> <password>", 2);
+	    	String[] splitted_input = getUserMsg("Enter Login information: <username> <password>", 2);
 	    	
 	    	byte[] username = splitted_input[0].getBytes();
 	    	byte[] password = splitted_input[1].getBytes();
@@ -293,8 +293,8 @@ class Client {
     	int ship_n;
     	int x1,y1,x2,y2;
     	while(!valid) {
-    		PlayerState.displayBoards();
-    		PlayerState.printAvaliableShips(); //prints avaliable ships
+    		playerState.displayBoards();
+    		playerState.printAvaliableShips(); //prints avaliable ships
     		
     		String[] splitted_input = getUserMsg("Enter a ship to place: <Number> <X> <Y> <X> <Y>", 5);
         	try {
@@ -304,7 +304,7 @@ class Client {
 	        	x2 =  Integer.parseInt(splitted_input[3]);
 	        	y2 =  Integer.parseInt(splitted_input[4]);
 	        	
-	        	valid = PlayerState.placeShipPlayer1Board(ship_n, x1, y1, x2, y2); // return if successfully placed. ship_n assumed to be 0 for destroyer, coords from 0-9 inclusive
+	        	valid = playerState.placeShipPlayer1Board(ship_n, x1, y1, x2, y2); // return if successfully placed. ship_n assumed to be 0 for destroyer, coords from 0-9 inclusive
 				if(!valid){
 					System.out.println("Invalid move!");
 					continue; // the ship placement failed.
@@ -366,8 +366,8 @@ class Client {
     			System.out.println("You have survived an attempted hit at " + data[2] + "," + data[3]);
     			hitMove.setValue(3);
     		}  	
-    		PlayerState.updatePlayer1Board(hitMove);
-    		PlayerState.displayBoards();
+    		playerState.updatePlayer1Board(hitMove);
+    		playerState.displayBoards();
     	}
     	   
     private static void HitShip() throws IOException {
@@ -391,7 +391,8 @@ class Client {
 		    	
 		    	
 		    	//Vlad's function here.
-		    	valid = PlayerState.isValidMove(userMove);
+		    	
+		    	valid = playerState.isValidMove(userMove);
 		    	if(!valid) {
 		    		continue;
 		    	}
@@ -424,14 +425,14 @@ class Client {
 	        			System.out.println("You have missed your shot at "+x +"," + y);
 	        			userMove.setValue(3);
 	        		}
-	        		PlayerState.updatePlayer2Board(userMove);
+	        		playerState.updatePlayer2Board(userMove);
 	        	}
 	        	else {
 	        		System.out.println("Received wrong confirmation, try again:");
 	        		continue;
 	        	}
 	        	
-	        	PlayerState.displayBoards();
+	        	playerState.displayBoards();
 	        	
 	        	//server_ACK= true;
 	        	//server_ACK = waitForACK(REPLY_SHIP_ID,REPLY_SHIP_HIT_FLAG);
