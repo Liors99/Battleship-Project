@@ -303,11 +303,12 @@ public class GameRoom
     		System.out.println("=========================================================");
     		System.out.println("GAME OVER");
     		System.out.println("=========================================================");
+		waitingRoom.alertGameHasEnded(this.gameID, playerBoards.keySet());
 		Message msgWinner = new Message(GAMEROOM_ID, PLAYER_WON_FLAG, winner, "");	
 		server.sendToClient(winner, msgWinner);
 		Message msgLoser = new Message(GAMEROOM_ID, PLAYER_LOST_FLAG, loser, "");	
 		server.sendToClient(loser, msgLoser);
-		waitingRoom.alertGameHasEnded(this.gameID, playerBoards.keySet());
+		
 	}
 
     /** WHAT IS THIS SUPPOSED TO DO */

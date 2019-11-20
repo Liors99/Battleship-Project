@@ -135,30 +135,40 @@ class Client {
         if(res == 1 || res == 0) {
 
         	Login();
-        	res = getJoinObserve();
-        	if(res == 0) {
-        		observeRequest();
-        	}
-        	else if(res == 1) {
-    			joinRequest();
-    			System.out.println("Joined a game!");
-    			
-    			
-        		//Pre-game phase (placing ships)
-    			preGamePhase();
-        		
-        		//Mid-game phase 
-    			
-    			gamePhase();
-        		
-        		
-        		tcpClient.clientSocket.close();   
-        	}
-        	else {
-        		Logout();
-        	}
+        	getUserPath();
+        	
         }
         
+    }
+    
+    /**
+     * Gets the path(play or observe) that the user chooses, and follows that path
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    private static void getUserPath() throws IOException, InterruptedException {
+    	int res = getJoinObserve();
+    	if(res == 0) {
+    		observeRequest();
+    	}
+    	else if(res == 1) {
+			joinRequest();
+			System.out.println("Joined a game!");
+			
+			
+    		//Pre-game phase (placing ships)
+			preGamePhase();
+    		
+    		//Mid-game phase 
+			
+			gamePhase();
+    		
+    		
+    		tcpClient.clientSocket.close();   
+    	}
+    	else {
+    		Logout();
+    	}
     }
     
     private static void preGamePhase() throws NumberFormatException, IOException {
@@ -205,7 +215,8 @@ class Client {
 	    		System.out.println("YOU LOST THE GAME");
 	    	}
 	    	
-	    	getJoinObserve();
+	    	playerState.resetGame();
+	    	getUserPath();
     }
     
     private static void joinRequest() throws IOException {
@@ -361,7 +372,7 @@ class Client {
     			System.out.println("You have been hit at " + data[2] + "," + data[3]);
     			hitMove.setValue(2);
     		}
-    		else if (data[3] == REPLY_HIT_NACK)
+    		else
     		{
     			System.out.println("You have survived an attempted hit at " + data[2] + "," + data[3]);
     			hitMove.setValue(3);

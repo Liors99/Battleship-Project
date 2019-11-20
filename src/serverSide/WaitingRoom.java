@@ -144,7 +144,7 @@ public class WaitingRoom {
 			System.out.println("New game started");
 			
 			//Stuff for debugging to circumvent game play
-			game.communicateToAllPlayersGameOver(player1, player2);
+			//game.communicateToAllPlayersGameOver(player1, player2);
 		}
 	}
 

@@ -13,6 +13,7 @@ public class PlayerGameState extends GameState {
 
     public boolean isValidMove(Move mv){
         if(this.getPlayer2Board()[mv.getRow()][ mv.getCol()] > 1){ //if there is a hit;miss there already
+        	System.out.println("You have already tried to hit there, try another position");
             return false;
         }
 
