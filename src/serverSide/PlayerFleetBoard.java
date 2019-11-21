@@ -38,17 +38,26 @@ public class PlayerFleetBoard
         			board[i][j] = '0';
     }
 
-    /** Indicates if there are ships that still need to be placed */
+    /** 
+     * Indicates if there are ships that still need to be placed 
+     * @return TRUE - if there are ships remaining, FALSE - if there aren't any ships left to place
+    */
     public boolean shipsRemainingToPlace()
     {
         return numOfShipsLeftToPlace > 0;
     }
     
+    /**
+     * prints the number of ships that still have to be placed on the servr console
+     */
     public void printShipsRemainingToPlace()
     {
     		System.out.println("Number of ships remaining for " + user.getUsername() + ": " + numOfShipsLeftToPlace);
     }
-    
+    /**
+     * Indicates if all ships have been sunk 
+     * @return true if all ships have been sunk - false otherwise 
+     */
     public boolean allShipsSunk()
     {
     		if (totalHitsSuffered == MAX_HITS_GAME_OVER)
@@ -59,7 +68,14 @@ public class PlayerFleetBoard
     		return false;
     }
 
-
+    /**
+     * Places a 1 where a ship exists in board[][] stored on the server 
+     * @param shipID the id of the ship
+     * @param x1 x of the starting coordinate 
+     * @param y1 y of the starting coordinate 
+     * @param x2 x of the ending coordinate 
+     * @param y2 y of the ending coordinate 
+     */
     public void placeShip(int shipID, int x1, int y1, int x2, int y2)
     {	
 	    	int shipSize = shipSizes[shipID];
@@ -70,6 +86,12 @@ public class PlayerFleetBoard
 	    	printBoard();
     }
 
+    /**
+     * Checks if there a ship placed at point <X,Y> on the board[][] stored on the server 
+     * @param X the x coordinate of the point 
+     * @param Y the y coordinate of the point 
+     * @return true/false if there is a 1 (ship) at that point
+     */
     public boolean checkBoard(int X, int Y)
     {	
         if(board[Y][X] == '1')
@@ -83,6 +105,10 @@ public class PlayerFleetBoard
         return false; 
     }
     
+    /**
+     * Prints the board on the serverside (Used for testing that shipPlacement on the serverside is
+     * working correctly) 
+     */
     public void printBoard()
     {
     		for (int x = 0; x < board.length; x++)

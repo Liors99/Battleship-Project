@@ -45,34 +45,6 @@ public class GameRoom
     private static final int PLAYER_LOST_FLAG = 5;
     
 
-
-    public static void main(String[] args)
-    {
-    		Client player1 = new Client("user1","pswd1");
-    		Client player2 = new Client("user2","pswd2");
-    		GameRoom game = new GameRoom(null,null,1,player1,player2);
-    		//Place ship message
-    		Message msg = new Message();
-    		msg.setProtocolId(GAMEROOM_ID);
-    		msg.setFlag(SHIP_PLACEMENT_REQUEST_FLAG);
-    		msg.setData("40444");
-    		msg.setClient(player1);
-    		game.handleMessage(msg);
-    		PlayerFleetBoard playerBoard = game.playerBoards.get(player1);
-    		playerBoard.printBoard();
-    		msg.setData("30333");
-    		game.handleMessage(msg);
-    		playerBoard.printBoard();
-    		msg.setData("20222");
-    		game.handleMessage(msg);
-    		playerBoard.printBoard();
-    		msg.setData("10121");
-    		game.handleMessage(msg);
-    		playerBoard.printBoard();
-    		
-    }
-
-
     /** Constructors */
     public GameRoom(GameServer newServer, WaitingRoom newWaitingRoom, int gameRoomID, Client player1, Client player2)
     {
@@ -93,25 +65,39 @@ public class GameRoom
 
     //Notify a player of turn- returns a messge that indicates its the players turn/or not  
 
-
+    /**
+     * Checks if the game is over 
+     * @return true/false if the game is over 
+     */
     public boolean isGameOver() {
         return gameOver;
     }
 
-    /** Adds a client to the observers list */
+    /**
+     * Adds a client to the observers list
+     * @param client the Client being added to the Observers list 
+     */
     public void addObserver(Client client)
     {
         observers.add(client); 
     }
 
-    /** Removes a client from the observers list */
+    /**
+     * Removes a client from the observers list
+     * @param client the client to be removed from the observers list 
+     */
     public void removeObserver(Client client)
     {
         int index = observers.indexOf(client); 
         observers.remove(index); 
     }
     
-    /** Still W.I.P */
+    /**
+     * Handles messages received by the server 
+     * - Places ships 
+     * - Forward hit requests 
+     * @param msg the message from the Client (that the Server has created)
+     */
     public void handleMessage(Message msg)
     {
         Client assocClient = msg.getClient(); 
@@ -170,6 +156,10 @@ public class GameRoom
         }
     }
 
+    /**
+     * Checks the 2 players boards in to see if either have shipsRemainingToPlace
+     * @return true if all players have finished placing ships 
+     */
 	private boolean allPlayersFinishedPlacingShips()
     {
         PlayerFleetBoard board;   
@@ -185,6 +175,13 @@ public class GameRoom
         return true; 
     }
 
+    /**
+     * Checks if the targets board has a ship at position <X,Y> when a client wants to perform a hit 
+     * @param target the player that the hit is being performed on 
+     * @param x the x coordinate of the position 
+     * @param y the y coordinate of the position 
+     * @return int 1 if it's a hit, 0 if it's a miss 
+     */
     private int checkHit(Client target, int x, int y)
     {
     		System.out.println("Checking if move " + x + "," + y + " is a hit on " + target.getUsername() + "...");
@@ -198,6 +195,12 @@ public class GameRoom
         return 0;   //it's a miss 
     }
 
+    /**
+     * Places a ship on a clients board
+     * @param board the board that the ship is being placed on 
+     * @param data the string of data from the message that is has the shipID/ <X1, Y1> / <X2, Y2>
+     * within it (has to be extracted)
+     */
     private void placeShip(PlayerFleetBoard board, String data)
     {
         if(board.shipsRemainingToPlace()){
@@ -241,8 +244,15 @@ public class GameRoom
         }
     }
 
+
     private void sendChatMessage(Message Msg){}
     
+    /**
+     * Communicates to all other members of the GameRoom that a player has left 
+     * Either we are in an idle state, the timer has started or we are dropping the connection 
+     * for the remainder of the players 
+     * @param quitClient - the client that disconnected 
+     */
     public void communicateToAllPlayerQuit(Client quitClient){
 
         gameOver = true; 
@@ -259,6 +269,14 @@ public class GameRoom
 
     } 
 
+    /**
+     * Communicates to all members of the GameRoom if a "Hit" request from a source client was a Hit 
+     * or a miss 
+     * @param source - the Client that sent the "hit" request 
+     * @param x - the x position of the hit request 
+     * @param y - the y position of the hit request 
+     * @param hit - 1/0 based on if it was a hit or a miss 
+     */
     private void communicateToAllPlayersHit(Client source, int x, int y, int hit)
     {
         Message msg;
@@ -275,6 +293,10 @@ public class GameRoom
         /** Have to implement for observers */
     }
 
+    /**
+     * Sends a message to all clients that all players have finished placing ships and that 
+     * the game (Hit phase) can commence 
+     */
     private void communicateToAllPlayersStart()
     {
     		System.out.println("All players have placed ships");
@@ -288,6 +310,9 @@ public class GameRoom
         communicateToPlayerTurn();
     }
 
+    /**
+     * Sends a message to the clients indicating it's their turn 
+     */
     private void communicateToPlayerTurn() 
     {
     		System.out.println("=========================================================");
@@ -297,7 +322,12 @@ public class GameRoom
     		server.sendToClient(sourcePlayer, msg);
 	}
     
-
+    /**
+     * Once one player has had all their ships sunk, send the message to that client saying that they 
+     * have lost the game, and send a message to the other client indicating that they have won
+     * @param winner - the player/client that won the game 
+     * @param loser - the player/client that lost the game 
+     */
     public void communicateToAllPlayersGameOver(Client winner, Client loser) 
     {
     		System.out.println("=========================================================");
@@ -311,13 +341,20 @@ public class GameRoom
 		
 	}
 
-    /** WHAT IS THIS SUPPOSED TO DO */
+    /** 
+     * WHAT IS THIS SUPPOSED TO DO 
+     * Will be used for handling dropping and reconnecting of players  
+     * */
     public Time getRemainingTime()
     {
         return duration; 
     }
 
-    /** Randomly chooses a client to start the game - "50/50" odds */
+    /**
+     * Randomly chooses a client to start the game - "50/50" odds
+     * @param player1 - the first player in the game 
+     * @param player2 - the second player in the game 
+     */
     public void createStartingPlayer(Client player1, Client player2)
     {
         Random random = new Random(); 
@@ -334,7 +371,9 @@ public class GameRoom
         	}
     }
 
-
+    /**
+     * @return the ID for the game 
+     */
     public int getGameID() {
         return gameID;
     }

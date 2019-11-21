@@ -9,6 +9,9 @@ public class ShipGamePiece
     boolean vertical; 
     int[] hitspots; 
 
+    /**
+     * Constructor 
+     */
     public ShipGamePiece(int shipSize)
     {
         size = shipSize; 
@@ -21,6 +24,7 @@ public class ShipGamePiece
     }
 
     /**
+     * Sets the size of the ship 
      * @param size the size to set
      */
     public void setSize(int size) {
@@ -58,6 +62,10 @@ public class ShipGamePiece
         return xPOS;
     }
 
+    /**
+     * 
+     * @return the yPosition 
+     */
     public int getY()
     {
         return yPOS;
