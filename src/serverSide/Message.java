@@ -1,9 +1,17 @@
 package serverSide;
+
+/**
+ * Class for abstracting the messages that are exchanged between the game server
+ * and clients connected to it. Each message has a protocol ID, flag, and data section
+ * that can be interpreted for appropriate handling. 
+ * @author Mariella
+ *
+ */
 public class Message {
 	
 	private int protocolId;
 	private int flag;
-	private Client client;
+	private Client client; // The client associated with this message
 	private String data;
 	
 	public Message(int protocol, int newFlag, Client newClient, String newData)

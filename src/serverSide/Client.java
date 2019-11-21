@@ -1,5 +1,14 @@
 package serverSide;
 
+/**
+ * Class for representation of the clients that connect to the server to
+ * either play or observer game instances. A client has a username and password,
+ * as well as status variables to denote their status within the system, e.g., 
+ * player or observer. If the client is associated with a game room, that is 
+ * recorded in a field as well.
+ * @author Mariella
+ *
+ */
 public class Client {
 	
 	private static final int NO_GAMEROOM = -1;

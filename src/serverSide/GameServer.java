@@ -1,17 +1,4 @@
 package serverSide;
-/*
- * A simple TCP select server that accepts multiple connections and echo message back to the clients
- * For use in CPSC 441 lectures
- * Instructor: Prof. Mea Wang
- * 
- * Notes:
- * A SocketChannel is NIO (non-blocking I/O) device whereas a Socket is
- * a blocking I/O device. A SocketChannel allows communication between
- * a server and multiple clients on a single thread. 
- * Note that it is not possible to create a channel for an arbitrary
- * pre-existing ServerSocket; a newly created channel is open, but not 
- * yet bound until a bind() method is invoked
- */
 
 import java.io.*;
 import java.net.*;
@@ -21,6 +8,16 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.util.*;
 
+/**
+ * Game server for hosting online instances of Battleship, a classic
+ * turn-based strategy game. 
+ * Notes:
+ * A SocketChannel is NIO (non-blocking I/O) device whereas a Socket is
+ * a blocking I/O device. A SocketChannel allows communication between
+ * a server and multiple clients on a single thread. 
+ * @author Mariella
+ *
+ */
 public class GameServer {
 	
 	private static final int SERVER_ID = 0;
@@ -50,12 +47,18 @@ public class GameServer {
     private SelectionKey key; 
     
     //Client-SocketChannel mapping
-    HashMap<SocketChannel,Client> clients;
+    HashMap<SocketChannel,Client> clients; // storage of connected clients
     HashMap<Client,SocketChannel> clientSockets;
     
     //Waiting room
     WaitingRoom waitingRoom; 
     
+    /**
+     * Constructor for game server. Creates server socket channel to accept connections
+     * to multiple clients and initiates structures to store client - socket channel mappings.
+     * @param port : Port over which we will communicate
+     * @throws IOException
+     */
     public GameServer(int port) throws IOException
     {
     		//Encoding/decoding
@@ -86,10 +89,10 @@ public class GameServer {
     }
     
     /**
-     * Main method wherein we will create an instance of our SelectServer class
-     * and listen for both incoming TCP connection requests via a ServerSocket
-     * Channel and send/receive datagrams via a DatagramChannel.
-     * This allows non-blocking I/0. 
+     * Main method wherein we will create an instance of our GameServer class
+     * and listen for incoming TCP connection requests via a ServerSocket
+     * Channel and send/receive messages.
+     * Channels allow non-blocking I/0. 
      * @param args[0] : Port over which we will communicate
      * @throws Exception
      */
@@ -111,6 +114,10 @@ public class GameServer {
         selectServer.close();
     }
     
+    /**
+     * Helper method to check if any channels registered to our selector are
+     * ready for operations (i.e., connection establishment, I/O)
+     */
     private void monitorSockets() 
     {
     		boolean terminated = false;
@@ -164,6 +171,9 @@ public class GameServer {
     		}
 	}
     
+    /**
+     * Clean-up method wherein all connections are closed 
+     */
     private void close() 
     {
     		// close all connections
@@ -197,6 +207,10 @@ public class GameServer {
         }
     }
 	
+    /**
+     * Method to accept a client, i.e., initialize an associated socket channel
+     * and register it to the selector for the server socket
+     */
     private void acceptClient() 
     {
     		SocketChannel tcpClientChannel;
@@ -219,7 +233,12 @@ public class GameServer {
 		}   
     }
     
-    
+    /**
+     * Method to read incoming packet from client and convert to a message
+     * that will be appropriately handled and/or forwarded to the WaitingRoom
+     * or GameRoom instance with which the client is associated
+     * @return : True is read was success; False is there is a read error
+     */
     private boolean readFromClient() 
     {
     		SocketChannel tcpClientChannel = (SocketChannel) keyChannel;
@@ -247,7 +266,6 @@ public class GameServer {
         		}
         		else if (bytesRead < BUFFERSIZE)
         		{
-        			//Is there more left to the message?
         			doneReading = true;
         		}
         		
@@ -305,6 +323,12 @@ public class GameServer {
         return true;
     }
     
+    /**
+     * Method for handling client login or signup to game server
+     * @param clientChannel : the channel to which the client in question is associated
+     * @param msg : the message associated with the login/signup request
+     * @param usernameLength : the length of the username provided by the client
+     */
     private void handleClientLoginSignup(SocketChannel clientChannel, Message msg, int usernameLength) 
     {
 	    	//Get username and password
@@ -329,6 +353,13 @@ public class GameServer {
 		
 	}
 
+    /**
+     * Main method wherein the parsed message, received on the client channel, is
+     * handled either directly or via forwarding to the WaitingRoom or appropriate 
+     * GameRoom instance
+     * @param clientChannel : the channel over which the message arrives
+     * @param msg : the message that requires handling
+     */
 	private void handleMessage(SocketChannel clientChannel, Message msg) 
     {
     		if (msg.getProtocolId() == SERVER_ID) 
@@ -360,9 +391,14 @@ public class GameServer {
     		
 	}
 
-    /*
-     * Should this method take client, or fetch from msg?
-     */
+    
+	/**
+	 * Main method to send a message to a client via their associated
+	 * socket channel.
+	 * @param client : the client to which we wish to send a message
+	 * @param msg : the message that we wish to send to client
+	 * @return : True if the message was successfully sent; False otherwise
+	 */
 	public boolean sendToClient(Client client, Message msg) 
     {
 		//Identify socket channel
