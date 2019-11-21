@@ -8,15 +8,16 @@ import serverSide.Client;
 public class GameRoom
 {
 
-    int gameID; 
-    boolean gameOver; 
-    HashMap<Client, PlayerFleetBoard> playerBoards = new HashMap<Client, PlayerFleetBoard>();
-    Client sourcePlayer; 
-    Client targetPlayer;
-    static List<Client> observers = new ArrayList<Client>();  
-    static Time duration; 
-    GameServer server;
+    private int gameID; 
+    private boolean gameOver; 
+    private HashMap<Client, PlayerFleetBoard> playerBoards = new HashMap<Client, PlayerFleetBoard>();
+    private Client sourcePlayer; 
+    private Client targetPlayer;
+    private List<Client> observers = new ArrayList<Client>();  
+    private Time duration; 
+    private GameServer server;
     WaitingRoom waitingRoom; 
+    
     private static final int DESTROYER_SHIP_ID = 0; 
     private static final int SUBMARINE_SHIP_ID = 1; 
     private static final int CRUISER_SHIP_ID = 2; 
@@ -34,8 +35,8 @@ public class GameRoom
     private static final int PROTOCOL_SHIP_PLACEMENT_COMPLETE = 3; 
     //private int FLAG_SHIPS_PLACED_ONE_PLAYER = 0; 
     private static final int FLAG_SHIPS_PLACED_BOTH_PLAYERS = 0;
-
-    private static final int HIT_REPLY_PROTOCOL_ID = 4; 
+    
+    private static final int HIT_REPLY_PROTOCOL_ID = 4;
     private static final int HIT_REPLY_TARGET_FLAG = 0; 
     private static final int HIT_REPLY_SOURCE_FLAG = 1; 
     
@@ -43,6 +44,10 @@ public class GameRoom
     
     private static final int PLAYER_WON_FLAG = 4;
     private static final int PLAYER_LOST_FLAG = 5;
+    
+    private static final int MESSAGING_ID = 8;
+    private static final int MSG_FROM_PLAYER_FLAG = 0;
+    private static final int MSG_FROM_OBSERVER_FLAG = 1;
     
 
     /** Constructors */
@@ -154,9 +159,47 @@ public class GameRoom
                 }
             }
         }
+        
+        /** Messaging */
+        else if(protocolID == MESSAGING_ID)
+        {
+        		//determine if message is from a player or an observer
+        		int msgFlag = msg.getFlag();
+        		if (msgFlag == MSG_FROM_PLAYER_FLAG)
+        			shareMessageWithAll(msg);
+        		else if (msgFlag == MSG_FROM_OBSERVER_FLAG)
+        			shareMessageWithObservers(msg);
+        }
     }
 
-    /**
+    private void shareMessageWithObservers(Message oldMsg) 
+    {
+		for (Client observer : observers)
+		{
+			Message newMsg = new Message(MESSAGING_ID, MSG_FROM_OBSERVER_FLAG, observer, oldMsg.getData());
+			server.sendToClient(observer, newMsg);
+		}	
+	}
+
+
+	private void shareMessageWithAll(Message oldMsg) 
+	{
+		Client src = oldMsg.getClient();
+		//Send message first to the other player
+		for (Client player : playerBoards.keySet())
+		{
+			if (player != src)
+			{
+				Message newMsg = new Message(MESSAGING_ID, MSG_FROM_PLAYER_FLAG, player, oldMsg.getData());
+				server.sendToClient(player, newMsg);
+			}
+		}
+		//Then share with observers
+		shareMessageWithObservers(oldMsg);
+	}
+
+
+	/**
      * Checks the 2 players boards in to see if either have shipsRemainingToPlace
      * @return true if all players have finished placing ships 
      */

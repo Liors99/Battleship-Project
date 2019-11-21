@@ -64,7 +64,7 @@ class Client {
 	private static final int REPLY_SHIP_PLACE_NACK_FLAG = 2;
 	private static final int REPLY_SHIP_HIT_FLAG = 1;
 	
-	private static final int FINISHED_PLACING_ID=3;
+	private static final int FINISHED_PLACING_ID = 3;
 	
 	private static final int FINISHED_PLACING_ACK_FLAG = 0;
 	private static final int FINISHED_PLACING_NACK_FLAG = 1;
@@ -196,6 +196,7 @@ class Client {
     	playerState.displayBoards();
     	System.out.println("Waiting for a the other player to finish placing ships....");
     	waitForACK(FINISHED_PLACING_ID, FINISHED_PLACING_ACK_FLAG);
+    	System.out.println("All ships placed. GAME ON!");
     }
     
     /**

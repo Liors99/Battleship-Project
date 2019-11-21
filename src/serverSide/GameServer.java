@@ -23,6 +23,7 @@ public class GameServer {
 	private static final int SERVER_ID = 0;
 	private static final int WAITING_ROOM_ID = 1;
 	private static final int GAME_ROOM_ID = 2;
+	private static final int MESSAGING_ID = 8;
 	private static final int SIGN_UP_FLAG = 0;
 	private static final int LOGIN_FLAG = 1;
 	private static final int LOGOUT_FLAG = 2;
@@ -388,6 +389,9 @@ public class GameServer {
     			waitingRoom.handleMessage(msg);
     		else if (msg.getProtocolId() == GAME_ROOM_ID)
     			waitingRoom.forwardMessageToGameRoom(msg);
+    		else if (msg.getProtocolId() == MESSAGING_ID)
+    			waitingRoom.forwardMessageToGameRoom(msg);
+    		
     		
 	}
 
