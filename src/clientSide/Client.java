@@ -83,6 +83,12 @@ class Client {
 	private static final int REPLY_HIT_ACK = 1; //a hit
 	
 	
+	/**
+	 * Constructor, intitalizes the streams and port number
+	 * @param add - address number
+	 * @param port - port number
+	 * @throws IOException
+	 */
 	public Client(String add, int port) throws IOException
 	{
 		// Initialize a client socket connection to the server
@@ -126,6 +132,11 @@ class Client {
     }
     
     
+    /**
+     * Handle the pre-login phase, i.e. asks the client if he wants to signup or login and create a new socket and playerstate
+     * @throws IOException
+     * @throws InterruptedException
+     */
     private static void preLoginPhase() throws IOException, InterruptedException {
     	int res= getUserLoginSignup();
     	// Make instance of TCP client
@@ -171,6 +182,11 @@ class Client {
     	}
     }
     
+    /**
+     * Prompts the user to place ships, as long as there are any ships left to be placed
+     * @throws NumberFormatException
+     * @throws IOException
+     */
     private static void preGamePhase() throws NumberFormatException, IOException {
     	//PlayerState.isGameOver();
     	while(playerState.shipsAvaliable()) {
@@ -182,6 +198,11 @@ class Client {
     	waitForACK(FINISHED_PLACING_ID, FINISHED_PLACING_ACK_FLAG);
     }
     
+    /**
+     * The game-phase itself, gets protocols IDs and handles them as the game progresses (i.e. when you can hit ships)
+     * @throws IOException
+     * @throws InterruptedException
+     */
     private static void gamePhase() throws IOException, InterruptedException 
     {
     		boolean isWon= false;
@@ -219,6 +240,10 @@ class Client {
 	    	getUserPath();
     }
     
+    /**
+     * Makes a game join request to the server
+     * @throws IOException
+     */
     private static void joinRequest() throws IOException {
     	int id = JOIN_ID;
     	int flag = JOIN_FLAG;
@@ -235,6 +260,10 @@ class Client {
     	waitForACK(REPLY_JOIN_ID,REPLY_JOIN_ACK_FLAG);
     }
     
+    /**
+     * Makes a game observe request to the server
+     * @throws IOException
+     */
     private static void observeRequest() throws IOException {
     	int id = OBSERVE_ID;
     	int flag = OBSERVE_FLAG;
@@ -250,6 +279,11 @@ class Client {
     	waitForACK(REPLY_JOIN_ID,REPLY_OBS_ACK_FLAG);
     }
     
+    
+    /**
+     * Gets the username and password, and sends them to the server
+     * @throws IOException
+     */
     private static void Login() throws IOException {
     	boolean valid = false;
     	while(!valid) {
@@ -284,7 +318,11 @@ class Client {
     	
     }
     
-    
+    /**
+     * Sends a logout request to the server and then goes back to the pre-login phase
+     * @throws IOException
+     * @throws InterruptedException
+     */
     private static void Logout() throws IOException, InterruptedException {
     	byte[] data = new byte[2];
     	data[0]=(byte)LOG_ID;
@@ -298,6 +336,12 @@ class Client {
     	
     	
     }
+    
+    /**
+     * Handles ship placement from client and sends the placement to the server
+     * @throws NumberFormatException
+     * @throws IOException
+     */
     private static void PlaceShip() throws NumberFormatException, IOException {
     	
     	boolean valid = false;
@@ -361,6 +405,11 @@ class Client {
     	
     }
     
+    /**
+     * Gets hit information from the server and updates the corresponding board on client side
+     * @param data
+     * @throws InterruptedException
+     */
     private static void getHitShip(int[] data) throws InterruptedException 
     {
     		Move hitMove = new Move();
@@ -381,6 +430,11 @@ class Client {
     		playerState.displayBoards();
     	}
     	   
+    
+    /**
+     * Sends a hit to the server and updates the corresponding board on client side
+     * @throws IOException
+     */
     private static void HitShip() throws IOException {
     	
     	boolean valid = false;
@@ -457,6 +511,11 @@ class Client {
     }
 
     
+    /**
+     * Gets from the user if he wants to login or sign up
+     * @return
+     * @throws IOException
+     */
     private static int getUserLoginSignup() throws IOException {
        while(true) {
     	   System.out.println("Enter one of the following number: ");
@@ -480,6 +539,11 @@ class Client {
         
     }
     
+    /**
+     * Gets from the user if he wants to join or observe a game
+     * @return
+     * @throws IOException
+     */
     private static int getJoinObserve() throws IOException {
     	while(true) {
      	   System.out.println("Enter one of the following number: ");
@@ -503,16 +567,23 @@ class Client {
         }
     }
     
+    /**
+     * Sends any message to the server using the stream
+     * @param msg
+     * @throws IOException
+     */
     private static void SendMessage(byte[] msg) throws IOException {
-        
-
     	// Send to the server
     	tcpClient.outBuffer.write(msg);
     	tcpClient.outBuffer.flush();
     }
     
     
-    //Needs to be worked on
+    /**
+     * Gets ANY message from the server and decodes it into protocol ID and FLAG, and puts this information into an array along with data.
+     * @return
+     * @throws InterruptedException
+     */
     private static int[] receiveMsg() throws InterruptedException
     {    	
     	int[] result = new int[5];
