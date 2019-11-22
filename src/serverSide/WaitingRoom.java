@@ -30,7 +30,7 @@ public class WaitingRoom {
 	private static final int LIST_GAMES_FAILURE = 5;
 	
 	GameServer server;
-	HashSet<Client> activeClients; //not sure if we need this list?
+	HashSet<Client> activeClients; 
 	Queue<Client> playerQueue; //clients waiting assignment as player
 	HashMap<Integer,GameRoom> games;
 	
@@ -225,6 +225,16 @@ public class WaitingRoom {
 		games.remove(gameRoomId);
 		for (Client client : clients)
 			client.resetStatus(); // client is no longer a player (or observer) at conclusion of game
+	}
+
+	/**
+	 * Method to check whether a client is currently active/online/logged in
+	 * @param user : the Client that we wish to verify is logged in
+	 * @return True if the user is logged in; False otherwise
+	 */
+	public boolean isActiveClient(Client user) {
+		
+		return activeClients.contains(user);
 	}
 
 	

@@ -69,6 +69,10 @@ public class Client {
 		return this.username;
 	}
 	
+	public boolean passwordMatches(String providedPassword) {
+		return this.password.equals(providedPassword);
+	}
+	
 }
 
 

@@ -37,8 +37,6 @@ public class GameServer {
 	private CharsetDecoder decoder;
 	
 	// Messaging
-	private static final int PROTOCOL_ID_SIZE = 1;
-	private static final int FLAG_SIZE = 1;
 	private static int BUFFERSIZE = 32;
     
     // Selector and channels
@@ -48,8 +46,11 @@ public class GameServer {
     private SelectionKey key; 
     
     //Client-SocketChannel mapping
-    HashMap<SocketChannel,Client> clients; // storage of connected clients
-    HashMap<Client,SocketChannel> clientSockets;
+    HashMap<SocketChannel,Client> clientsByChannel; 
+    HashMap<Client,SocketChannel> socketsByClient;
+    
+    //Storage of registered/signed-up clients
+    HashMap<String,Client> signedUpClientsByUsername;
     
     //Waiting room
     WaitingRoom waitingRoom; 
@@ -82,8 +83,8 @@ public class GameServer {
         tcpChannel.register(selector, SelectionKey.OP_ACCEPT); //server is interested in connection requests 
         
         //Initialize the socketchannel-client hashmap
-        clients = new HashMap<SocketChannel,Client>();
-        clientSockets = new HashMap<Client,SocketChannel>();
+        clientsByChannel = new HashMap<SocketChannel,Client>();
+        socketsByClient = new HashMap<Client,SocketChannel>();
         
         //Create waiting room
         waitingRoom = new WaitingRoom(this);
@@ -256,8 +257,8 @@ public class GameServer {
         		Message msg = new Message();
         		
         		//Set the client, if applicable
-        		if (clients.containsKey(tcpClientChannel))
-        			msg.setClient(clients.get(tcpClientChannel));
+        		if (clientsByChannel.containsKey(tcpClientChannel))
+        			msg.setClient(clientsByChannel.get(tcpClientChannel));
         				
         		bytesRead = tcpClientChannel.read(inByteBuffer);
         		if (bytesRead <= 0)
@@ -315,8 +316,13 @@ public class GameServer {
         		System.out.println("Data: " + msg.getData());
         		
         		//Handle message
-        		if (msg.getProtocolId() == SERVER_ID && (msg.getFlag() == SIGN_UP_FLAG || msg.getFlag() == LOGIN_FLAG))
-        			handleClientLoginSignup(tcpClientChannel, msg, usernameLength);
+        		if (msg.getProtocolId() == SERVER_ID)
+        		{
+        			if (msg.getFlag() == SIGN_UP_FLAG)
+        				handleClientSignup(tcpClientChannel, msg, usernameLength);
+        			else if(msg.getFlag() == LOGIN_FLAG)
+        				handleClientLogin(tcpClientChannel, msg, usernameLength);
+        		}
         		else if (msg.getProtocolId() == MESSAGING_ID)
         			handleChatMessage(tcpClientChannel, msg, chatMsgLength);
         		else
@@ -339,18 +345,68 @@ public class GameServer {
     private void handleChatMessage(SocketChannel tcpClientChannel, Message msg, int chatMsgLength) 
     {
     		byte[] bytes = msg.getData().getBytes();
-    		System.out.println("Chat message of length " + chatMsgLength + " from " + clients.get(tcpClientChannel).getUsername() + ":");
+    		System.out.println("Chat message of length " + chatMsgLength + " from " + clientsByChannel.get(tcpClientChannel).getUsername() + ":");
     		System.out.println(new String(bytes)); //print the chat message
     		handleMessage(tcpClientChannel, msg);
 	}
 
 	/**
-     * Method for handling client login or signup to game server
+     * Method for handling client login to game server
      * @param clientChannel : the channel to which the client in question is associated
-     * @param msg : the message associated with the login/signup request
+     * @param msg : the message associated with the login request
      * @param usernameLength : the length of the username provided by the client
      */
-    private void handleClientLoginSignup(SocketChannel clientChannel, Message msg, int usernameLength) 
+    private void handleClientLogin(SocketChannel clientChannel, Message msg, int usernameLength) 
+    {
+	    	//Get username and password
+	    	byte[] bytes = msg.getData().getBytes();
+	    	byte[] usernameBytes = Arrays.copyOfRange(bytes, 0, usernameLength);    	
+	    	byte[] passwordBytes = Arrays.copyOfRange(bytes, usernameLength, bytes.length);
+	    	String providedUsername = new String(usernameBytes);
+	    	String providedPassword = new String(passwordBytes);
+	    	System.out.println("Provided username: " + providedUsername);
+	    	System.out.println("Provided password: " + providedPassword);
+	    	
+	    	//Initialize message to send back to client
+	    	Message reply = new Message();
+    		reply.setProtocolId(SERVER_ID);
+	    	
+	    //Get the register user, if it exists
+	    	Client user = signedUpClientsByUsername.get(providedUsername);
+	    	
+	    	//Check that user exists
+	    	if (user != null)
+	    	{
+	    		//Check that password matches username
+	    		if (user.passwordMatches(providedPassword))
+	    		{
+	    			//Check that client isn't already logged in
+	    			if (!waitingRoom.isActiveClient(user))
+	    			{
+	    				//Add the client to the waiting room
+		    			waitingRoom.activateClient(user);	
+		    		 	//Set flag of message to success
+		    	    		reply.setFlag(LOGIN_SIGNUP_SUCCESS);	
+	    			}		
+	    		}
+	    	}
+	    	else
+	    	{
+	    		//Set flag of message to failure
+	    		reply.setFlag(LOGIN_SIGNUP_FAILURE);
+	    	}
+	    	
+	    	//Send message to client
+	    	sendToClient(user, reply);	
+	}
+    
+    /**
+     * Method for handling client signup to game server
+     * @param clientChannel : the channel to which the client in question is associated
+     * @param msg : the message associated with the signup request
+     * @param usernameLength : the length of the username provided by the client
+     */
+    private void handleClientSignup(SocketChannel clientChannel, Message msg, int usernameLength) 
     {
 	    	//Get username and password
 	    	byte[] bytes = msg.getData().getBytes();
@@ -360,18 +416,20 @@ public class GameServer {
 	    	String password = new String(passwordBytes);
 	    	System.out.println("Username: " + username);
 	    	System.out.println("Password: " + password);
+	    	
 	    	//Create new client and add to hashmap
 	    	Client client = new Client(username, password);
-	    	clients.put(clientChannel, client);
-	    	clientSockets.put(client, clientChannel);
+	    	clientsByChannel.put(clientChannel, client);
+	    	socketsByClient.put(client, clientChannel);
+	    	
 	    	//Add the client to the waiting room
 	    	waitingRoom.activateClient(client);	
 	    	//Message to send back if successful
+	    	
 	    	Message reply = new Message();
 	    	reply.setProtocolId(SERVER_ID);
 	    	reply.setFlag(LOGIN_SIGNUP_SUCCESS);
-	    	sendToClient(client, reply);
-		
+	    	sendToClient(client, reply);	
 	}
 
     /**
@@ -387,10 +445,10 @@ public class GameServer {
     		{
     			if (msg.getFlag() == LOGOUT_FLAG)
     			{	
-    				Client client = clients.get(clientChannel);
+    				Client client = clientsByChannel.get(clientChannel);
     				waitingRoom.deactiviateClient(client);
     				//Send message to client that has been closed?
-    				clients.remove(clientChannel);
+    				clientsByChannel.remove(clientChannel);
     				//Message to send back if logout successful
     				Message reply = new Message();
     				reply.setProtocolId(SERVER_ID);
@@ -426,7 +484,7 @@ public class GameServer {
 	public boolean sendToClient(Client client, Message msg) 
     {
 		//Identify socket channel
-		SocketChannel tcpClientChannel = clientSockets.get(client);
+		SocketChannel tcpClientChannel = socketsByClient.get(client);
 		System.out.println("Sending message to: " + client.getUsername());
 		
 		//Decompose message
