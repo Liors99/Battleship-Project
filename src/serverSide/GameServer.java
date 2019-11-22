@@ -247,6 +247,7 @@ public class GameServer {
     		CharBuffer inCharBuffer = CharBuffer.allocate(BUFFERSIZE);
     		int bytesRead = 0;
     		int usernameLength = 0; //only used if login or signup request
+    		int chatMsgLength = 0; //only used if chat messaging       
     		boolean doneReading = false;
     		
         // Read from client socket channel
@@ -286,6 +287,9 @@ public class GameServer {
         		if (msg.getProtocolId() == SERVER_ID && 
                         (msg.getFlag() == SIGN_UP_FLAG || msg.getFlag() == LOGIN_FLAG))
     				usernameLength = inByteBuffer.getInt();
+        		else if (msg.getProtocolId() == MESSAGING_ID)
+        			chatMsgLength = inByteBuffer.getInt();
+        			
         		
         		//Get the data
         		decoder.decode(inByteBuffer, inCharBuffer, false); //advances pointer
@@ -313,6 +317,8 @@ public class GameServer {
         		//Handle message
         		if (msg.getProtocolId() == SERVER_ID && (msg.getFlag() == SIGN_UP_FLAG || msg.getFlag() == LOGIN_FLAG))
         			handleClientLoginSignup(tcpClientChannel, msg, usernameLength);
+        		else if (msg.getProtocolId() == MESSAGING_ID)
+        			handleChatMessage(tcpClientChannel, msg, chatMsgLength);
         		else
         			handleMessage(tcpClientChannel, msg);
         }
@@ -325,6 +331,20 @@ public class GameServer {
     }
     
     /**
+     * Method for handling in-game chat messaging.
+     * @param clientChannel : the channel to which the client in question is associated
+     * @param msg : the message associated with the login/signup request
+     * @param chatMsgLength : the length of the chat message payload
+     */
+    private void handleChatMessage(SocketChannel tcpClientChannel, Message msg, int chatMsgLength) 
+    {
+    		byte[] bytes = msg.getData().getBytes();
+    		System.out.println("Chat message of length " + chatMsgLength + " from " + clients.get(tcpClientChannel).getUsername() + ":");
+    		System.out.println(new String(bytes)); //print the chat message
+    		handleMessage(tcpClientChannel, msg);
+	}
+
+	/**
      * Method for handling client login or signup to game server
      * @param clientChannel : the channel to which the client in question is associated
      * @param msg : the message associated with the login/signup request
@@ -414,15 +434,29 @@ public class GameServer {
 		byte flagByte = (byte) msg.getFlag();
 		String data = msg.getData();
 		byte[] dataBytes = data.getBytes();
+		byte[] outBytes = null;
+		int dataStart = 2; //the index at which the data starts
 		
-		byte[] outBytes = new byte[2 + dataBytes.length];
+		if (msg.getProtocolId() == MESSAGING_ID)
+		{
+			//We must include the message length, if a chat message
+			outBytes = new byte[2 + 4 + dataBytes.length];
+			byte[] msgLength = ByteBuffer.allocate(4).putInt(dataBytes.length).array();
+			System.arraycopy(msgLength, 0, outBytes, dataStart, msgLength.length);
+			dataStart += 4;	// increment by 4 since length takes up 4 bytes
+		}
+		else
+		{
+			outBytes = new byte[2 + dataBytes.length];		
+		}
+		
 		outBytes[0] = protocolByte;
 		outBytes[1] = flagByte;
-		System.arraycopy(dataBytes, 0, outBytes,  2, dataBytes.length);
+		System.arraycopy(dataBytes, 0, outBytes,  dataStart, dataBytes.length);
 		System.out.println("Sent PROTOCOL ID: " + outBytes[0]);
 		System.out.println("Sent PROTOCOL FLAG: " + outBytes[1]);
 		if (dataBytes.length > 0)
-			System.out.println("Sent data section: " + new String(outBytes, 2, dataBytes.length));
+			System.out.println("Sent data section: " + new String(outBytes, dataStart, dataBytes.length));
 		
     		// Write message to client socket 
     		int bytesSent = 0;
