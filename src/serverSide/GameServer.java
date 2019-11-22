@@ -85,6 +85,7 @@ public class GameServer {
         //Initialize the socketchannel-client hashmap
         clientsByChannel = new HashMap<SocketChannel,Client>();
         socketsByClient = new HashMap<Client,SocketChannel>();
+        signedUpClientsByUsername = new HashMap<String,Client>();
         
         //Create waiting room
         waitingRoom = new WaitingRoom(this);
@@ -372,11 +373,14 @@ public class GameServer {
     		reply.setProtocolId(SERVER_ID);
 	    	
 	    //Get the register user, if it exists
-	    	Client user = signedUpClientsByUsername.get(providedUsername);
+    		System.out.print("Does the user exist? ");
+    		boolean userExists = signedUpClientsByUsername.containsKey(providedUsername);
+    		System.out.println(userExists);
 	    	
 	    	//Check that user exists
-	    	if (user != null)
+	    	if (userExists)
 	    	{
+	    	 	Client user = signedUpClientsByUsername.get(providedUsername);
 	    		//Check that password matches username
 	    		if (user.passwordMatches(providedPassword))
 	    		{
@@ -389,15 +393,17 @@ public class GameServer {
 		    	    		reply.setFlag(LOGIN_SIGNUP_SUCCESS);	
 	    			}		
 	    		}
+	    		//Send message to client
+		    	sendToClient(user, reply);	
 	    	}
 	    	else
 	    	{
 	    		//Set flag of message to failure
 	    		reply.setFlag(LOGIN_SIGNUP_FAILURE);
+	    		sendToClientChannel(clientChannel, reply);
 	    	}
 	    	
-	    	//Send message to client
-	    	sendToClient(user, reply);	
+	    
 	}
     
     /**
