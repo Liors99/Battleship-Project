@@ -417,19 +417,33 @@ public class GameServer {
 	    	System.out.println("Username: " + username);
 	    	System.out.println("Password: " + password);
 	    	
-	    	//Create new client and add to hashmap
-	    	Client client = new Client(username, password);
-	    	clientsByChannel.put(clientChannel, client);
-	    	socketsByClient.put(client, clientChannel);
-	    	
-	    	//Add the client to the waiting room
-	    	waitingRoom.activateClient(client);	
-	    	//Message to send back if successful
-	    	
-	    	Message reply = new Message();
+	    	//Initialize message to reply to client
+	     Message reply = new Message();
 	    	reply.setProtocolId(SERVER_ID);
-	    	reply.setFlag(LOGIN_SIGNUP_SUCCESS);
-	    	sendToClient(client, reply);	
+	    	
+	    	//make sure username is not already taken
+	    	if (signedUpClientsByUsername.containsKey(username))
+	    	{
+	    		//Set message flag to failure
+	    		reply.setFlag(LOGIN_SIGNUP_FAILURE);
+	    	}
+	    	else
+	    	{
+	    		//Create new client and add to hashmap
+		    	Client client = new Client(username, password);
+		    	clientsByChannel.put(clientChannel, client);
+		    	socketsByClient.put(client, clientChannel);
+		    	signedUpClientsByUsername.put(username, client);
+		    	
+		    	//Add the client to the waiting room
+		    	waitingRoom.activateClient(client);	
+
+		    	//Set message flag to success
+		    	reply.setFlag(LOGIN_SIGNUP_SUCCESS);
+	    	}
+	    	
+	    	//Send message to client
+	    	sendToClientChannel(clientChannel, reply);	
 	}
 
     /**
@@ -472,21 +486,31 @@ public class GameServer {
     		
     		
 	}
+	
+	/**
+	 * Helper method to send a message to a client by specified the Client object.
+	 * @param client : the Client object to which we wish to send the message
+	 * @param msg : the message that we wish to send to client
+	 * @return True if the message was successfully sent; False otherwise
+	 */
+	public boolean sendToClient(Client client, Message msg)
+	{
+		//Identify socket channel
+		SocketChannel clientChannel = socketsByClient.get(client);
+		System.out.println("Sending message to: " + client.getUsername());
+		return sendToClientChannel(clientChannel, msg);
+	}
 
     
 	/**
 	 * Main method to send a message to a client via their associated
 	 * socket channel.
-	 * @param client : the client to which we wish to send a message
+	 * @param clientChannel : the client channel to which we wish to send a message
 	 * @param msg : the message that we wish to send to client
-	 * @return : True if the message was successfully sent; False otherwise
+	 * @return True if the message was successfully sent; False otherwise
 	 */
-	public boolean sendToClient(Client client, Message msg) 
+	public boolean sendToClientChannel(SocketChannel clientChannel, Message msg) 
     {
-		//Identify socket channel
-		SocketChannel tcpClientChannel = socketsByClient.get(client);
-		System.out.println("Sending message to: " + client.getUsername());
-		
 		//Decompose message
 		byte protocolByte = (byte) msg.getProtocolId();
 		byte flagByte = (byte) msg.getFlag();
@@ -523,7 +547,7 @@ public class GameServer {
         ByteBuffer outByteBuffer = ByteBuffer.wrap(outBytes);
  	       
     		try {
-	    		bytesSent = tcpClientChannel.write(outByteBuffer);
+	    		bytesSent = clientChannel.write(outByteBuffer);
 	    	} catch (IOException e) {
 	    		// TODO Auto-generated catch block
 	    		e.printStackTrace();
@@ -540,7 +564,5 @@ public class GameServer {
     		System.out.println("Length of bytes sent: " + msgSize);
         return true;	
     }
-	
-    
-    
+	  
 }
