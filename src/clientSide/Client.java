@@ -40,6 +40,10 @@ class Client {
 	private static final int HIT_ID = 2; 
 	private static final int HIT_FLAG = 2; 
 	
+	private static final int CHAT_ID= 8;
+	private static final int CHAT_PLAYER_FLAG= 0;
+	private static final int CHAT_OBSERVER_FLAG= 1;
+	
 	//Flag and IDs for Replies
 	private static final int REPLY_LOGIN_ID = 0;
 	
@@ -186,11 +190,35 @@ class Client {
      * Prompts the user to place ships, as long as there are any ships left to be placed
      * @throws NumberFormatException
      * @throws IOException
+     * @throws InterruptedException 
      */
-    private static void preGamePhase() throws NumberFormatException, IOException {
+    private static void preGamePhase() throws NumberFormatException, IOException, InterruptedException {
     	//PlayerState.isGameOver();
     	while(playerState.shipsAvaliable()) {
-			PlaceShip();
+    		
+    		boolean made_move= false;
+    		
+    		while(!made_move) {
+    			System.out.println("Waiting for user to make a move....");
+    			int res = getUserAction_PLACE();
+    			switch(res) {
+    				case 0:
+    					Logout();
+    					made_move=true;
+    					break;
+    				case 1:
+    					sendChatMSG();
+    					break;
+    				case 2:
+    					PlaceShip();
+    					made_move=true;
+    					break;
+        					
+        			
+        		}
+    		}
+			
+    		
     	}
     	
     	playerState.displayBoards();
@@ -209,22 +237,47 @@ class Client {
     		boolean isWon= false;
     		
 	    	while(!playerState.isGameOver()) {
-	    		int[] data = receiveMsg();
-	    		int protocolId = data[0];
-	    		int flag = data[1];
-	    		if (data[0] == REPLY_TURN_ID && data[1] == REPLY_TURN_FLAG) //it's my turn
+	    		ClientMessage rec_msg = receiveMsg();
+	    		int protocolId = rec_msg.getProtocolId();
+	    		int flag = rec_msg.getFlag();
+	    		if (protocolId == REPLY_TURN_ID && flag == REPLY_TURN_FLAG) //it's my turn
 	    		{
-	    			HitShip();
+	    			
+	    			boolean made_move = false;
+	    			
+	    			while(!made_move) {
+	    				int res = getUserAction_HIT();
+		    			switch(res) {
+		    				case 0:
+		    					Logout();
+		    					made_move=true;
+		    					break;
+		    				case 1:
+		    					sendChatMSG();
+		    					break;
+		    				case 2:
+		    					HitShip();
+		    					made_move=true;
+		    					break;
+		    					
+		    			}
+	    			}
+	    			
+	    			
+	    			
 	    		}
-	    		else if (data[0] == REPLY_HIT_ID && data[1] == REPLY_HIT_THIS_FLAG)
+	    		else if (protocolId == REPLY_HIT_ID && flag == REPLY_HIT_THIS_FLAG)
 	    		{
-	    			getHitShip(data);
+	    			getHitShip(rec_msg.getDataShipInts());
 	    		}
-	    		else if(data[0]==REPLY_TURN_ID && data[1] == REPLY_END_WON) {
+	    		else if(protocolId==CHAT_ID && flag == CHAT_PLAYER_FLAG) {
+	    			getChatMSG(rec_msg.getData());
+	    		}
+	    		else if(protocolId==REPLY_TURN_ID && flag == REPLY_END_WON) {
 	    			isWon=true;
 	    			break;
 	    		}
-	    		else if(data[0]==REPLY_TURN_ID && data[1] == REPLY_END_LOST) {
+	    		else if(protocolId==REPLY_TURN_ID && flag == REPLY_END_LOST) {
 	    			break;
 	    		}
 	    		
@@ -248,14 +301,12 @@ class Client {
     private static void joinRequest() throws IOException {
     	int id = JOIN_ID;
     	int flag = JOIN_FLAG;
-    	byte protocolByte = (byte) id;
-    	byte flagByte = (byte) flag;
     	
-    	byte[] data = new byte[2];
-    	data[0] = protocolByte;
-    	data[1] = flagByte;
+    	ClientMessage send_msg = new ClientMessage();
+    	send_msg.setProtocolId(id);
+    	send_msg.setFlag(flag);
     	
-    	SendMessage(data);
+    	SendMessage(send_msg.getEntirePacket());
     	
     	System.out.println("Trying to find a game....");
     	waitForACK(REPLY_JOIN_ID,REPLY_JOIN_ACK_FLAG);
@@ -268,14 +319,12 @@ class Client {
     private static void observeRequest() throws IOException {
     	int id = OBSERVE_ID;
     	int flag = OBSERVE_FLAG;
-    	byte protocolByte = (byte) id;
-    	byte flagByte = (byte) flag;
     	
-    	byte[] data = new byte[2];
-    	data[0] = protocolByte;
-    	data[1] = flagByte;
+    	ClientMessage send_msg = new ClientMessage();
+    	send_msg.setProtocolId(id);
+    	send_msg.setFlag(flag);
     	
-    	SendMessage(data);
+    	SendMessage(send_msg.getEntirePacket());
     	
     	waitForACK(REPLY_JOIN_ID,REPLY_OBS_ACK_FLAG);
     }
@@ -293,16 +342,23 @@ class Client {
 	    	byte[] username = splitted_input[0].getBytes();
 	    	byte[] password = splitted_input[1].getBytes();
 	    	
+	    	
+	    	ClientMessage send_msg = new ClientMessage();
+	    	
 	    	int id = LOG_ID;
 	    	int flag = LOGIN_FLAG;
-	    	byte protocolByte = (byte) id;
-	    	byte flagByte = (byte) flag;
+	    	send_msg.setProtocolId(id);
+	    	send_msg.setFlag(flag);
 	    	
 	    	
-	    	byte[] data = new byte[2 + 4 + username.length + password.length];
-	    	data[0] = protocolByte;
-	    	data[1] = flagByte;
-	    	int pos = 2;
+	    	//byte protocolByte = (byte) id;
+	    	//byte flagByte = (byte) flag;
+	    	
+	    	
+	    	byte[] data = new byte[4 + username.length + password.length];
+	    	//data[0] = protocolByte;
+	    	//data[1] = flagByte;
+	    	int pos = 0;
 	    	byte[] len = ByteBuffer.allocate(4).putInt(username.length).array();
 	    	System.arraycopy(len, 0, data,  pos, len.length);
 	    	pos+=4;
@@ -310,8 +366,9 @@ class Client {
 	    	System.arraycopy(username, 0, data,  pos, username.length);
 	    	pos += username.length;
 	    	System.arraycopy(password, 0, data,  pos, password.length);
+	    	send_msg.setData(data);
 	    	
-	    	SendMessage(data);
+	    	SendMessage(send_msg.getEntirePacket());
 	    	valid = waitForACK(REPLY_LOGIN_ID, REPLY_LOGIN_ACK_FLAG);
     	}
     	
@@ -325,11 +382,16 @@ class Client {
      * @throws InterruptedException
      */
     private static void Logout() throws IOException, InterruptedException {
+    	/*
     	byte[] data = new byte[2];
     	data[0]=(byte)LOG_ID;
     	data[1] = (byte)LOGOUT_FLAG;
+    	*/
     	
-    	SendMessage(data);
+    	ClientMessage send_msg = new ClientMessage();
+    	send_msg.setProtocolId(LOG_ID);
+    	send_msg.setFlag(LOGOUT_FLAG);
+    	SendMessage(send_msg.getEntirePacket());
     	
     	waitForACK(REPLY_LOGIN_ID,REPLY_LOGOUT_ACK_FLAG);
     	tcpClient.clientSocket.close();
@@ -368,8 +430,14 @@ class Client {
 				
 				//PlayerState.displayBoards();
 				
+				ClientMessage send_msg = new ClientMessage();
+				
 	        	int id = PLACE_ID;
 	        	int flag = PLACE_FLAG;
+	        	
+	        	send_msg.setProtocolId(id);
+	        	send_msg.setFlag(flag);
+	        	
 	        	byte protocolByte = (byte) id;
 	        	byte flagByte = (byte) flag;
 	        	
@@ -379,22 +447,24 @@ class Client {
 	        		dataString = dataString + input;
 	        	
 	        	//byte[] data = new byte[2+5];
-	        	byte outBytes[] = new byte[2+dataString.getBytes().length];
+	        	byte outBytes[] = new byte[dataString.getBytes().length];
 	        	outBytes[0] = protocolByte;
 	        	outBytes[1] = flagByte;
 	        	
 	        	//Convert data string to byte array
 	        	byte[] data = dataString.getBytes();
 	        for (int i = 0; i < data.length; i++)
-	        		outBytes[2+i] = data[i];
+	        		outBytes[i] = data[i];
 	        	
 	        	//data[2] = (byte)ship_n;
 	        	//data[3] = (byte)x1;
 	        	//data[4] = (byte)y1;
 	        	//data[5] = (byte)x2;
 	        	//data[6] = (byte)y2;
+	        
+	        send_msg.setData(outBytes);
 	        	
-	        	SendMessage(outBytes);
+	        	SendMessage(send_msg.getEntirePacket());
 	        	waitForACK(REPLY_SHIP_ID, REPLY_SHIP_PLACE_ACK_FLAG);
 	        	
         	}
@@ -414,17 +484,17 @@ class Client {
     private static void getHitShip(int[] data) throws InterruptedException 
     {
     		Move hitMove = new Move();
-    		hitMove.setCol(data[2]);
-    		hitMove.setRow(data[3]);
+    		hitMove.setCol(data[0]);
+    		hitMove.setRow(data[1]);
     		
-    		if (data[4] == REPLY_HIT_ACK)
+    		if (data[2] == REPLY_HIT_ACK)
     		{
-    			System.out.println("You have been hit at " + data[2] + "," + data[3]);
+    			System.out.println("You have been hit at " + data[0] + "," + data[1]);
     			hitMove.setValue(2);
     		}
     		else
     		{
-    			System.out.println("You have survived an attempted hit at " + data[2] + "," + data[3]);
+    			System.out.println("You have survived an attempted hit at " + data[0] + "," + data[1]);
     			hitMove.setValue(3);
     		}  	
     		playerState.updatePlayer1Board(hitMove);
@@ -481,7 +551,7 @@ class Client {
 	        	
 	        	SendMessage(data);
 	        	
-	        	int[] ship_cor = getHit();
+	        	int[] ship_cor = getHitData();
 	        	if(ship_cor[1] == REPLY_HIT_ENEMY_FLAG) {
 	        		if(ship_cor[4] == REPLY_HIT_ACK) {
 	        			System.out.println("You have successfully hit your opponent at "+x +"," + y);
@@ -568,6 +638,67 @@ class Client {
         }
     }
     
+    
+    
+    /**
+     * Gets the action that the user wants to perform given a list of options for THE HIT PHASE
+     * @return
+     * @throws IOException 
+     */
+    private static int getUserAction_HIT() throws IOException {
+    	while(true) {
+    		System.out.println("Enter one of the following number: ");
+    		
+    		System.out.println("0: Logout ");
+    		System.out.println("1: Send chat message ");
+    		System.out.println("2: Make a hit move ");
+    		
+    		int res= getUserResponse(0 , 2);
+      	   	switch (res) {
+	  	        case 0:
+	  	        	return 0;
+	  	        case 1:
+	  	        	return 1;
+	  	        case 2:
+	  	        	return 2;
+	  	        case -1:
+	  	    		System.out.println("Not a valid option");
+	  	    		continue;
+  	        	
+      	   }
+    	}
+    }
+    
+    
+    /**
+     * Gets the action that the user wants to perform given a list of options for THE PLACE PHASE
+     * @return
+     * @throws IOException 
+     */
+    private static int getUserAction_PLACE() throws IOException {
+    	while(true) {
+    		System.out.println("Enter one of the following number: ");
+    		
+    		System.out.println("0: Logout ");
+    		System.out.println("1: Send chat message ");
+    		System.out.println("2: Place a ship ");
+    		
+    		int res= getUserResponse(0 , 2);
+      	   	switch (res) {
+	  	        case 0:
+	  	        	return 0;
+	  	        case 1:
+	  	        	return 1;
+	  	        case 2:
+	  	        	return 2;
+	  	        case -1:
+	  	    		System.out.println("Not a valid option");
+	  	    		continue;
+  	        	
+      	   }
+    	}
+    }
+    
     /**
      * Sends any message to the server using the stream
      * @param msg
@@ -585,11 +716,15 @@ class Client {
      * @return
      * @throws InterruptedException
      */
-    private static int[] receiveMsg() throws InterruptedException
+    private static ClientMessage receiveMsg() throws InterruptedException
     {    	
     	int[] result = new int[5];
     	
+    	ClientMessage in_msg = new ClientMessage();
     	try {
+    		
+    		
+    		
     		byte[] inBytes = new byte[BUFFERSIZE];
     		StringBuilder strBuilder = new StringBuilder();
     		int bytesRead = 0;
@@ -601,6 +736,9 @@ class Client {
     			protocolId = inStream.read();
     	    	flag = inStream.read();
     	    	
+    	    	in_msg.setProtocolId(protocolId);
+    	    	in_msg.setFlag(flag);
+    	    	
     	    	System.out.println("Received PROTOCOL ID: " + protocolId);
     	    	System.out.println("Received PROTOCOL FLAG: "+flag);
     		}
@@ -609,26 +747,25 @@ class Client {
     		result[1]=flag;
     		
 	    	if(protocolId == REPLY_HIT_ID) {
-		    	result[2] = Character.getNumericValue(((char) inStream.read()));
-		    	result[3] = Character.getNumericValue(((char) inStream.read()));
-		    	result[4] = Character.getNumericValue(((char) inStream.read()));
-		    	
-		    	//System.out.println("Received data[2]: " + result[2]);
-		    	//System.out.println("Received data[3]: " + result[3]);
-		    	//System.out.println("Received data[4]: " + result[4]);
+	    		in_msg.setData(intToByteArray(Character.getNumericValue(((char) inStream.read()))));
+	    		in_msg.setData(intToByteArray(Character.getNumericValue(((char) inStream.read()))));
+	    		in_msg.setData(intToByteArray(Character.getNumericValue(((char) inStream.read()))));
+	    		
+
+	    	}
+	    	else if(protocolId == CHAT_ID) {
+	    		//Get the size of the text message, and move populate the data section.
+	    		
+	    		int size = inStream.read();
 	    	}
 	    	else {
 	    		result[2]=-1;
 	    		result[3]=-1;
 	    		result[4]=-1;
 	    	}
-	    	
 
 	    	
-	    	
 	    	TimeUnit.MICROSECONDS.sleep(1);
-	    	//System.out.println("Recieved PROTOCOL ID: " + protocolId);
-	    	//System.out.println("Recieved PROTOCL FLAG: "+flag);
 	    	
     	
     	
@@ -639,7 +776,7 @@ class Client {
 			e.printStackTrace();
 		}
     	
-    	return result;
+    	return in_msg;
     }
     
     
@@ -700,15 +837,21 @@ class Client {
      */
     private static boolean waitForACK(int ID, int FLAG) {
     	
-    	int[] data = new int[5];
+    	//int[] data = new int[5];
+    	int id=-1;
+    	int flag=-1;
+    	ClientMessage rec_msg = null;
     	do {
     		try {
-				data= receiveMsg();
+    			rec_msg = receiveMsg();
+    			id= rec_msg.getProtocolId();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-    	} while( data[0]!= ID);
-    	return data[1] == FLAG;
+    	} while( id!= ID);
+    	
+    	flag = rec_msg.getFlag();
+    	return flag == FLAG;
     }
     
     
@@ -718,12 +861,78 @@ class Client {
      * @return
      * @throws InterruptedException
      */
-    private static int[] getHit() throws InterruptedException {
+    private static int[] getHitData() throws InterruptedException {
     	int[] data = new int[5];
+    	int id = -1;
+    	ClientMessage rec_msg;
     	do {
-    		data = receiveMsg();
-    	}while(data[0]!=REPLY_HIT_ID);
+    		rec_msg = receiveMsg();
+    		id = rec_msg.getProtocolId();
+    	}while(id!=REPLY_HIT_ID);
     	
+    	data[0] = id;
+    	data[1]=rec_msg.getFlag();
+    	
+    	byte[] msg_data = rec_msg.getData();
+    	
+    	System.out.println("-------- Length of data recieved: " + msg_data.length);
+    	data[2] = fromByteArray(Arrays.copyOfRange(msg_data, 0, 4));
+    	data[3] = fromByteArray(Arrays.copyOfRange(msg_data, 4, 8));
+    	data[4] = fromByteArray(Arrays.copyOfRange(msg_data, 8, 12));
+    	
+    	
+    	System.out.println("Received data[2]: " + data[2]);
+    	System.out.println("Received data[3]: " + data[3]);
+    	System.out.println("Received data[4]: " + data[4]);
     	return data;
     }
+    
+   
+    
+    
+    //"Special command handling"
+    
+    
+    
+   
+   /**
+    * Sends a chat message to the server
+    * @param msg
+    * @throws IOException 
+    */
+   private static void sendChatMSG() throws IOException {
+	   System.out.println("Type in a message to be sent: ");
+	   
+	   String msg = inFromUser.readLine();
+	   ClientMessage packet = new ClientMessage(CHAT_ID, CHAT_PLAYER_FLAG, msg.getBytes());
+	   SendMessage(packet.getEntirePacket());
+   }
+   
+   private static void getChatMSG(byte[] msg) {
+	   
+	   String s = new String(msg);
+	   System.out.println("------------ Your opponent has messaged: " + s);
+   }
+   
+   
+   //Helper methods (GENERAL)
+   
+   /**
+    * Converts an integer to a byte array
+    * @param n
+    * @return
+    */
+   private static byte[] intToByteArray(int n) {
+   	return ByteBuffer.allocate(4).putInt(n).array();
+   }
+   
+   
+   /**
+    * Converts a byte array into an integer
+    * @param bytes
+    * @return
+    */
+   private static int fromByteArray(byte[] bytes) {
+       return ByteBuffer.wrap(bytes).getInt();
+  }
 } 
