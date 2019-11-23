@@ -29,10 +29,10 @@ public class WaitingRoom {
 	private static final int LIST_GAMES_SUCCESS = 4;
 	private static final int LIST_GAMES_FAILURE = 5;
 	
-	GameServer server;
-	HashSet<Client> activeClients; 
-	Queue<Client> playerQueue; //clients waiting assignment as player
-	HashMap<Integer,GameRoom> games;
+	private GameServer server;
+	private HashSet<Client> activeClients; 
+	private Queue<Client> playerQueue; //clients waiting assignment as player
+	private HashMap<Integer,GameRoom> games;
 	
 	public WaitingRoom(GameServer server)
 	{

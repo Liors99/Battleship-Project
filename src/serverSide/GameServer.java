@@ -216,18 +216,18 @@ public class GameServer {
      */
     private void acceptClient() 
     {
-    		SocketChannel tcpClientChannel;
+    		SocketChannel clientChannel;
     		// Accept a connection made to this channel's socket
         try 
         {
-			tcpClientChannel = ((ServerSocketChannel)keyChannel).accept();
-			tcpClientChannel.configureBlocking(false);
+			clientChannel = ((ServerSocketChannel)keyChannel).accept();
+			clientChannel.configureBlocking(false);
 			 System.out.println("Accepted a connection from " + 
-						tcpClientChannel.socket().getInetAddress().toString() +
-							":" + tcpClientChannel.socket().getPort());
+						clientChannel.socket().getInetAddress().toString() +
+							":" + clientChannel.socket().getPort());
 			 
 			 //Register the client to the selector
-			 tcpClientChannel.register(selector, SelectionKey.OP_READ);
+			 clientChannel.register(selector, SelectionKey.OP_READ);
 		} 
         catch (IOException e) 
         {
@@ -266,6 +266,8 @@ public class GameServer {
         		{
         			System.out.println("read() error, or connection closed");
         			key.cancel();  // deregister the socket
+        			//remove the client from waiting room
+        			waitingRoom.deactiviateClient(clientsByChannel.get(tcpClientChannel));
         			return false;  
         		}
         		else if (bytesRead < BUFFERSIZE)

@@ -305,7 +305,7 @@ public class GameRoom
         for (Client player : players())
         {
             if (player != quitClient){
-                msg = new Message(PROTOCOL_ID_GAME_LOGOUT,FLAG_LOGOUT_SUCCESSFUL, player, "");
+                msg = new Message(PROTOCOL_ID_GAME_LOGOUT,FLAG_LOGOUT_SUCCESSFUL, player, ""); // need individual protocol for other player dropped?
                 server.sendToClient(player, msg);
             }
         }    
