@@ -33,6 +33,7 @@ class Client {
 	private static final int OBSERVE_ID = 1;
 	private static final int OBSERVE_FLAG = 1;
 	private static final int LOG_ID = 0;
+	private static final int SIGNUP_FLAG = 0;
 	private static final int LOGIN_FLAG = 1;
 	private static final int LOGOUT_FLAG = 2;
 	private static final int PLACE_ID = 2;
@@ -147,12 +148,17 @@ class Client {
         tcpClient = new Client(add , port);
         playerState = new PlayerGameState();
     	
-        if(res == 1 || res == 0) {
+        if(res == 0) {
+        	signUp();
+        }
+        
+        else if(res == 1) {
 
         	Login();
-        	getUserPath();
         	
         }
+        
+        getUserPath();
         
     }
     
@@ -333,48 +339,85 @@ class Client {
     /**
      * Gets the username and password, and sends them to the server
      * @throws IOException
+     * @throws InterruptedException 
      */
-    private static void Login() throws IOException {
+    private static void Login() throws IOException, InterruptedException {
     	boolean valid = false;
-    	while(!valid) {
-	    	String[] splitted_input = getUserMsg("Enter Login information: <username> <password>", 2);
-	    	
-	    	byte[] username = splitted_input[0].getBytes();
-	    	byte[] password = splitted_input[1].getBytes();
-	    	
-	    	
-	    	ClientMessage send_msg = new ClientMessage();
-	    	
-	    	int id = LOG_ID;
-	    	int flag = LOGIN_FLAG;
-	    	send_msg.setProtocolId(id);
-	    	send_msg.setFlag(flag);
-	    	
-	    	
-	    	//byte protocolByte = (byte) id;
-	    	//byte flagByte = (byte) flag;
-	    	
-	    	
-	    	byte[] data = new byte[4 + username.length + password.length];
-	    	//data[0] = protocolByte;
-	    	//data[1] = flagByte;
-	    	int pos = 0;
-	    	byte[] len = ByteBuffer.allocate(4).putInt(username.length).array();
-	    	System.arraycopy(len, 0, data,  pos, len.length);
-	    	pos+=4;
-	    	
-	    	System.arraycopy(username, 0, data,  pos, username.length);
-	    	pos += username.length;
-	    	System.arraycopy(password, 0, data,  pos, password.length);
-	    	send_msg.setData(data);
-	    	
-	    	SendMessage(send_msg.getEntirePacket());
-	    	valid = waitForACK(REPLY_LOGIN_ID, REPLY_LOGIN_ACK_FLAG);
+    	String[] splitted_input = getUserMsg("Enter Login information: <username> <password>", 2);
+    	
+    	byte[] username = splitted_input[0].getBytes();
+    	byte[] password = splitted_input[1].getBytes();
+    	
+    	
+    	ClientMessage send_msg = new ClientMessage();
+    	
+    	int id = LOG_ID;
+    	int flag = LOGIN_FLAG;
+    	send_msg.setProtocolId(id);
+    	send_msg.setFlag(flag);
+    	
+    	
+    	byte[] data = new byte[4 + username.length + password.length];
+    	int pos = 0;
+    	byte[] len = ByteBuffer.allocate(4).putInt(username.length).array();
+    	System.arraycopy(len, 0, data,  pos, len.length);
+    	pos+=4;
+    	
+    	System.arraycopy(username, 0, data,  pos, username.length);
+    	pos += username.length;
+    	System.arraycopy(password, 0, data,  pos, password.length);
+    	send_msg.setData(data);
+    	
+    	SendMessage(send_msg.getEntirePacket());
+    	valid = waitForACK(REPLY_LOGIN_ID, REPLY_LOGIN_ACK_FLAG);
+    	
+    	if(!valid) {
+    		System.out.println("Username or password incorrect");
+    		preLoginPhase();
     	}
-    	
-    	
-    	
     }
+    	
+    	
+    	/**
+         * Gets the username and password, and sends them to the server
+         * @throws IOException
+         * @throws InterruptedException 
+         */
+        private static void signUp() throws IOException, InterruptedException {
+        	boolean valid = false;
+        	String[] splitted_input = getUserMsg("Enter signup information: <username> <password>", 2);
+        	
+        	byte[] username = splitted_input[0].getBytes();
+        	byte[] password = splitted_input[1].getBytes();
+        	
+        	
+        	ClientMessage send_msg = new ClientMessage();
+        	
+        	int id = LOG_ID;
+        	int flag = SIGNUP_FLAG;
+        	send_msg.setProtocolId(id);
+        	send_msg.setFlag(flag);
+        	
+        	
+        	byte[] data = new byte[4 + username.length + password.length];
+        	int pos = 0;
+        	byte[] len = ByteBuffer.allocate(4).putInt(username.length).array();
+        	System.arraycopy(len, 0, data,  pos, len.length);
+        	pos+=4;
+        	
+        	System.arraycopy(username, 0, data,  pos, username.length);
+        	pos += username.length;
+        	System.arraycopy(password, 0, data,  pos, password.length);
+        	send_msg.setData(data);
+        	
+        	SendMessage(send_msg.getEntirePacket());
+        	valid = waitForACK(REPLY_LOGIN_ID, REPLY_LOGIN_ACK_FLAG);
+        	
+        	if(!valid) {
+        		System.out.println("Username already exists or already logged in");
+        		preLoginPhase();
+        	}
+        }
     
     /**
      * Sends a logout request to the server and then goes back to the pre-login phase
