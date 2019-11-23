@@ -119,4 +119,9 @@ public class PlayerFleetBoard
     		}
     }
 
+	public String getPrivateBoardString() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

@@ -49,6 +49,8 @@ public class GameRoom
     private static final int MSG_FROM_PLAYER_FLAG = 0;
     private static final int MSG_FROM_OBSERVER_FLAG = 1;
     
+    private static final int PLAYER_BOARD_DUMP_ID = 6;
+    private static final int OBSERVER_BOARD_DUMP_ID = 7;
 
     /** Constructors */
     public GameRoom(GameServer newServer, WaitingRoom newWaitingRoom, int gameRoomID, Client player1, Client player2)
@@ -186,7 +188,7 @@ public class GameRoom
 	{
 		Client src = oldMsg.getClient();
 		//Send message first to the other player
-		for (Client player : playerBoards.keySet())
+		for (Client player : players())
 		{
 			if (player != src)
 			{
@@ -206,7 +208,7 @@ public class GameRoom
 	private boolean allPlayersFinishedPlacingShips()
     {
         PlayerFleetBoard board;   
-        for (Client player : playerBoards.keySet())
+        for (Client player : players())
         {
         		board = playerBoards.get(player); 
             if (board.shipsRemainingToPlace())
@@ -300,7 +302,7 @@ public class GameRoom
 
         gameOver = true; 
         Message msg;
-        for (Client player : playerBoards.keySet())
+        for (Client player : players())
         {
             if (player != quitClient){
                 msg = new Message(PROTOCOL_ID_GAME_LOGOUT,FLAG_LOGOUT_SUCCESSFUL, player, "");
@@ -325,7 +327,7 @@ public class GameRoom
         Message msg;
         String data = Integer.toString(x) + Integer.toString(y) + Integer.toString(hit);
         System.out.println("Data that should be sent for Hit: "+ data);
-        for (Client player : playerBoards.keySet())
+        for (Client player : players())
         {
             if (player == source)
                 msg = new Message(HIT_REPLY_PROTOCOL_ID, HIT_REPLY_SOURCE_FLAG, player, data);
@@ -344,7 +346,7 @@ public class GameRoom
     {
     		System.out.println("All players have placed ships");
         Message msg; 
-        for (Client player : playerBoards.keySet())
+        for (Client player : players())
         {
             msg = new Message(PROTOCOL_SHIP_PLACEMENT_COMPLETE,FLAG_SHIPS_PLACED_BOTH_PLAYERS, player, "");
             server.sendToClient(player, msg);
@@ -376,7 +378,7 @@ public class GameRoom
     		System.out.println("=========================================================");
     		System.out.println("GAME OVER");
     		System.out.println("=========================================================");
-		waitingRoom.alertGameHasEnded(this.gameID, playerBoards.keySet());
+		waitingRoom.alertGameHasEnded(this.gameID, players());
 		Message msgWinner = new Message(GAMEROOM_ID, PLAYER_WON_FLAG, winner, "");	
 		server.sendToClient(winner, msgWinner);
 		Message msgLoser = new Message(GAMEROOM_ID, PLAYER_LOST_FLAG, loser, "");	
@@ -421,6 +423,21 @@ public class GameRoom
         return gameID;
     }
 
+    public void dumpBoardContentsToObserver(Client observer)
+    {
+    		int playerFlag = 0; //to indicate via flag that we are dumping different players' boards
+    		for (PlayerFleetBoard board : playerBoards.values())
+    		{
+    			String boardString = board.getPrivateBoardString();
+    			Message boardDump = new Message(OBSERVER_BOARD_DUMP_ID, playerFlag, observer, boardString);
+    			playerFlag++; //increment flag; should be 0 for first player, 1 for second player
+    		}
+    }
+    
+    private Set<Client> players()
+    {
+    		return this.playerBoards.keySet();
+    }
 
 
 }
