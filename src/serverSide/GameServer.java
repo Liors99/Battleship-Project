@@ -278,12 +278,12 @@ public class GameServer {
         		
         		//Get the protocol Id
         		int protocolId = (inByteBuffer.get() & 0xFF);
-        		System.out.print("Protocol ID: " + protocolId);
+        		System.out.println("Received PROTOCOL ID: " + protocolId);
         		msg.setProtocolId(protocolId);
         		
         		//Get the flag
         		int flag = (inByteBuffer.get() & 0xFF);
-        		System.out.println("; Flag: " + flag);
+        		System.out.println("Received PROTOCOL FLAG: " + flag);
         		msg.setFlag(flag);
         		
         		if (msg.getProtocolId() == SERVER_ID && 
@@ -323,6 +323,8 @@ public class GameServer {
         				handleClientSignup(tcpClientChannel, msg, usernameLength);
         			else if(msg.getFlag() == LOGIN_FLAG)
         				handleClientLogin(tcpClientChannel, msg, usernameLength);
+        			else
+        				handleMessage(tcpClientChannel, msg);
         		}
         		else if (msg.getProtocolId() == MESSAGING_ID)
         			handleChatMessage(tcpClientChannel, msg, chatMsgLength);
@@ -380,21 +382,23 @@ public class GameServer {
 	    	//Check that user exists
 	    	if (userExists)
 	    	{
-	    	 	Client user = signedUpClientsByUsername.get(providedUsername);
+	    	 	Client client = signedUpClientsByUsername.get(providedUsername);
 	    		//Check that password matches username
-	    		if (user.passwordMatches(providedPassword))
+	    		if (client.passwordMatches(providedPassword))
 	    		{
 	    			//Check that client isn't already logged in
-	    			if (!waitingRoom.isActiveClient(user))
+	    			if (!waitingRoom.isActiveClient(client))
 	    			{
 	    				//Add the client to the waiting room
-		    			waitingRoom.activateClient(user);	
+		    			waitingRoom.activateClient(client);
+		    			//Add the new client-socket mapping
+		    			addToClientSocketMapping(client, clientChannel);
 		    		 	//Set flag of message to success
 		    	    		reply.setFlag(LOGIN_SIGNUP_SUCCESS);	
 	    			}		
 	    		}
 	    		//Send message to client
-		    	sendToClient(user, reply);	
+		    	sendToClient(client, reply);	
 	    	}
 	    	else
 	    	{
@@ -437,8 +441,7 @@ public class GameServer {
 	    	{
 	    		//Create new client and add to hashmap
 		    	Client client = new Client(username, password);
-		    	clientsByChannel.put(clientChannel, client);
-		    	socketsByClient.put(client, clientChannel);
+		    	addToClientSocketMapping(client, clientChannel);
 		    	signedUpClientsByUsername.put(username, client);
 		    	
 		    	//Add the client to the waiting room
@@ -466,14 +469,15 @@ public class GameServer {
     			if (msg.getFlag() == LOGOUT_FLAG)
     			{	
     				Client client = clientsByChannel.get(clientChannel);
-    				waitingRoom.deactiviateClient(client);
-    				//Send message to client that has been closed?
-    				clientsByChannel.remove(clientChannel);
     				//Message to send back if logout successful
     				Message reply = new Message();
     				reply.setProtocolId(SERVER_ID);
     				reply.setFlag(LOGOUT_SUCCESS);
     				sendToClient(client, reply);
+    				//Deactivate client from waiting room
+    				waitingRoom.deactiviateClient(client);
+    				//Remove from client-channel mapping
+    				removeFromClientSocketMapping(client);
     				
     				try {
     					clientChannel.socket().close();
@@ -493,6 +497,19 @@ public class GameServer {
     		
 	}
 	
+	private void addToClientSocketMapping(Client client, SocketChannel clientChannel)
+	{
+		clientsByChannel.put(clientChannel, client);
+    		socketsByClient.put(client, clientChannel);
+	}
+	
+	private void removeFromClientSocketMapping(Client client) 
+	{
+		SocketChannel clientChannel = socketsByClient.get(client);
+		clientsByChannel.remove(clientChannel);
+		socketsByClient.remove(client);
+	}
+
 	/**
 	 * Helper method to send a message to a client by specified the Client object.
 	 * @param client : the Client object to which we wish to send the message
