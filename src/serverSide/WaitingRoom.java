@@ -130,6 +130,8 @@ public class WaitingRoom {
 		observeSuccess.setProtocolId(WAITING_ROOM_ID);
 		observeSuccess.setFlag(GAME_OBSERVE_SUCCESS);
 		server.sendToClient(client, observeSuccess);	
+		//Send dump of game board contents
+		game.dumpBoardContentsToObserver(client);
 	}
 
 	/**

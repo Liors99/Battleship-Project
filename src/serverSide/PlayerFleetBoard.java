@@ -25,6 +25,20 @@ public class PlayerFleetBoard
     		{DESTROYER_SHIP_LENGTH,SUBMARINE_SHIP_LENGTH,CRUISER_SHIP_LENGTH,BATTLESHIP_SHIP_LENGTH,CARRIER_SHIP_LENGTH};
     private static final int MAX_HITS_GAME_OVER = 17; //total of each ship's length
     
+    /**
+     * Main for testing
+     * @param args : None
+     */
+    public static void main(String[] args)
+    {
+    		Client client = new Client("mariella", "1234567");
+    		PlayerFleetBoard board = new PlayerFleetBoard(client);
+    		System.out.println(board.getPrivateBoardString());
+    		board.placeShip(4, 0, 4, 4, 4);
+    		System.out.println(board.getPrivateBoardString());
+    		board.checkBoard(1,4);
+    		System.out.println(board.getPrivateBoardString());
+    }
     
     /** Constructors */
     public PlayerFleetBoard(Client player)
@@ -35,7 +49,7 @@ public class PlayerFleetBoard
         //Initialize board
         for (int i = 0; i < board.length; i++)
         		for (int j = 0; j < board[0].length; j++)
-        			board[i][j] = '0';
+        			board[i][j] = '.';
     }
 
     /** 
@@ -81,7 +95,7 @@ public class PlayerFleetBoard
 	    	int shipSize = shipSizes[shipID];
 	    	for(int i = y1; i <= y2; i++)
 	    		for (int j = x1; j <= x2; j++)
-	    			board[i][j] = '1'; 
+	    			board[i][j] = '+'; 
 	    	numOfShipsLeftToPlace--;
 	    	printBoard();
     }
@@ -94,14 +108,16 @@ public class PlayerFleetBoard
      */
     public boolean checkBoard(int X, int Y)
     {	
-        if(board[Y][X] == '1')
+        if(board[Y][X] == '+')
         {
         		//It's a hit
+        		board[Y][X] = 'X';
         		totalHitsSuffered++;
         		System.out.println(user.getUsername() + " has suffered " + totalHitsSuffered + " hits");
             return true;
         }
         //It's a miss
+        board[Y][X] = '0';
         return false; 
     }
     
@@ -119,9 +135,19 @@ public class PlayerFleetBoard
     		}
     }
 
+    /**
+     * Method to extract string representation of private game board
+     * @return String representing private game board, row-by-row
+     */
 	public String getPrivateBoardString() {
-		// TODO Auto-generated method stub
-		return null;
+		
+		String boardString = "";
+		for (int x = 0; x < board.length; x++)
+		{
+			for (int y = 0; y < board[0].length; y++)
+				boardString += board[x][y];
+		}
+		return boardString;
 	}
 
 }

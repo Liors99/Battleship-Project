@@ -430,6 +430,7 @@ public class GameRoom
     		{
     			String boardString = board.getPrivateBoardString();
     			Message boardDump = new Message(OBSERVER_BOARD_DUMP_ID, playerFlag, observer, boardString);
+    			server.sendToClient(observer, boardDump);
     			playerFlag++; //increment flag; should be 0 for first player, 1 for second player
     		}
     }
