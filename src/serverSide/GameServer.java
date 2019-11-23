@@ -325,13 +325,15 @@ public class GameServer {
         				handleClientSignup(tcpClientChannel, msg, usernameLength);
         			else if(msg.getFlag() == LOGIN_FLAG)
         				handleClientLogin(tcpClientChannel, msg, usernameLength);
-        			else
-        				handleMessage(tcpClientChannel, msg);
+        			else if (msg.getFlag() == LOGOUT_FLAG)
+        				handleClientLogout(tcpClientChannel, msg);
         		}
         		else if (msg.getProtocolId() == MESSAGING_ID)
         			handleChatMessage(tcpClientChannel, msg, chatMsgLength);
-        		else
-        			handleMessage(tcpClientChannel, msg);
+        		else if (msg.getProtocolId() == WAITING_ROOM_ID)
+        			waitingRoom.handleMessage(msg);
+        		else if (msg.getProtocolId() == GAME_ROOM_ID)
+        			waitingRoom.forwardMessageToGameRoom(msg); 	
         }
         catch (IOException e) {
         	// TODO Auto-generated catch block
@@ -342,6 +344,33 @@ public class GameServer {
     }
     
     /**
+     * Method to handle client logout request
+     * @param clientChannel : the socket channel of the associated client
+     * @param msg : the message received from the client (not needed; just following general 'handle' format)
+     */
+    private void handleClientLogout(SocketChannel clientChannel, Message msg) 
+    {
+    		Client client = clientsByChannel.get(clientChannel);
+		//Message to send back if logout successful
+		Message reply = new Message();
+		reply.setProtocolId(SERVER_ID);
+		reply.setFlag(LOGOUT_SUCCESS);
+		sendToClient(client, reply);
+		//Deactivate client from waiting room
+		waitingRoom.deactiviateClient(client);
+		//Remove from client-channel mapping
+		removeFromClientSocketMapping(client);
+		
+		try {
+			clientChannel.socket().close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+
+	/**
      * Method for handling in-game chat messaging.
      * @param clientChannel : the channel to which the client in question is associated
      * @param msg : the message associated with the login/signup request
@@ -352,7 +381,7 @@ public class GameServer {
     		byte[] bytes = msg.getData().getBytes();
     		System.out.println("Chat message of length " + chatMsgLength + " from " + clientsByChannel.get(tcpClientChannel).getUsername() + ":");
     		System.out.println(new String(bytes)); //print the chat message
-    		handleMessage(tcpClientChannel, msg);
+    		waitingRoom.forwardMessageToGameRoom(msg);  
 	}
 
 	/**
@@ -407,9 +436,7 @@ public class GameServer {
 	    		//Set flag of message to failure
 	    		reply.setFlag(LOGIN_SIGNUP_FAILURE);
 	    		sendToClientChannel(clientChannel, reply);
-	    	}
-	    	
-	    
+	    	}    
 	}
     
     /**
@@ -455,48 +482,6 @@ public class GameServer {
 	    	
 	    	//Send message to client
 	    	sendToClientChannel(clientChannel, reply);	
-	}
-
-    /**
-     * Main method wherein the parsed message, received on the client channel, is
-     * handled either directly or via forwarding to the WaitingRoom or appropriate 
-     * GameRoom instance
-     * @param clientChannel : the channel over which the message arrives
-     * @param msg : the message that requires handling
-     */
-	private void handleMessage(SocketChannel clientChannel, Message msg) 
-    {
-    		if (msg.getProtocolId() == SERVER_ID) 
-    		{
-    			if (msg.getFlag() == LOGOUT_FLAG)
-    			{	
-    				Client client = clientsByChannel.get(clientChannel);
-    				//Message to send back if logout successful
-    				Message reply = new Message();
-    				reply.setProtocolId(SERVER_ID);
-    				reply.setFlag(LOGOUT_SUCCESS);
-    				sendToClient(client, reply);
-    				//Deactivate client from waiting room
-    				waitingRoom.deactiviateClient(client);
-    				//Remove from client-channel mapping
-    				removeFromClientSocketMapping(client);
-    				
-    				try {
-    					clientChannel.socket().close();
-    				} catch (IOException e) {
-    					// TODO Auto-generated catch block
-    					e.printStackTrace();
-    				}
-    			}	
-    		}
-    		else if (msg.getProtocolId() == WAITING_ROOM_ID)
-    			waitingRoom.handleMessage(msg);
-    		else if (msg.getProtocolId() == GAME_ROOM_ID)
-    			waitingRoom.forwardMessageToGameRoom(msg);
-    		else if (msg.getProtocolId() == MESSAGING_ID)
-    			waitingRoom.forwardMessageToGameRoom(msg);
-    		
-    		
 	}
 	
 	private void addToClientSocketMapping(Client client, SocketChannel clientChannel)
