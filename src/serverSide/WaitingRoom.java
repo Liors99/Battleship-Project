@@ -239,5 +239,17 @@ public class WaitingRoom {
 		return activeClients.contains(user);
 	}
 
+
+	public void dumpClientBoard(Client client)
+	{
+		GameRoom room = games.get(client.getGameRoomId());
+		System.out.println("Got the respective room"); 
+		if(room.players().contains(client))
+		{
+			System.out.println("Client is a player in this room"); 
+			room.dumpBoardContents(client); 
+		}
+
+	}
 	
 }

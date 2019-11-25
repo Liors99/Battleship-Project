@@ -50,6 +50,10 @@ public class GameRoom
     private static final int MSG_FROM_OBSERVER_FLAG = 1;
     
     private static final int PLAYER_BOARD_DUMP_ID = 6;
+    private static final int DUMP_PLAYER_SHIPS_FLAG = 0; 
+    private static final int DUMP_PLAYER_HITS_FLAG = 1; 
+    private static final int DUMP_HITS_ON_PLAYER = 2;
+       
     private static final int OBSERVER_BOARD_DUMP_ID = 7;
 
     /** Constructors */
@@ -200,6 +204,54 @@ public class GameRoom
 		shareMessageWithObservers(oldMsg);
 	}
 
+    public void dumpBoardContents(Client client)
+    {
+        PlayerFleetBoard clientBoard = playerBoards.get(client); 
+        int iterator = 1;
+        byte newData[] = new byte[(clientBoard.ships.size())];
+        newData[0] = (byte)clientBoard.ships.size();
+        for (ShipSet<Integer, Integer, Integer, Integer, Integer> ship : clientBoard.ships) {
+
+            //for all the ships get the information and add it to a byte array
+            newData[iterator] = ship.getS().byteValue();
+            iterator++;
+            newData[iterator] = ship.getX().byteValue();
+            iterator++;
+            newData[iterator] = ship.getY().byteValue();
+            iterator++;
+            newData[iterator] = ship.getL().byteValue();
+            iterator++;
+            newData[iterator] = ship.getR().byteValue();
+            iterator++;
+
+        }
+        //BOARD_DUMP_ID = 6, DUMP_PLAYER_SHIPS_FLAG = 0
+        Message msg = new Message(PLAYER_BOARD_DUMP_ID, DUMP_PLAYER_SHIPS_FLAG, client, newData.toString());
+        server.sendToClient(client, msg);
+
+        for(PlayerFleetBoard board : playerBoards.values()){
+        //send the message to client 
+            iterator = 1; 
+            newData[0] = (byte)clientBoard.boardHits.size();
+            for (Pair<Integer, Integer, Integer> hit : clientBoard.boardHits)
+            {
+                newData[iterator] = hit.getH().byteValue(); 
+                iterator++;
+                newData[iterator] = hit.getL().byteValue(); 
+                iterator++;
+                newData[iterator] = hit.getR().byteValue(); 
+                iterator++;
+            }
+            
+            if(board == clientBoard)
+                msg = new Message(PLAYER_BOARD_DUMP_ID, DUMP_HITS_ON_PLAYER, client, newData.toString());
+            else 
+                msg = new Message(PLAYER_BOARD_DUMP_ID, DUMP_PLAYER_HITS_FLAG, client, newData.toString());
+           
+            server.sendToClient(client, msg);
+        }
+
+    }
 
 	/**
      * Checks the 2 players boards in to see if either have shipsRemainingToPlace
@@ -435,7 +487,7 @@ public class GameRoom
     		}
     }
     
-    private Set<Client> players()
+    public Set<Client> players()
     {
     		return this.playerBoards.keySet();
     }

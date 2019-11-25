@@ -1,5 +1,8 @@
 package serverSide;
 
+import java.util.*;
+import java.util.Map.Entry;
+
 public class PlayerFleetBoard
 {
     Client user; 
@@ -8,6 +11,15 @@ public class PlayerFleetBoard
     int numOfShipsLeftToPlace;    
     int totalHitsSuffered;
 
+    //This is the list that has all the hits that has been made on the player 
+    //<X, Y, H=1/M=0>
+    List<Pair<Integer, Integer, Integer>> boardHits = new ArrayList<Pair<Integer, Integer, Integer>>(); 
+
+    //This is the list that has the ships and all their positions 
+    //<Ship number, X1, Y1, X2, Y2>
+    List<ShipSet<Integer, Integer, Integer, Integer, Integer>> ships = new ArrayList<ShipSet<Integer, Integer, Integer, Integer, Integer>>(); 
+    
+
     private static final int DESTROYER_SHIP_ID = 0; 
     private static final int SUBMARINE_SHIP_ID = 1; 
     private static final int CRUISER_SHIP_ID = 2; 
@@ -15,7 +27,6 @@ public class PlayerFleetBoard
     private static final int CARRIER_SHIP_ID = 4; 
     
     private static final int TOTAL_SHIPS = 5; 
-
     private static final int DESTROYER_SHIP_LENGTH = 2;
     private static final int SUBMARINE_SHIP_LENGTH = 3;
     private static final int CRUISER_SHIP_LENGTH = 3;
@@ -28,7 +39,6 @@ public class PlayerFleetBoard
     /**
      * Main for testing
      * @param args : None
-     */
     public static void main(String[] args)
     {
     		Client client = new Client("mariella", "1234567");
@@ -39,6 +49,7 @@ public class PlayerFleetBoard
     		board.checkBoard(1,4);
     		System.out.println(board.getPrivateBoardString());
     }
+    */
     
     /** Constructors */
     public PlayerFleetBoard(Client player)
@@ -92,12 +103,15 @@ public class PlayerFleetBoard
      */
     public void placeShip(int shipID, int x1, int y1, int x2, int y2)
     {	
-	    	int shipSize = shipSizes[shipID];
-	    	for(int i = y1; i <= y2; i++)
-	    		for (int j = x1; j <= x2; j++)
-	    			board[i][j] = '+'; 
-	    	numOfShipsLeftToPlace--;
-	    	printBoard();
+        ShipSet<Integer, Integer, Integer, Integer, Integer> ship = new ShipSet<Integer, Integer, Integer, Integer, Integer>(shipID, x1, y1, x2, y2);
+        ships.add(ship); 
+        System.out.print("Length of Placed Ships Set: "+ ships.size());
+        int shipSize = shipSizes[shipID];
+        for(int i = y1; i <= y2; i++)
+            for (int j = x1; j <= x2; j++)
+                board[i][j] = '+'; 
+        numOfShipsLeftToPlace--;
+        printBoard();
     }
 
     /**
@@ -112,12 +126,20 @@ public class PlayerFleetBoard
         {
         		//It's a hit
         		board[Y][X] = 'X';
-        		totalHitsSuffered++;
-        		System.out.println(user.getUsername() + " has suffered " + totalHitsSuffered + " hits");
+                totalHitsSuffered++;
+                System.out.println(user.getUsername() + " has suffered " + totalHitsSuffered + " hits");
+                Pair<Integer, Integer, Integer> hit = new Pair<Integer, Integer, Integer>(X, Y, 1);
+                boardHits.add(hit);
+                System.out.println("Number of hits in the set: "+boardHits.size());
+
             return true;
         }
         //It's a miss
         board[Y][X] = '0';
+        Pair<Integer, Integer, Integer> miss = new Pair<Integer, Integer, Integer>(X, Y, 0);
+        boardHits.add(miss);
+        System.out.println("Number of hits in the set: "+boardHits.size());
+
         return false; 
     }
     
@@ -149,5 +171,49 @@ public class PlayerFleetBoard
 		}
 		return boardString;
 	}
+
+}
+
+class Pair<H,L,R> {
+    private L l;
+    private R r;
+    private H h; 
+    public Pair(L l, R r, H h){
+        this.h = h; 
+        this.l = l;
+        this.r = r;
+    }
+    public L getL(){ return l; }
+    public R getR(){ return r; }
+    public H getH(){ return h; }
+    public void setL(L l){ this.l = l; }
+    public void setR(R r){ this.r = r; }
+    public void setH(H h){ this.h = h; }
+
+}
+
+class ShipSet<S,X,Y,L,R> {
+    private L l;
+    private R r;
+    private X x;
+    private Y y;
+    private S s; 
+    public ShipSet(S s, X x, Y y, L l, R r){
+        this.s = s; 
+        this.x = x; 
+        this.y = y;
+        this.l = l;
+        this.r = r;
+    }
+    public L getL(){ return l; }
+    public R getR(){ return r; }
+    public X getX(){ return x; }
+    public Y getY(){ return y; }
+    public S getS(){ return s; }
+    public void setL(L l){ this.l = l; }
+    public void setR(R r){ this.r = r; }
+    public void setX(X x){ this.x = x; }
+    public void setY(Y y){ this.y = y; }
+    public void setS(S s){ this.s = s; }
 
 }
