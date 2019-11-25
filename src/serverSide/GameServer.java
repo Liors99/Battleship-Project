@@ -37,6 +37,7 @@ public class GameServer {
 	private CharsetDecoder decoder;
 	
 	// Messaging
+	private static int FIELDSSIZE = 6; //6 bytes for protocol ID + flag + data section length
 	private static int BUFFERSIZE = 32;
     
     // Selector and channels
@@ -245,12 +246,15 @@ public class GameServer {
     private boolean readFromClient() 
     {
     		SocketChannel tcpClientChannel = (SocketChannel) keyChannel;
-    		ByteBuffer inByteBuffer = ByteBuffer.allocateDirect(BUFFERSIZE);
+    		ByteBuffer inFieldsByteBuffer = ByteBuffer.allocateDirect(FIELDSSIZE);
     		CharBuffer inCharBuffer = CharBuffer.allocate(BUFFERSIZE);
     		int bytesRead = 0;
+    		boolean doneReading = false;
+    		
+    		//Special use
     		int usernameLength = 0; //only used if login or signup request
     		int chatMsgLength = 0; //only used if chat messaging       
-    		boolean doneReading = false;
+    		
     		
         // Read from client socket channel
         try 
@@ -261,61 +265,48 @@ public class GameServer {
         		if (clientsByChannel.containsKey(tcpClientChannel))
         			msg.setClient(clientsByChannel.get(tcpClientChannel));
         				
-        		bytesRead = tcpClientChannel.read(inByteBuffer);
+        		bytesRead = tcpClientChannel.read(inFieldsByteBuffer);
+        		
         		if (bytesRead <= 0)
-        		{
-        			System.out.println("read() error, or connection closed");
-        			key.cancel();  // deregister the socket
-        			//remove the client from waiting room
-        			waitingRoom.deactiviateClient(clientsByChannel.get(tcpClientChannel));
-        			return false;  
-        		}
-        		else if (bytesRead < BUFFERSIZE)
-        		{
-        			doneReading = true;
-        		}
+        			return signalReadError(tcpClientChannel, key);
         		
         		//Flip buffer for reading
-        		inByteBuffer.flip();
+        		inFieldsByteBuffer.flip();
         		
         		//Get the protocol Id
-        		int protocolId = (inByteBuffer.get() & 0xFF);
+        		int protocolId = (inFieldsByteBuffer.get() & 0xFF);
         		System.out.println("Received PROTOCOL ID: " + protocolId);
         		msg.setProtocolId(protocolId);
         		
         		//Get the flag
-        		int flag = (inByteBuffer.get() & 0xFF);
+        		int flag = (inFieldsByteBuffer.get() & 0xFF);
         		System.out.println("Received PROTOCOL FLAG: " + flag);
         		msg.setFlag(flag);
         		
+        		//Get the length of the data section
+        		int dataSectionLength = inFieldsByteBuffer.getInt(); //get 4 bytes
+        		//Allocate this many bytes to inByteBuffer
+        		ByteBuffer inDataByteBuffer = ByteBuffer.allocateDirect(dataSectionLength);
+        		   		
+        		//Get data section
+        		bytesRead = tcpClientChannel.read(inDataByteBuffer);
+        		
+        		//Read error?
+        		if (bytesRead <= 0 && dataSectionLength != 0) //if we have read 0, and we were supposed to read something
+        			return signalReadError(tcpClientChannel, key);
+        			
+        		//Special "flags" that are extracted from payload/data section
         		if (msg.getProtocolId() == SERVER_ID && 
                         (msg.getFlag() == SIGN_UP_FLAG || msg.getFlag() == LOGIN_FLAG))
-    				usernameLength = inByteBuffer.getInt();
+    				usernameLength = inDataByteBuffer.getInt();
         		else if (msg.getProtocolId() == MESSAGING_ID)
-        			chatMsgLength = inByteBuffer.getInt();
-        			
+        			chatMsgLength = inDataByteBuffer.getInt();
         		
-        		//Get the data
-        		decoder.decode(inByteBuffer, inCharBuffer, false); //advances pointer
-        		inCharBuffer.flip();
-        		//StringBuilder for data section
-        		StringBuilder strBuilder = new StringBuilder();
-        		strBuilder.append(inCharBuffer.toString());
+        		//Decode the bytes to ASCII characters
+        		decoder.decode(inFieldsByteBuffer, inCharBuffer, false);
         		
-        		//If not done reading message
-        		while(!doneReading)
-        		{
-        			inByteBuffer.clear();
-        			inCharBuffer.clear();
-        			bytesRead = tcpClientChannel.read(inByteBuffer);
-        			decoder.decode(inByteBuffer, inCharBuffer, false);
-        			inCharBuffer.flip();
-        			strBuilder.append(inCharBuffer.toString());
-        			doneReading = (bytesRead < BUFFERSIZE);
-        		}
-        		
-        		//Get the data section (payload)
-        		msg.setData(strBuilder.toString());
+        		//Set the message data section to this string
+        		msg.setData(inCharBuffer.toString());
         		System.out.println("Data: " + msg.getData());
         		
         		//Handle message
@@ -343,7 +334,16 @@ public class GameServer {
         return true;
     }
     
-    /**
+    private boolean signalReadError(SocketChannel tcpClientChannel, SelectionKey key2) 
+    {
+    		System.out.println("read() error, or connection closed");
+		key.cancel();  // deregister the socket
+		//remove the client from waiting room
+		waitingRoom.deactiviateClient(clientsByChannel.get(tcpClientChannel));
+		return false;  	
+	}
+
+	/**
      * Method to handle client logout request
      * @param clientChannel : the socket channel of the associated client
      * @param msg : the message received from the client (not needed; just following general 'handle' format)
