@@ -287,7 +287,9 @@ public class GameServer {
         		int flag = (inByteBuffer.get() & 0xFF);
         		System.out.println("Received PROTOCOL FLAG: " + flag);
         		msg.setFlag(flag);
-        		
+				
+			//put a byte converter here - read everything byte by byte? 	
+
         		if (msg.getProtocolId() == SERVER_ID && 
                         (msg.getFlag() == SIGN_UP_FLAG || msg.getFlag() == LOGIN_FLAG))
     				usernameLength = inByteBuffer.getInt();
@@ -350,7 +352,8 @@ public class GameServer {
      */
     private void handleClientLogout(SocketChannel clientChannel, Message msg) 
     {
-    		Client client = clientsByChannel.get(clientChannel);
+			Client client = clientsByChannel.get(clientChannel);
+			System.out.println("Logging out of GameRoom: "+client.getGameRoomId());
 		//Message to send back if logout successful
 		Message reply = new Message();
 		reply.setProtocolId(SERVER_ID);
@@ -430,14 +433,23 @@ public class GameServer {
 						if(client.getGameRoomId() != -1)
 						{
 							System.out.println("Resume game"); 
-							waitingRoom.dumpClientBoard(client); 
-						}
+							reply = new Message(5,2,client,"");  
+							//send to client the message that they have to resume a game immediately 
+							sendToClient(client, reply);		
+							waitingRoom.dumpClientBoard(client);
+
+							}
 						else
 						{
-							System.out.println("Start a new game"); 
+							System.out.println("Start a new game"); //the client has options on what they want to do
+							reply = new Message(5,3,client,"");  
+							//send to client the message that they can do whatever when they log in  
+							sendToClient(client, reply);	
 						}
 	    			}		
-	    		}
+				}
+				//have to add something here because the username exists but the password doesn't match 
+				//{}
 	    		//Send message to client
 		    	
 	    	}

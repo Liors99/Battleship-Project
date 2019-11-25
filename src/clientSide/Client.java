@@ -330,7 +330,7 @@ class Client {
     	ClientMessage send_msg = new ClientMessage();
     	send_msg.setProtocolId(id);
     	send_msg.setFlag(flag);
-    	send_msg.setData(intToByteArray(0));
+    	//send_msg.setData(intToByteArray(0));
     	
     	SendMessage(send_msg.getEntirePacket());
     	
@@ -349,7 +349,7 @@ class Client {
     	ClientMessage send_msg = new ClientMessage();
     	send_msg.setProtocolId(id);
     	send_msg.setFlag(flag);
-    	send_msg.setData(intToByteArray(0));
+    	//send_msg.setData(intToByteArray(0));
     	
     	SendMessage(send_msg.getEntirePacket());
     	
@@ -487,7 +487,7 @@ class Client {
     	ClientMessage send_msg = new ClientMessage();
     	send_msg.setProtocolId(LOG_ID);
     	send_msg.setFlag(LOGOUT_FLAG);
-    	send_msg.setData(intToByteArray(0));
+    	//send_msg.setData(intToByteArray(0));
     	SendMessage(send_msg.getEntirePacket());
     	
     	waitForACK(REPLY_LOGIN_ID,REPLY_LOGOUT_ACK_FLAG);
