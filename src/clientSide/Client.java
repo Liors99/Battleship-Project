@@ -559,7 +559,7 @@ class Client {
 	        	//data[5] = (byte)x2;
 	        	//data[6] = (byte)y2;
 	        
-	        	send_msg.setData(intToByteArray(outBytes.length));
+	        	//send_msg.setData(intToByteArray(outBytes.length));
 	        	send_msg.setData(outBytes);
 	        	
 	        	SendMessage(send_msg.getEntirePacket());
