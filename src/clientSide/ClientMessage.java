@@ -83,6 +83,20 @@ public class ClientMessage {
 		return res;
 	}
 	
+	
+	public int[] dataToIntArray() {
+		byte[] org = getData();
+		int[] res = new int[org.length/4];
+		
+		int j = 0;
+		for(int i =0 ; i<org.length ; i+=4) {
+			res[j]= fromByteArray(Arrays.copyOfRange(org, i, i+4));
+			j++;
+		}
+		
+		return res;
+	}
+	
 	private int fromByteArray(byte[] bytes) {
         return ByteBuffer.wrap(bytes).getInt();
    }

@@ -87,6 +87,21 @@ class Client {
 	public static final int REPLY_HIT_ACK = 1; //a hit
 	
 	
+	//Reconnect IDs and flags
+	public static final int REPLY_RECONNECT_ID = 5;
+	
+	public static final int REPLY_RECONNECT_DISCONNECT_FLAG = 0;
+	public static final int REPLY_RECONNECT_RECONNECT_FLAG = 1;
+	public static final int REPLY_RECONNECT_INGAME_FLAG = 2;
+	public static final int REPLY_RECONNECT_NOT_INGAME_FLAG = 3;
+	
+	
+	//Dump IDs and flags
+	public static final int REPLY_DUMP_ID=6;
+	public static final int REPLY_DUMP_THIS_BOARD_FLAG=0;
+	public static final int REPLY_DUMP_THIS_HIT_FLAG=1;
+	public static final int REPLY_DUMP_OTHER_HIT_FLAG=2;
+	
 	/**
 	 * Constructor, intitalizes the streams and port number
 	 * @param add - address number
@@ -283,7 +298,7 @@ class Client {
 	    		else if(protocolId==CHAT_ID && flag == CHAT_PLAYER_FLAG) {
 	    			getChatMSG(rec_msg.getData());
 	    		}
-	    		else if(protocolId==REPLY_TURN_ID && flag == REPLY_END_WON) {
+	    		else if(protocolId==REPLY_TURN_ID && (flag == REPLY_END_WON || flag == REPLY_END_QUIT)) {
 	    			isWon=true;
 	    			break;
 	    		}
@@ -315,6 +330,7 @@ class Client {
     	ClientMessage send_msg = new ClientMessage();
     	send_msg.setProtocolId(id);
     	send_msg.setFlag(flag);
+    	send_msg.setData(intToByteArray(0));
     	
     	SendMessage(send_msg.getEntirePacket());
     	
@@ -333,6 +349,7 @@ class Client {
     	ClientMessage send_msg = new ClientMessage();
     	send_msg.setProtocolId(id);
     	send_msg.setFlag(flag);
+    	send_msg.setData(intToByteArray(0));
     	
     	SendMessage(send_msg.getEntirePacket());
     	
@@ -361,6 +378,7 @@ class Client {
     	send_msg.setFlag(flag);
     	
     	
+    	
     	byte[] data = new byte[4 + username.length + password.length];
     	int pos = 0;
     	byte[] len = ByteBuffer.allocate(4).putInt(username.length).array();
@@ -378,6 +396,33 @@ class Client {
     	if(!valid) {
     		System.out.println("Username or password incorrect");
     		preLoginPhase();
+    	}
+    	
+    	
+    	
+    	//Figure out if we are in game
+    	ClientMessage rec_msg = receiveMsg();
+    	if(rec_msg.getProtocolId() == REPLY_RECONNECT_ID) {
+    		
+    		//If we are in game
+    		if(rec_msg.getFlag() == REPLY_RECONNECT_INGAME_FLAG) {
+    			
+    			
+    			//Get our current board
+    			rec_msg = receiveMsg();
+    			
+    			//Get hits on our board
+    			
+    			
+    			//Gets hits on the enemy board
+    			
+    			PlaceShip();
+    		}
+    		
+    		//We are NOT in game
+    		else {
+    			getUserPath();
+    		}
     	}
     }
     	
@@ -438,6 +483,7 @@ class Client {
     	ClientMessage send_msg = new ClientMessage();
     	send_msg.setProtocolId(LOG_ID);
     	send_msg.setFlag(LOGOUT_FLAG);
+    	send_msg.setData(intToByteArray(0));
     	SendMessage(send_msg.getEntirePacket());
     	
     	waitForACK(REPLY_LOGIN_ID,REPLY_LOGOUT_ACK_FLAG);
@@ -509,7 +555,8 @@ class Client {
 	        	//data[5] = (byte)x2;
 	        	//data[6] = (byte)y2;
 	        
-	        send_msg.setData(outBytes);
+	        	send_msg.setData(intToByteArray(outBytes.length));
+	        	send_msg.setData(outBytes);
 	        	
 	        	SendMessage(send_msg.getEntirePacket());
 	        	waitForACK(REPLY_SHIP_ID, REPLY_SHIP_PLACE_ACK_FLAG);
@@ -778,20 +825,26 @@ class Client {
     		
     		int protocolId = -1;
     		int flag = -1;
+    		int data_length = -1;
     		
     		if(inStream.available()>0) {
     			protocolId = inStream.read();
     	    	flag = inStream.read();
+    	    	data_length = fromByteArray(inStream.readNBytes(4));
     	    	
     	    	in_msg.setProtocolId(protocolId);
     	    	in_msg.setFlag(flag);
+    	    	in_msg.setData(inStream.readNBytes(data_length));
     	    	
     	    	System.out.println("Received PROTOCOL ID: " + protocolId);
     	    	System.out.println("Received PROTOCOL FLAG: "+flag);
+    	    	System.out.println("LENGTH OF DATA: "+data_length);
     		}
     		
     		result[0]=protocolId;
     		result[1]=flag;
+    		
+    		
     		
 	    	if(protocolId == REPLY_HIT_ID) {
 	    		in_msg.setData(intToByteArray(Character.getNumericValue(((char) inStream.read()))));
@@ -902,6 +955,17 @@ class Client {
     }
     
     
+    
+    public ClientMessage getServerMsg() throws InterruptedException {
+    	ClientMessage res;
+    	do {
+    		res = receiveMsg();
+    	}while(res.getProtocolId()==-1 && res.getFlag()==-1);
+    	
+    	return res;
+    	
+    	
+    }
     
     /**
      * Gets the hit coordiantes and the type 
