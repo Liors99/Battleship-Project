@@ -392,6 +392,29 @@ public class GameState {
     	return isOver;
     	}
 
+    public boolean isGameOver2(){
+        boolean isOver = true;
+        l1:
+        for(int[] row : Player2Board) {
+            for(int ship : row) {
+                if(ship==1) {
+                    isOver = false;
+
+                    break l1;
+                }
+            }
+
+        }
+        if(isOver) {
+            resetGame();
+            System.out.println("GAMEOVER!");
+        }
+
+
+
+        return isOver;
+    }
+
     public int[][] getPlayer1Board() {
         return Player1Board;
     }
