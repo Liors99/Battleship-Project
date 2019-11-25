@@ -147,6 +147,14 @@ public class GameState {
         displayBoard(getPlayer1Board());
     }
 
+    public void observe(){
+        System.out.println("Player2 board:");
+        displayBoard(getPlayer2Board());
+        System.out.println("___________________________________________________");
+        System.out.println("Player1 board:");
+        displayBoard(getPlayer1Board());
+    }
+
     private char shipDir(int x1, int y1, int x2, int y2){
         if(x1!=x2 && y1!=y2) return 'F';
         if(x1 == x2){
@@ -391,6 +399,29 @@ public class GameState {
     	
     	return isOver;
     	}
+
+    public boolean isGameOver2(){
+        boolean isOver = true;
+        l1:
+        for(int[] row : Player2Board) {
+            for(int ship : row) {
+                if(ship==1) {
+                    isOver = false;
+
+                    break l1;
+                }
+            }
+
+        }
+        if(isOver) {
+            resetGame();
+            System.out.println("GAMEOVER!");
+        }
+
+
+
+        return isOver;
+    }
 
     public int[][] getPlayer1Board() {
         return Player1Board;
