@@ -18,6 +18,7 @@ class Client {
 	private static int BUFFERSIZE = 8 * 1024;
 	
 	private int portNumber;
+	private String address;
 	private Socket clientSocket;
 	private DataOutputStream outBuffer; 
 	private InputStream inStream;
@@ -110,19 +111,9 @@ class Client {
 	 */
 	public Client(String add, int port) throws IOException
 	{
-		// Initialize a client socket connection to the server
-		portNumber = port;
-        clientSocket = new Socket(add, port); 
-        
-        // Initialize input and an output stream for the connection(s)
-        outBuffer = new DataOutputStream(clientSocket.getOutputStream());
-        
-        // Break this up into multiple steps so we can see how many bytes
-        // are available at the input stream at any given time
-        inStream = clientSocket.getInputStream();
-        // Make the in buffer capacity 8 KB
-        inBuffer = new DataInputStream(
-				new BufferedInputStream(inStream));
+		this.address = add;
+		this.portNumber = port;
+		
         
         inFromUser = new BufferedReader(
 				new InputStreamReader(System.in));
@@ -168,17 +159,37 @@ class Client {
     	int res = tcpClient.getUserLoginSignup();
     	
         if(res == 0) {
+        	tcpClient.initializeClient();
         	tcpClient.signUp();
+        	
         }
         
         else if(res == 1) {
-
+        	
+        	tcpClient.initializeClient();
         	tcpClient.Login();
         	
         }
         
         tcpClient.getUserPath();
         
+    }
+    
+    
+    public void initializeClient() throws UnknownHostException, IOException {
+    	// Initialize a client socket connection to the server
+		portNumber = port;
+        clientSocket = new Socket(address, portNumber); 
+        
+        // Initialize input and an output stream for the connection(s)
+        outBuffer = new DataOutputStream(clientSocket.getOutputStream());
+        
+        // Break this up into multiple steps so we can see how many bytes
+        // are available at the input stream at any given time
+        inStream = clientSocket.getInputStream();
+        // Make the in buffer capacity 8 KB
+        inBuffer = new DataInputStream(
+				new BufferedInputStream(inStream));
     }
     
     /**
@@ -363,6 +374,7 @@ class Client {
      * @throws InterruptedException 
      */
     private void Login() throws IOException, InterruptedException {
+    	
     	boolean valid = false;
     	String[] splitted_input = getUserMsg("Enter Login information: <username> <password>", 2);
     	
@@ -391,7 +403,11 @@ class Client {
     	send_msg.setData(data);
     	
     	SendMessage(send_msg.getEntirePacket());
-    	valid = waitForACK(REPLY_LOGIN_ID, REPLY_LOGIN_ACK_FLAG);
+    	ClientMessage rec_msg = getServerMsg();
+    	//valid = waitForACK(REPLY_LOGIN_ID, REPLY_LOGIN_ACK_FLAG);
+    	if(rec_msg.getProtocolId() == REPLY_LOGIN_ID && rec_msg.getFlag() == REPLY_LOGIN_ACK_FLAG) {
+    		valid = true;
+    	}
     	
     	if(!valid) {
     		System.out.println("Username or password incorrect");
@@ -400,34 +416,86 @@ class Client {
     	
     	
     	
-    	/*
+    	
     	//Figure out if we are in game
-    	ClientMessage rec_msg = receiveMsg();
+    	rec_msg = getServerMsg();
     	if(rec_msg.getProtocolId() == REPLY_RECONNECT_ID) {
     		
     		//If we are in game
     		if(rec_msg.getFlag() == REPLY_RECONNECT_INGAME_FLAG) {
     			
+    			System.out.println("CLIENT IS CURRENTLY IN GAME");
+    			
+    			byte[] data_msg;
     			
     			//Get our current board
-    			rec_msg = receiveMsg();
+    			rec_msg = getServerMsg();
+    			data_msg = rec_msg.getData();
+    			for(int i =0; i< data_msg.length ; i+=5) {
+    				int ship_n= data_msg[i];
+    				int x1= data_msg[i+1];
+    				int y1= data_msg[i+2];
+    				int x2= data_msg[i+3];
+    				int y2= data_msg[i+4];
+    				
+    				System.out.println("GOT SHIP = " + ship_n);
+    				System.out.println("GOT X1 = " + x1);
+    				System.out.println("GOT Y1 = " + y1);
+    				System.out.println("GOT X2 = " + x2);
+    				System.out.println("GOT Y2 = " + y2);
+    				
+    				playerState.placeShipPlayer1Board(ship_n, x1, y1, x2, y2);
+    			}
     			
     			//Get hits on our board
-    			
+    			rec_msg = getServerMsg();
+    			data_msg = rec_msg.getData();
+    			for(int i = 0; i< data_msg.length ; i+=2) {
+    				int x = data_msg[i];
+    				int y = data_msg[i+1];
+    				
+    				Move mv = new Move();
+    				mv.setCol(x);
+    				mv.setRow(y);
+    				
+    				playerState.updatePlayer1Board(mv);
+    			}
     			
     			//Gets hits on the enemy board
+    			rec_msg = getServerMsg();
+    			
+    			rec_msg = getServerMsg();
+    			data_msg = rec_msg.getData();
+    			for(int i = 0; i< data_msg.length ; i+=3) {
+    				int x = data_msg[i];
+    				int y = data_msg[i+1];
+    				int hit = data_msg[i+2];
+    				
+    				Move mv = new Move();
+    				mv.setCol(x);
+    				mv.setRow(y);
+    				
+    				if(hit == REPLY_HIT_ACK) {
+    					mv.setValue(3);
+    				}
+    				else {
+    					mv.setValue(2);
+    				}
+    				
+    				playerState.updatePlayer1Board(mv);
+    			}
     			
     			PlaceShip();
     		}
     		
     		//We are NOT in game
     		else {
-    			
+    			getUserPath();
     		}
     	}
-    	*/
     	
-    	getUserPath();
+    	
+    	
     }
     	
     	
@@ -437,6 +505,7 @@ class Client {
      * @throws InterruptedException 
      */
     private void signUp() throws IOException, InterruptedException {
+    	
     	boolean valid = false;
     	String[] splitted_input = getUserMsg("Enter signup information: <username> <password>", 2);
     	
@@ -552,18 +621,24 @@ class Client {
 	        	byte[] data = dataString.getBytes();
 	        for (int i = 0; i < data.length; i++)
 	        		outBytes[i] = data[i];
-	        	
-	        	//data[2] = (byte)ship_n;
-	        	//data[3] = (byte)x1;
-	        	//data[4] = (byte)y1;
-	        	//data[5] = (byte)x2;
-	        	//data[6] = (byte)y2;
 	        
 	        	//send_msg.setData(intToByteArray(outBytes.length));
 	        	send_msg.setData(outBytes);
 	        	
 	        	SendMessage(send_msg.getEntirePacket());
-	        	waitForACK(REPLY_SHIP_ID, REPLY_SHIP_PLACE_ACK_FLAG);
+	        	//waitForACK(REPLY_SHIP_ID, REPLY_SHIP_PLACE_ACK_FLAG);
+	        	
+	        	ClientMessage rec_msg = getServerMsg();
+	        	if(rec_msg.getProtocolId() == REPLY_SHIP_ID && rec_msg.getFlag() == REPLY_SHIP_PLACE_ACK_FLAG) {
+	        		System.out.println("Got ack for placement");
+	        		
+	        	}
+	        	else if(rec_msg.getProtocolId() == CHAT_ID && rec_msg.getFlag() == CHAT_PLAYER_FLAG) {
+	        		getChatMSG(rec_msg.getData());
+	        	}
+	        	else {
+	        		System.out.println("Server could not place the ship");
+	        	}
 	        	
         	}
         	catch(Exception e) {
@@ -841,9 +916,12 @@ class Client {
     	    	in_msg.setFlag(flag);
     	    	//in_msg.setData(inStream.readNBytes(data_length));
     	    	
+    	    	
+    	    	
+    	    	
     	    	System.out.println("Received PROTOCOL ID: " + protocolId);
     	    	System.out.println("Received PROTOCOL FLAG: "+flag);
-    	    	System.out.println("LENGTH OF DATA: "+data_length);
+    	    	//System.out.println("LENGTH OF DATA: "+data_length);
     		}
     		
     		result[0]=protocolId;
@@ -851,7 +929,9 @@ class Client {
     		
     		
     		
-    		/*
+    		
+    		
+    		
 	    	if(protocolId == REPLY_HIT_ID) {
 	    		in_msg.setData(intToByteArray(Character.getNumericValue(((char) inStream.read()))));
 	    		in_msg.setData(intToByteArray(Character.getNumericValue(((char) inStream.read()))));
@@ -859,17 +939,22 @@ class Client {
 	    		
 
 	    	}
-	    	else if(protocolId == CHAT_ID) {
+	    	else if(protocolId == CHAT_ID || protocolId == REPLY_DUMP_ID) {
 	    		//Get the size of the text message, and move populate the data section.
 	    		
-	    		int size = inStream.read();
+	    		System.out.println("Trying to get data from buffer, size of buffer: " + inStream.available());
+	    		data_length = fromByteArray(inStream.readNBytes(4));
+	    		System.out.println("length of data recvd: "+ data_length);
+	    		in_msg.setData(inStream.readNBytes(data_length));
+	    		
+	    		System.out.println("LENGTH OF DATA: "+data_length);
 	    	}
 	    	else {
 	    		result[2]=-1;
 	    		result[3]=-1;
 	    		result[4]=-1;
 	    	}
-	    	*/
+	    	
 
 	    	
 	    	TimeUnit.MICROSECONDS.sleep(1);
@@ -964,7 +1049,7 @@ class Client {
     
     
     /**
-     * Gets a message (protocol) from the server
+     * Gets the next message (protocol) that the server has sent (one by one)
      * @return - the message object
      * @throws InterruptedException
      */
@@ -1027,7 +1112,11 @@ class Client {
 	   System.out.println("Type in a message to be sent: ");
 	   
 	   String msg = inFromUser.readLine();
-	   ClientMessage packet = new ClientMessage(CHAT_ID, CHAT_PLAYER_FLAG, msg.getBytes());
+	   ClientMessage packet = new ClientMessage();
+	   packet.setProtocolId(CHAT_ID);
+	   packet.setFlag(CHAT_PLAYER_FLAG);
+	   packet.setData(intToByteArray(msg.length()));
+	   packet.setData(msg.getBytes());
 	   SendMessage(packet.getEntirePacket());
    }
    
