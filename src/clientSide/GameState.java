@@ -147,6 +147,14 @@ public class GameState {
         displayBoard(getPlayer1Board());
     }
 
+    public void observe(){
+        System.out.println("Player2 board:");
+        displayBoard(getPlayer2Board());
+        System.out.println("___________________________________________________");
+        System.out.println("Player1 board:");
+        displayBoard(getPlayer1Board());
+    }
+
     private char shipDir(int x1, int y1, int x2, int y2){
         if(x1!=x2 && y1!=y2) return 'F';
         if(x1 == x2){

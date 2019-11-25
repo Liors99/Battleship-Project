@@ -75,7 +75,11 @@ public class Observer {
         }
     }
 
-
+    /**
+     * handles observer
+     * currently supports chat and viewing the gameplay
+     * @param C
+     */
     public void main (Client C){
         this.C = C;
         moveCounter = 0;
@@ -108,6 +112,7 @@ public class Observer {
                         else{ mv.setValue(3);}
                         GameBoards.updatePlayer2Board(mv);
                     }
+                    GameBoards.observe();
                     if(GameBoards.isGameOver() || GameBoards.isGameOver2()) {
                         gameOver = true;
                     }

@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="8382c5ff-cd3e-41d0-a8f5-247e3e7ac743" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/src/clientSide/Observer.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/clientSide/GameState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/clientSide/GameState.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/clientSide/Observer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/clientSide/Observer.java" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -39,11 +39,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/clientSide/Observer.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="652">
-              <caret line="110" column="50" selection-start-line="110" selection-start-column="50" selection-end-line="110" selection-end-column="50" />
+            <state relative-caret-position="80">
+              <caret line="79" column="55" selection-start-line="79" selection-start-column="55" selection-end-line="79" selection-end-column="55" />
             </state>
           </provider>
         </entry>
@@ -57,11 +57,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/clientSide/GameState.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="472">
-              <caret line="397" column="31" selection-start-line="397" selection-start-column="31" selection-end-line="397" selection-end-column="31" />
+            <state relative-caret-position="530">
+              <caret line="153" column="35" selection-start-line="153" selection-start-column="35" selection-end-line="153" selection-end-column="35" />
             </state>
           </provider>
         </entry>
@@ -91,8 +91,8 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/src/clientSide/Client.java" />
-        <option value="$PROJECT_DIR$/src/clientSide/Observer.java" />
         <option value="$PROJECT_DIR$/src/clientSide/GameState.java" />
+        <option value="$PROJECT_DIR$/src/clientSide/Observer.java" />
       </list>
     </option>
   </component>
@@ -139,6 +139,9 @@
       <pane id="PackagesPane" />
       <pane id="Scope" />
     </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -232,17 +235,17 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/clientSide/Observer.java">
+    <entry file="file://$PROJECT_DIR$/src/clientSide/GameState.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="652">
-          <caret line="110" column="50" selection-start-line="110" selection-start-column="50" selection-end-line="110" selection-end-column="50" />
+        <state relative-caret-position="530">
+          <caret line="153" column="35" selection-start-line="153" selection-start-column="35" selection-end-line="153" selection-end-column="35" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/clientSide/GameState.java">
+    <entry file="file://$PROJECT_DIR$/src/clientSide/Observer.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="472">
-          <caret line="397" column="31" selection-start-line="397" selection-start-column="31" selection-end-line="397" selection-end-column="31" />
+        <state relative-caret-position="80">
+          <caret line="79" column="55" selection-start-line="79" selection-start-column="55" selection-end-line="79" selection-end-column="55" />
         </state>
       </provider>
     </entry>
