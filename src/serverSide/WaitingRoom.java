@@ -60,12 +60,16 @@ public class WaitingRoom {
 		activeClients.remove(client);
 		int gameRoomId = client.getGameRoomId();
 		GameRoom game = games.get(gameRoomId);
-		if(client.isPlayer())
+		/**if(client.isPlayer())
 		{
 			games.remove(gameRoomId); //The game cannot continue without player
 			game.communicateToAllPlayerQuit(client);
+
+			//Add the timer here 
+			//Then game remove if timer is exceeded
+
 		}
-		else if (client.isObserver())
+		else*/ if (client.isObserver())
 		{
 			game.removeObserver(client);
 		}
@@ -210,8 +214,8 @@ public class WaitingRoom {
 	 */
 	public void forwardMessageToGameRoom(Message msg) {
 		
-		int gameRoomId = msg.getGameRoomId();
-		GameRoom game = games.get(gameRoomId); //need to wrap in Integer?
+		int gameRoomId = msg.getGameRoomId();	//get the gameRoomID of the client
+		GameRoom game = games.get(gameRoomId); //get the gameRoom that has a matching gameRoomID
 		game.handleMessage(msg);
 	}
 	
@@ -242,9 +246,19 @@ public class WaitingRoom {
 
 	public void dumpClientBoard(Client client)
 	{
-		GameRoom room = games.get(client.getGameRoomId());
-		System.out.println("Got the respective room"); 
-		if(room.players().contains(client))
+		GameRoom room = this.games.get(client.getGameRoomId());	
+		System.out.println("Got the respective room "+client.getGameRoomId()); //returning 0
+
+		if(this.games != null)	
+		{
+			System.out.println("GameRooms Exists");
+		}
+		if(client != null)
+		{
+			System.out.println("Client Exists");
+		}
+
+		if(room.players().contains(client)) 
 		{
 			System.out.println("Client is a player in this room"); 
 			room.dumpBoardContents(client); 
@@ -252,4 +266,7 @@ public class WaitingRoom {
 
 	}
 	
+	//Have to correctly set the gameRoomID 
+
+
 }
