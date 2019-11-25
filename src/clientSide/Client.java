@@ -165,7 +165,7 @@ class Client {
     	
     	tcpClient.setPlayerState(playerState);
     	
-    	int res= tcpClient.getUserLoginSignup();
+    	int res = tcpClient.getUserLoginSignup();
     	
         if(res == 0) {
         	tcpClient.signUp();
@@ -694,9 +694,9 @@ class Client {
     	   int res= getUserResponse(0 , 1);
     	   
     	   switch (res) {
-	        case 0:
+	        case 0 :
 	        	return 0;
-	        case 1:
+	        case 1 :
 	        	return 1;
 	        case -1:
 	    		System.out.println("Not a valid option");

@@ -425,11 +425,21 @@ public class GameServer {
 		    			//Add the new client-socket mapping
 		    			addToClientSocketMapping(client, clientChannel);
 		    		 	//Set flag of message to success
-		    	    		reply.setFlag(LOGIN_SIGNUP_SUCCESS);	
+						reply.setFlag(LOGIN_SIGNUP_SUCCESS);
+						sendToClient(client, reply);		
+						if(client.getGameRoomId() != -1)
+						{
+							System.out.println("Resume game"); 
+							waitingRoom.dumpClientBoard(client); 
+						}
+						else
+						{
+							System.out.println("Start a new game"); 
+						}
 	    			}		
 	    		}
 	    		//Send message to client
-		    	sendToClient(client, reply);	
+		    	
 	    	}
 	    	else
 	    	{
