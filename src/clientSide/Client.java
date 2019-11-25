@@ -400,6 +400,7 @@ class Client {
     	
     	
     	
+    	/*
     	//Figure out if we are in game
     	ClientMessage rec_msg = receiveMsg();
     	if(rec_msg.getProtocolId() == REPLY_RECONNECT_ID) {
@@ -421,9 +422,12 @@ class Client {
     		
     		//We are NOT in game
     		else {
-    			getUserPath();
+    			
     		}
     	}
+    	*/
+    	
+    	getUserPath();
     }
     	
     	
@@ -830,11 +834,12 @@ class Client {
     		if(inStream.available()>0) {
     			protocolId = inStream.read();
     	    	flag = inStream.read();
-    	    	data_length = fromByteArray(inStream.readNBytes(4));
+    	    	
+    	    	//data_length = fromByteArray(inStream.readNBytes(4));
     	    	
     	    	in_msg.setProtocolId(protocolId);
     	    	in_msg.setFlag(flag);
-    	    	in_msg.setData(inStream.readNBytes(data_length));
+    	    	//in_msg.setData(inStream.readNBytes(data_length));
     	    	
     	    	System.out.println("Received PROTOCOL ID: " + protocolId);
     	    	System.out.println("Received PROTOCOL FLAG: "+flag);
@@ -846,6 +851,7 @@ class Client {
     		
     		
     		
+    		/*
 	    	if(protocolId == REPLY_HIT_ID) {
 	    		in_msg.setData(intToByteArray(Character.getNumericValue(((char) inStream.read()))));
 	    		in_msg.setData(intToByteArray(Character.getNumericValue(((char) inStream.read()))));
@@ -863,6 +869,7 @@ class Client {
 	    		result[3]=-1;
 	    		result[4]=-1;
 	    	}
+	    	*/
 
 	    	
 	    	TimeUnit.MICROSECONDS.sleep(1);
@@ -956,6 +963,11 @@ class Client {
     
     
     
+    /**
+     * Gets a message (protocol) from the server
+     * @return - the message object
+     * @throws InterruptedException
+     */
     public ClientMessage getServerMsg() throws InterruptedException {
     	ClientMessage res;
     	do {
