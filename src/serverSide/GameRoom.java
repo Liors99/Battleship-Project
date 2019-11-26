@@ -122,11 +122,11 @@ public class GameRoom
     {
         Client assocClient = msg.getClient(); 
         int protocolID = msg.getProtocolId(); 
-        System.out.println("GameRoom Protocol ID: "+protocolID);
+        System.out.println("GameRoom Protocol ID: "+ protocolID);
         int flag = msg.getFlag();
-        System.out.println("GameRoom Flag: "+flag);
+        System.out.println("GameRoom Flag: "+ flag);
         String data = msg.getData(); 
-        System.out.println("GameRoom Data: "+data);
+        System.out.println("GameRoom Data: "+ data);
         PlayerFleetBoard board = playerBoards.get(assocClient);
         
         /** Ship placement request */
@@ -392,7 +392,8 @@ public class GameRoom
     private void communicateToAllPlayersHit(Client source, int x, int y, int hit)
     {
         Message msg;
-        String data = Integer.toString(x) + Integer.toString(y) + Integer.toString(hit);
+        //String data = Integer.toString(x) + Integer.toString(y) + Integer.toString(hit);
+        String data = "" + x + y + hit;
         System.out.println("Data that should be sent for Hit: "+ data);
         
         //Send to players

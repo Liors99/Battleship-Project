@@ -10,6 +10,9 @@ package clientSide;
 import java.io.*; 
 import java.net.*;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit; 
 
@@ -304,7 +307,7 @@ class Client {
 	    		}
 	    		else if (protocolId == REPLY_HIT_ID && flag == REPLY_HIT_THIS_FLAG)
 	    		{
-	    			getHitShip(rec_msg.getDataShipInts());
+	    			getHitShip(rec_msg.data4BytesToIntArray());
 	    		}
 	    		else if(protocolId==CHAT_ID && flag == CHAT_PLAYER_FLAG) {
 	    			getChatMSG(rec_msg.getData());
@@ -427,11 +430,11 @@ class Client {
     			
     			System.out.println("CLIENT IS CURRENTLY IN GAME");
     			
-    			byte[] data_msg;
+    			int[] data_msg;
     			
     			//Get our current board
     			rec_msg = getServerMsg();
-    			data_msg = rec_msg.getData();
+    			data_msg = rec_msg.data4BytesToIntArray();
     			for(int i =0; i< data_msg.length ; i+=5) {
     				int ship_n= data_msg[i];
     				int x1= data_msg[i+1];
@@ -450,7 +453,7 @@ class Client {
     			
     			//Get hits on our board
     			rec_msg = getServerMsg();
-    			data_msg = rec_msg.getData();
+    			data_msg = rec_msg.data4BytesToIntArray();
     			for(int i = 0; i< data_msg.length ; i+=2) {
     				int x = data_msg[i];
     				int y = data_msg[i+1];
@@ -466,7 +469,7 @@ class Client {
     			rec_msg = getServerMsg();
     			
     			rec_msg = getServerMsg();
-    			data_msg = rec_msg.getData();
+    			data_msg = rec_msg.data4BytesToIntArray();
     			for(int i = 0; i< data_msg.length ; i+=3) {
     				int x = data_msg[i];
     				int y = data_msg[i+1];
@@ -942,16 +945,25 @@ class Client {
 	    		System.out.println("length of data recvd: "+ data_length);
 	    		
 	    		//Read in the data section
-	    		byte[] data_section = new byte[data_length];
 	    		
-	    		for(int i =0 ; i< data_length ; i ++ ) {
-	    			data_section[i] = (byte) inStream.read();
+	    		//If it is a chat message, do not convert...
+	    		
+	    		if(protocolId == CHAT_ID) {
+	    			byte[] data_section = new byte[data_length];
+	    			for(int i =0 ; i< data_length ; i ++ ) {
+		    			data_section[i] = (byte) inStream.read();
+		    		}
+	    			
+	    			in_msg.setData(data_section);
+	    			
+	    		}
+	    		else {
+	    			for(int i =0 ; i< data_length ; i ++ ) {
+	    				in_msg.setData(intToByteArray(Character.getNumericValue(((char) inStream.read()))));
+		    		}
 	    		}
 	    		
-	    		in_msg.setData(data_section);
-    	    	
-    	    	
-    	    	
+	    		
     	    	System.out.println("Received PROTOCOL ID: " + protocolId);
     	    	System.out.println("Received PROTOCOL FLAG: "+flag);
     	    	System.out.println("LENGTH OF DATA: "+data_length);
@@ -1153,11 +1165,13 @@ class Client {
 	   packet.setData(intToByteArray(msg.length()));
 	   packet.setData(msg.getBytes());
 	   SendMessage(packet.getEntirePacket());
+	   
+	   System.out.println("SENT MESSAGE OF SIZE: " + msg.length());
    }
    
    private static void getChatMSG(byte[] msg) {
-	   
 	   String s = new String(msg);
+	   
 	   System.out.println("------------ Your opponent has messaged: " + s);
    }
    
