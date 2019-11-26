@@ -214,7 +214,7 @@ public class GameRoom
         PlayerFleetBoard clientBoard = playerBoards.get(client); 
         System.out.println("Size of client board: "+clientBoard.ships.size());
         //The first position is the number of shops that are currently placed (Max 5)
-        String newData = Integer.toString(clientBoard.ships.size());
+        String newData = "";
         //Go through all ships currently placed and add them to the byte array (data section)
         for (ShipSet<Integer, Integer, Integer, Integer, Integer> ship : clientBoard.ships) {
 
@@ -240,8 +240,6 @@ public class GameRoom
                 System.out.print("Should Skip "); 
                 //create a new array with size (number of hits * 3) + 1 
                 newData = "";
-                //the first position is the number of hits 
-                newData += clientBoard.boardHits.size();
                 //For each hit that has been made add the hit to the data section in the message
                 for (Pair<Integer, Integer, Integer> hit : clientBoard.boardHits)
                 {
