@@ -490,7 +490,7 @@ class Client {
     				playerState.updatePlayer1Board(mv);
     			}
     			
-    			PlaceShip();
+    			preGamePhase();
     		}
     		
     		//We are NOT in game
