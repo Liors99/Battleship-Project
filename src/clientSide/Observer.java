@@ -64,7 +64,8 @@ public class Observer {
             gameBoards.setPlayer2Board(board);
         }
         
-        //gameBoards.displayBoards();
+        //Print to make sure they are as expected
+        gameBoards.displayBoards();
         
     }
 
