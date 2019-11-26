@@ -36,6 +36,9 @@ public class Observer {
     private void getBoard(int id) throws InterruptedException {
         ClientMessage CM = C.getServerMsg(); //expects dump
         String sBoard = new String(CM.getData());
+
+        CM.viewData();
+
         int [][] board = new int[10][10];
         for(int i=0;i<10;i++){
             for(int j=0;j<10;j++){
@@ -75,7 +78,7 @@ public class Observer {
             getBoard(1);
 
             boolean gameOver = false;
-
+            //return;   //for testing
             while(!gameOver){
                 ClientMessage CM = C.getServerMsg();
                 int protId = CM.getProtocolId();

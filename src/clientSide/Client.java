@@ -205,6 +205,8 @@ class Client {
     	if(res == 0) {
     		observeRequest();
     		System.out.println("Observing a game!");
+        Observer Obs = new Observer();
+        Obs.main(this);
     	}
     	else if(res == 1) {
 			joinRequest();
