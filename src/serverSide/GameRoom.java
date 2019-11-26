@@ -16,7 +16,8 @@ public class GameRoom
     private List<Client> observers = new ArrayList<Client>();  
     private Time duration; 
     private GameServer server;
-    WaitingRoom waitingRoom; 
+    private WaitingRoom waitingRoom; 
+    private boolean allPlayersFinishedPlacingShips;
     
     private static final int DESTROYER_SHIP_ID = 0; 
     private static final int SUBMARINE_SHIP_ID = 1; 
@@ -63,6 +64,7 @@ public class GameRoom
         waitingRoom = newWaitingRoom; 
         gameID = gameRoomID;
         gameOver = false; 
+        allPlayersFinishedPlacingShips = false;
         PlayerFleetBoard board1 = new PlayerFleetBoard(player1); 
         PlayerFleetBoard board2 = new PlayerFleetBoard(player2); 
         playerBoards.put(player1, board1);
@@ -126,7 +128,7 @@ public class GameRoom
                 Message response = new Message(GAMEROOM_ID, SUCCESS_SHIP_PLACEMENT_FLAG, assocClient, ""); 
                 server.sendToClient(assocClient, response);
                 
-                if(allPlayersFinishedPlacingShips()) //Both players have finished placing ships 
+                if(checkAllPlayersFinishedPlacingShips()) //Both players have finished placing ships 
                 {      
                 		communicateToAllPlayersStart();     //Tell all players that they're done 
                 }
@@ -257,7 +259,7 @@ public class GameRoom
      * Checks the 2 players boards in to see if either have shipsRemainingToPlace
      * @return true if all players have finished placing ships 
      */
-	private boolean allPlayersFinishedPlacingShips()
+	private boolean checkAllPlayersFinishedPlacingShips()
     {
         PlayerFleetBoard board;   
         for (Client player : players())
@@ -269,8 +271,14 @@ public class GameRoom
             		return false;
             }
         }
+        this.allPlayersFinishedPlacingShips = true;
         return true; 
     }
+	
+	public boolean allPlayersFinishedPlacingShips()
+	{
+		return this.allPlayersFinishedPlacingShips;
+	}
 
     /**
      * Checks if the targets board has a ship at position <X,Y> when a client wants to perform a hit 

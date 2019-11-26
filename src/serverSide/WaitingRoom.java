@@ -147,8 +147,12 @@ public class WaitingRoom {
 		int i = 0;
 		for (Integer gameRoomId : games.keySet())
 		{
-			gameIds[i] = gameRoomId.toString();
-			i++;
+			//Only list game is all players have finished placing ships
+			if (games.get(gameRoomId).allPlayersFinishedPlacingShips())
+			{
+				gameIds[i] = gameRoomId.toString();
+				i++;
+			}
 		}
 		String data = String.join(",", gameIds);
 		
