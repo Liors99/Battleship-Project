@@ -105,6 +105,8 @@ class Client {
 	public static final int REPLY_DUMP_THIS_BOARD_FLAG=0;
 	public static final int REPLY_DUMP_THIS_HIT_FLAG=1;
 	public static final int REPLY_DUMP_OTHER_HIT_FLAG=2;
+
+	private static final int OBSERVER_DUMP_ID = 7;
 	
 	/**
 	 * Constructor, intitalizes the streams and port number
@@ -949,7 +951,7 @@ class Client {
 	    		
 	    		//If it is a chat message, do not convert...
 	    		
-	    		if(protocolId == CHAT_ID) {
+	    		if(protocolId == CHAT_ID || protocolId == OBSERVER_DUMP_ID) {
 	    			byte[] data_section = new byte[data_length];
 	    			for(int i =0 ; i< data_length ; i ++ ) {
 		    			data_section[i] = (byte) inStream.read();

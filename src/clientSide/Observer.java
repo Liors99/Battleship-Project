@@ -3,7 +3,7 @@ package clientSide;
 import java.util.List;
 
 public class Observer {
-    private GameState GameBoards;
+    private GameState gameBoards;
     private Client C;
     private int moveCounter;
 
@@ -36,8 +36,9 @@ public class Observer {
     private void getBoard(int id) throws InterruptedException {
         ClientMessage CM = C.getServerMsg(); //expects dump
         String sBoard = new String(CM.getData());
+        System.out.println(sBoard);
 
-        CM.viewData();
+        //CM.viewData();
 
         int [][] board = new int[10][10];
         for(int i=0;i<10;i++){
@@ -58,10 +59,13 @@ public class Observer {
             }
         }
         if(id == 0) {
-            GameBoards.setPlayer1Board(board);
-        }else if(id == 0){
-            GameBoards.setPlayer2Board(board);
+            gameBoards.setPlayer1Board(board);
+        }else if(id == 1){
+            gameBoards.setPlayer2Board(board);
         }
+        
+        //gameBoards.displayBoards();
+        
     }
 
     /**
@@ -72,7 +76,7 @@ public class Observer {
     public void main (Client C){
         this.C = C;
         moveCounter = 0;
-        GameBoards = C.getPlayerState();
+        gameBoards = C.getPlayerState();
         try {
             getBoard(0);
             getBoard(1);
@@ -90,20 +94,20 @@ public class Observer {
                       Move mv = new Move();
                       mv.setCol(ar[0]);
                       mv.setRow(ar[1]);
-                      if(GameBoards.isShipAtPlayer1Board(mv)) mv.setValue(2);
+                      if(gameBoards.isShipAtPlayer1Board(mv)) mv.setValue(2);
                       else mv.setValue(3);
-                      GameBoards.updatePlayer1Board(mv);
+                      gameBoards.updatePlayer1Board(mv);
                     }else{ //p2
                         int[] ar = get2Ints(CM.getData());
                         Move mv = new Move();
                         mv.setCol(ar[0]);
                         mv.setRow(ar[1]);
-                        if(GameBoards.isShipAtPlayer2Board(mv)) {mv.setValue(2);}
+                        if(gameBoards.isShipAtPlayer2Board(mv)) {mv.setValue(2);}
                         else{ mv.setValue(3);}
-                        GameBoards.updatePlayer2Board(mv);
+                        gameBoards.updatePlayer2Board(mv);
                     }
-                    GameBoards.observe();
-                    if(GameBoards.isGameOver() || GameBoards.isGameOver2()) {
+                    gameBoards.observe();
+                    if(gameBoards.isGameOver() || gameBoards.isGameOver2()) {
                         gameOver = true;
                     }
                     moveCounter++;
