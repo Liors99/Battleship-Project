@@ -225,7 +225,7 @@ public class GameRoom
             newData += ship.getL().toString();   //x2
             newData += ship.getR().toString();   //y2
         }
-        System.out.print("Data Section: "+newData);
+        System.out.println("Data Section: "+newData);
         //BOARD_DUMP_ID = 6, DUMP_PLAYER_SHIPS_FLAG = 0
         Message msg = new Message(PLAYER_BOARD_DUMP_ID, DUMP_PLAYER_SHIPS_FLAG, client, newData);
         server.sendToClient(client, msg);
@@ -236,28 +236,28 @@ public class GameRoom
         
         for(PlayerFleetBoard board : playerBoards.values()){
             
+            newData = "";
+            //For each hit that has been made add the hit to the data section in the message
             if(board.boardHits.size() > 0){
                 System.out.print("Should Skip "); 
-                //create a new array with size (number of hits * 3) + 1 
-                newData = "";
-                //For each hit that has been made add the hit to the data section in the message
                 for (Pair<Integer, Integer, Integer> hit : clientBoard.boardHits)
                 {
                     newData += hit.getH().toString(); //Hit or Miss (1/0)
                     newData += hit.getL().toString(); //X
                     newData += hit.getR().toString(); //Y
                 }
-                System.out.print("Data section for Hit: "+newData); 
-                //If the board that we are getting the hits for is the the clients board (Flag = hits on)
-                if(board == clientBoard)
-                    msg = new Message(PLAYER_BOARD_DUMP_ID, DUMP_HITS_ON_PLAYER, client, newData);
-                //The board is the targets board - so its the hits we have made 
-                else 
-                    msg = new Message(PLAYER_BOARD_DUMP_ID, DUMP_PLAYER_HITS_FLAG, client, newData);
-            
-                //send the message to the client
-                server.sendToClient(client, msg);
             }
+            System.out.print("Data section for Hit: "+newData); 
+            //If the board that we are getting the hits for is the the clients board (Flag = hits on)
+            if(board == clientBoard)
+                msg = new Message(PLAYER_BOARD_DUMP_ID, DUMP_HITS_ON_PLAYER, client, newData);
+            //The board is the targets board - so its the hits we have made 
+            else 
+                msg = new Message(PLAYER_BOARD_DUMP_ID, DUMP_PLAYER_HITS_FLAG, client, newData);
+        
+            //send the message to the client
+            server.sendToClient(client, msg);
+            
         }
 
         System.out.println("Skipped");
