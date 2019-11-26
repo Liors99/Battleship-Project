@@ -52,7 +52,7 @@ public class Observer {
                 }else if(c=='X'){
                     board[i][j] = 2;
                     moveCounter++;
-                }else if(c=='O'){
+                }else if(c=='0'){
                     board[i][j] = 3;
                     moveCounter++;
                 }
