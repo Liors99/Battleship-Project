@@ -341,7 +341,7 @@ class Client {
     	ClientMessage send_msg = new ClientMessage();
     	send_msg.setProtocolId(id);
     	send_msg.setFlag(flag);
-    	//send_msg.setData(intToByteArray(0));
+    	send_msg.setData(intToByteArray(0));
     	
     	SendMessage(send_msg.getEntirePacket());
     	
@@ -360,7 +360,7 @@ class Client {
     	ClientMessage send_msg = new ClientMessage();
     	send_msg.setProtocolId(id);
     	send_msg.setFlag(flag);
-    	//send_msg.setData(intToByteArray(0));
+    	send_msg.setData(intToByteArray(0));
     	
     	SendMessage(send_msg.getEntirePacket());
     	
@@ -400,6 +400,7 @@ class Client {
     	System.arraycopy(username, 0, data,  pos, username.length);
     	pos += username.length;
     	System.arraycopy(password, 0, data,  pos, password.length);
+    	send_msg.setData(intToByteArray(data.length));
     	send_msg.setData(data);
     	
     	SendMessage(send_msg.getEntirePacket());
@@ -558,7 +559,7 @@ class Client {
     	ClientMessage send_msg = new ClientMessage();
     	send_msg.setProtocolId(LOG_ID);
     	send_msg.setFlag(LOGOUT_FLAG);
-    	//send_msg.setData(intToByteArray(0));
+    	send_msg.setData(intToByteArray(0));
     	SendMessage(send_msg.getEntirePacket());
     	
     	waitForACK(REPLY_LOGIN_ID,REPLY_LOGOUT_ACK_FLAG);
@@ -624,7 +625,7 @@ class Client {
 	        for (int i = 0; i < data.length; i++)
 	        		outBytes[i] = data[i];
 	        
-	        	//send_msg.setData(intToByteArray(outBytes.length));
+	        	send_msg.setData(intToByteArray(outBytes.length));
 	        	send_msg.setData(outBytes);
 	        	
 	        	SendMessage(send_msg.getEntirePacket());
@@ -718,13 +719,23 @@ class Client {
 	        	byte flagByte = (byte) flag;
 	        	
 	        	
+	        	ClientMessage send_msg = new ClientMessage();
+	        	
+	        	/*
 	        	byte[] data = new byte[2 + xByte.length + yByte.length];
 	        	data[0] = protocolByte;
 	        	data[1] = flagByte;
 	        	System.arraycopy(xByte, 0, data,  2, xByte.length);
 		    	System.arraycopy(yByte, 0, data,  2 + xByte.length, yByte.length);
+		    	*/
+		    	
+		    	send_msg.setProtocolId(id);
+		    	send_msg.setFlag(flag);
+		    	send_msg.setData(intToByteArray(2));
+		    	send_msg.setData(xByte);
+		    	send_msg.setData(yByte);
 	        	
-	        	SendMessage(data);
+	        	SendMessage(send_msg.getEntirePacket());
 	        	
 	        	int[] ship_cor = getHitData();
 	        	if(ship_cor[1] == REPLY_HIT_ENEMY_FLAG) {
@@ -918,33 +929,7 @@ class Client {
     	    	in_msg.setFlag(flag);
     	    	//in_msg.setData(inStream.readNBytes(data_length));
     	    	
-    	    	
-    	    	
-    	    	
-    	    	System.out.println("Received PROTOCOL ID: " + protocolId);
-    	    	System.out.println("Received PROTOCOL FLAG: "+flag);
-    	    	//System.out.println("LENGTH OF DATA: "+data_length);
-    		}
-    		
-    		result[0]=protocolId;
-    		result[1]=flag;
-    		
-    		
-    		
-    		
-    		
-    		
-	    	if(protocolId == REPLY_HIT_ID) {
-	    		in_msg.setData(intToByteArray(Character.getNumericValue(((char) inStream.read()))));
-	    		in_msg.setData(intToByteArray(Character.getNumericValue(((char) inStream.read()))));
-	    		in_msg.setData(intToByteArray(Character.getNumericValue(((char) inStream.read()))));
-	    		
-
-	    	}
-	    	else if(protocolId == CHAT_ID || protocolId == REPLY_DUMP_ID) {
-	    		//Get the size of the text message, and move populate the data section.
-	    		
-	    		System.out.println("Trying to get data from buffer, size of buffer: " + inStream.available());
+    	    	System.out.println("Trying to get data from buffer, size of buffer: " + inStream.available());
 	    		
 	    		
 	    		//read in the size of the data section
@@ -964,6 +949,34 @@ class Client {
 	    		}
 	    		
 	    		in_msg.setData(data_section);
+    	    	
+    	    	
+    	    	
+    	    	System.out.println("Received PROTOCOL ID: " + protocolId);
+    	    	System.out.println("Received PROTOCOL FLAG: "+flag);
+    	    	System.out.println("LENGTH OF DATA: "+data_length);
+    		}
+    		
+    		/*
+    		result[0]=protocolId;
+    		result[1]=flag;
+    		
+    		
+    		
+    		
+    		
+    		
+	    	if(protocolId == REPLY_HIT_ID) {
+	    		in_msg.setData(intToByteArray(Character.getNumericValue(((char) inStream.read()))));
+	    		in_msg.setData(intToByteArray(Character.getNumericValue(((char) inStream.read()))));
+	    		in_msg.setData(intToByteArray(Character.getNumericValue(((char) inStream.read()))));
+	    		
+
+	    	}
+	    	else if(protocolId == CHAT_ID || protocolId == REPLY_DUMP_ID) {
+	    		//Get the size of the text message, and move populate the data section.
+	    		
+	    		
 	    		
 	    		//in_msg.setData(inStream.readNBytes(data_length));
 	    		
@@ -976,7 +989,7 @@ class Client {
 	    		result[3]=-1;
 	    		result[4]=-1;
 	    	}
-	    	
+	    	*/
 
 	    	
 	    	TimeUnit.MICROSECONDS.sleep(1);

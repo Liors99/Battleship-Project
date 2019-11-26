@@ -297,6 +297,8 @@ public class GameServer {
         		//Read error?
         		if (bytesRead <= 0 && dataSectionLength != 0) //if we have read 0, and we were supposed to read something
         			return signalReadError(tcpClientChannel, key);
+        		
+        		inDataByteBuffer.flip();
         			
         		//Special "flags" that are extracted from payload/data section
         		if (msg.getProtocolId() == SERVER_ID && 
