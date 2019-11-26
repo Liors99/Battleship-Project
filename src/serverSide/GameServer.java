@@ -292,9 +292,8 @@ public class GameServer {
         		   		
         		//Get data section
         		bytesRead = tcpClientChannel.read(inDataByteBuffer);
-        		System.out.println("Number of bytes read: " + bytesRead);
         		
-        		//Read error?
+        		//Check for read error
         		if (bytesRead <= 0 && dataSectionLength != 0) //if we have read 0, and we were supposed to read something
         			return signalReadError(tcpClientChannel, key);
         		
@@ -313,7 +312,6 @@ public class GameServer {
         		//rewind before converting to string
         		inCharBuffer.rewind(); 
         		//Set the message data section to this string
-        		System.out.println("Char buffer contents: " + inCharBuffer.toString());
         		msg.setData(inCharBuffer.toString());
         		System.out.println("Data: " + msg.getData());
         		
@@ -414,12 +412,10 @@ public class GameServer {
 	    	Message reply = new Message();
     		reply.setProtocolId(SERVER_ID);
 	    	
-	    //Get the register user, if it exists
+	    	//Check that user exists
     		System.out.print("Does the user exist? ");
     		boolean userExists = signedUpClientsByUsername.containsKey(providedUsername);
     		System.out.println(userExists);
-	    	
-	    	//Check that user exists
 	    	if (userExists)
 	    	{
 	    	 	Client client = signedUpClientsByUsername.get(providedUsername);
@@ -430,6 +426,7 @@ public class GameServer {
 	    		if (client.passwordMatches(providedPassword))
 	    		{
 	    			//Check that client isn't already logged in
+	    			System.out.println("Is the user already logged in? " + waitingRoom.isActiveClient(client));
 	    			if (!waitingRoom.isActiveClient(client))
 	    			{
 	    				//Add the client to the waiting room
