@@ -31,12 +31,14 @@ public class GameServer {
 	private static final int LOGIN_SIGNUP_FAILURE = 1;
 	private static final int LOGOUT_SUCCESS = 2;
 	private static final int LOGOUT_FAILURE = 3;
+	private static final int DATA_START = 6; //data section starts at 6 bytes into message
 	
 	//Encoding and decoding
 	private Charset charset; 
 	private CharsetDecoder decoder;
 	
 	// Messaging
+	private static int FIELDSSIZE = 6; //6 bytes for protocol ID + flag + data section length
 	private static int BUFFERSIZE = 32;
     
     // Selector and channels
@@ -245,12 +247,14 @@ public class GameServer {
     private boolean readFromClient() 
     {
     		SocketChannel tcpClientChannel = (SocketChannel) keyChannel;
-    		ByteBuffer inByteBuffer = ByteBuffer.allocateDirect(BUFFERSIZE);
-    		CharBuffer inCharBuffer = CharBuffer.allocate(BUFFERSIZE);
+    		ByteBuffer inFieldsByteBuffer = ByteBuffer.allocateDirect(FIELDSSIZE);
     		int bytesRead = 0;
+    		boolean doneReading = false;
+    		
+    		//Special use
     		int usernameLength = 0; //only used if login or signup request
     		int chatMsgLength = 0; //only used if chat messaging       
-    		boolean doneReading = false;
+    		
     		
         // Read from client socket channel
         try 
@@ -261,61 +265,52 @@ public class GameServer {
         		if (clientsByChannel.containsKey(tcpClientChannel))
         			msg.setClient(clientsByChannel.get(tcpClientChannel));
         				
-        		bytesRead = tcpClientChannel.read(inByteBuffer);
+        		bytesRead = tcpClientChannel.read(inFieldsByteBuffer);
+        		
         		if (bytesRead <= 0)
-        		{
-        			System.out.println("read() error, or connection closed");
-        			key.cancel();  // deregister the socket
-        			//remove the client from waiting room
-        			waitingRoom.deactiviateClient(clientsByChannel.get(tcpClientChannel));
-        			return false;  
-        		}
-        		else if (bytesRead < BUFFERSIZE)
-        		{
-        			doneReading = true;
-        		}
+        			return signalReadError(tcpClientChannel, key);
         		
         		//Flip buffer for reading
-        		inByteBuffer.flip();
+        		inFieldsByteBuffer.flip();
         		
         		//Get the protocol Id
-        		int protocolId = (inByteBuffer.get() & 0xFF);
+        		int protocolId = (inFieldsByteBuffer.get() & 0xFF);
         		System.out.println("Received PROTOCOL ID: " + protocolId);
         		msg.setProtocolId(protocolId);
         		
         		//Get the flag
-        		int flag = (inByteBuffer.get() & 0xFF);
+        		int flag = (inFieldsByteBuffer.get() & 0xFF);
         		System.out.println("Received PROTOCOL FLAG: " + flag);
         		msg.setFlag(flag);
         		
+        		//Get the length of the data section
+        		int dataSectionLength = inFieldsByteBuffer.getInt(); //get 4 bytes
+        		System.out.println("Received DATA SECTION LENGTH: " + dataSectionLength);
+        		//Allocate this many bytes to inByteBuffer and charBuffer
+        		ByteBuffer inDataByteBuffer = ByteBuffer.allocateDirect(dataSectionLength);
+        		CharBuffer inCharBuffer = CharBuffer.allocate(dataSectionLength);
+        		   		
+        		//Get data section
+        		bytesRead = tcpClientChannel.read(inDataByteBuffer);
+        		
+        		//Check for read error
+        		if (bytesRead <= 0 && dataSectionLength != 0) //if we have read 0, and we were supposed to read something
+        			return signalReadError(tcpClientChannel, key);
+        		
+        		inDataByteBuffer.flip();
+        			
+        		//Special "flags" that are extracted from payload/data section
         		if (msg.getProtocolId() == SERVER_ID && 
                         (msg.getFlag() == SIGN_UP_FLAG || msg.getFlag() == LOGIN_FLAG))
-    				usernameLength = inByteBuffer.getInt();
-        		else if (msg.getProtocolId() == MESSAGING_ID)
-        			chatMsgLength = inByteBuffer.getInt();
-        			
+    				usernameLength = inDataByteBuffer.getInt();
         		
-        		//Get the data
-        		decoder.decode(inByteBuffer, inCharBuffer, false); //advances pointer
-        		inCharBuffer.flip();
-        		//StringBuilder for data section
-        		StringBuilder strBuilder = new StringBuilder();
-        		strBuilder.append(inCharBuffer.toString());
+        		//Decode the bytes to ASCII characters
+        		decoder.decode(inDataByteBuffer, inCharBuffer, false);
         		
-        		//If not done reading message
-        		while(!doneReading)
-        		{
-        			inByteBuffer.clear();
-        			inCharBuffer.clear();
-        			bytesRead = tcpClientChannel.read(inByteBuffer);
-        			decoder.decode(inByteBuffer, inCharBuffer, false);
-        			inCharBuffer.flip();
-        			strBuilder.append(inCharBuffer.toString());
-        			doneReading = (bytesRead < BUFFERSIZE);
-        		}
-        		
-        		//Get the data section (payload)
-        		msg.setData(strBuilder.toString());
+        		//rewind before converting to string
+        		inCharBuffer.rewind(); 
+        		//Set the message data section to this string
+        		msg.setData(inCharBuffer.toString());
         		System.out.println("Data: " + msg.getData());
         		
         		//Handle message
@@ -329,7 +324,7 @@ public class GameServer {
         				handleClientLogout(tcpClientChannel, msg);
         		}
         		else if (msg.getProtocolId() == MESSAGING_ID)
-        			handleChatMessage(tcpClientChannel, msg, chatMsgLength);
+        			handleChatMessage(tcpClientChannel, msg);
         		else if (msg.getProtocolId() == WAITING_ROOM_ID)
         			waitingRoom.handleMessage(msg);
         		else if (msg.getProtocolId() == GAME_ROOM_ID)
@@ -343,14 +338,24 @@ public class GameServer {
         return true;
     }
     
-    /**
+    private boolean signalReadError(SocketChannel tcpClientChannel, SelectionKey key2) 
+    {
+    		System.out.println("read() error, or connection closed");
+		key.cancel();  // deregister the socket
+		//remove the client from waiting room
+		waitingRoom.deactiviateClient(clientsByChannel.get(tcpClientChannel));
+		return false;  	
+	}
+
+	/**
      * Method to handle client logout request
      * @param clientChannel : the socket channel of the associated client
      * @param msg : the message received from the client (not needed; just following general 'handle' format)
      */
     private void handleClientLogout(SocketChannel clientChannel, Message msg) 
     {
-    		Client client = clientsByChannel.get(clientChannel);
+			Client client = clientsByChannel.get(clientChannel);
+			System.out.println("Logging out of GameRoom: "+client.getGameRoomId());
 		//Message to send back if logout successful
 		Message reply = new Message();
 		reply.setProtocolId(SERVER_ID);
@@ -376,10 +381,10 @@ public class GameServer {
      * @param msg : the message associated with the login/signup request
      * @param chatMsgLength : the length of the chat message payload
      */
-    private void handleChatMessage(SocketChannel tcpClientChannel, Message msg, int chatMsgLength) 
+    private void handleChatMessage(SocketChannel tcpClientChannel, Message msg) 
     {
     		byte[] bytes = msg.getData().getBytes();
-    		System.out.println("Chat message of length " + chatMsgLength + " from " + clientsByChannel.get(tcpClientChannel).getUsername() + ":");
+    		System.out.println("Chat message of length " + bytes.length + " from " + clientsByChannel.get(tcpClientChannel).getUsername() + ":");
     		System.out.println(new String(bytes)); //print the chat message
     		waitingRoom.forwardMessageToGameRoom(msg);  
 	}
@@ -405,19 +410,21 @@ public class GameServer {
 	    	Message reply = new Message();
     		reply.setProtocolId(SERVER_ID);
 	    	
-	    //Get the register user, if it exists
+	    	//Check that user exists
     		System.out.print("Does the user exist? ");
     		boolean userExists = signedUpClientsByUsername.containsKey(providedUsername);
     		System.out.println(userExists);
-	    	
-	    	//Check that user exists
 	    	if (userExists)
 	    	{
 	    	 	Client client = signedUpClientsByUsername.get(providedUsername);
 	    		//Check that password matches username
+	    	 	//System.out.println("Saved password: " + client.getPassword());
+	    	 	//System.out.println("Provided password password: " + providedPassword);
+	    	 	System.out.println("Does the password match? " + client.passwordMatches(providedPassword));
 	    		if (client.passwordMatches(providedPassword))
 	    		{
 	    			//Check that client isn't already logged in
+	    			System.out.println("Is the user already logged in? " + waitingRoom.isActiveClient(client));
 	    			if (!waitingRoom.isActiveClient(client))
 	    			{
 	    				//Add the client to the waiting room
@@ -425,31 +432,41 @@ public class GameServer {
 		    			//Add the new client-socket mapping
 		    			addToClientSocketMapping(client, clientChannel);
 		    		 	//Set flag of message to success
-						reply.setFlag(LOGIN_SIGNUP_SUCCESS);
+		    			reply.setFlag(LOGIN_SIGNUP_SUCCESS);
+					sendToClient(client, reply);		
+					if(client.getGameRoomId() != -1)
+					{
+						System.out.println("Resume game"); 
+						reply = new Message(5,2,client,"");  
+						//send to client the message that they have to resume a game immediately 
 						sendToClient(client, reply);		
-						if(client.getGameRoomId() != -1)
-						{
-							System.out.println("Resume game"); 
-							waitingRoom.dumpClientBoard(client); 
-						}
-						else
-						{
-							System.out.println("Start a new game"); 
-						}
-	    			}		
+						waitingRoom.dumpClientBoard(client);
+					}
+					else
+					{
+						System.out.println("Start a new game"); //the client has options on what they want to do
+						reply = new Message(5,3,client,"");  
+						//send to client the message that they can do whatever when they log in  
+						sendToClient(client, reply);	
+					}
+	    			}
+	    			else // client is already logged in 
+	    				sendLoginFailure(clientChannel, reply);
 	    		}
-	    		//Send message to client
-		    	
+	    		else //password doesn't match
+	    			sendLoginFailure(clientChannel, reply);	
 	    	}
 	    	else
-	    	{
-	    		//Set flag of message to failure
-	    		reply.setFlag(LOGIN_SIGNUP_FAILURE);
-	    		sendToClientChannel(clientChannel, reply);
-	    	}    
+	    		sendLoginFailure(clientChannel, reply);
 	}
     
-    /**
+    private void sendLoginFailure(SocketChannel clientChannel, Message reply) 
+    {
+    		reply.setFlag(LOGIN_SIGNUP_FAILURE);
+		sendToClientChannel(clientChannel, reply);	
+	}
+
+	/**
      * Method for handling client signup to game server
      * @param clientChannel : the channel to which the client in question is associated
      * @param msg : the message associated with the signup request
@@ -536,29 +553,22 @@ public class GameServer {
 		byte flagByte = (byte) msg.getFlag();
 		String data = msg.getData();
 		byte[] dataBytes = data.getBytes();
-		byte[] outBytes = null;
-		int dataStart = 2; //the index at which the data starts
+		byte[] outBytes = new byte[2 + 4 + dataBytes.length]; 
 		
-		if (msg.getProtocolId() == MESSAGING_ID)
-		{
-			//We must include the message length, if a chat message
-			outBytes = new byte[2 + 4 + dataBytes.length];
-			byte[] msgLength = ByteBuffer.allocate(4).putInt(dataBytes.length).array();
-			System.arraycopy(msgLength, 0, outBytes, dataStart, msgLength.length);
-			dataStart += 4;	// increment by 4 since length takes up 4 bytes
-		}
-		else
-		{
-			outBytes = new byte[2 + dataBytes.length];		
-		}
-		
+		//Put protocol Id, flag, and data section length in outBytes
 		outBytes[0] = protocolByte;
 		outBytes[1] = flagByte;
-		System.arraycopy(dataBytes, 0, outBytes,  dataStart, dataBytes.length);
 		System.out.println("Sent PROTOCOL ID: " + outBytes[0]);
 		System.out.println("Sent PROTOCOL FLAG: " + outBytes[1]);
+		byte[] dataSectionLength = ByteBuffer.allocate(4).putInt(dataBytes.length).array(); //4 bytes for dataSectionLength
+		System.arraycopy(dataSectionLength, 0, outBytes, 2, 4);
+		System.out.println("Sent DATASECTION LENGTH: " + dataBytes.length);
+		
+		//Copy data section into outBytes
+		System.arraycopy(dataBytes, 0, outBytes, DATA_START, dataBytes.length);
+		
 		if (dataBytes.length > 0)
-			System.out.println("Sent data section: " + new String(outBytes, dataStart, dataBytes.length));
+			System.out.println("Sent data section: " + new String(outBytes, DATA_START, dataBytes.length));
 		
     		// Write message to client socket 
     		int bytesSent = 0;
@@ -581,7 +591,7 @@ public class GameServer {
             return false;    
         }
     		
-    		System.out.println("Length of bytes sent: " + msgSize);
+    		System.out.println("Length of message sent, in bytes: " + msgSize);
         return true;	
     }
 	  

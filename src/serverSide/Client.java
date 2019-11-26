@@ -58,6 +58,10 @@ public class Client {
 		return this.gameRoomId;
 	}
 
+	public String getPassword() {
+		return this.password;
+	}
+	
 	public void resetStatus() 
 	{
 		this.gameRoomId = NO_GAMEROOM;
