@@ -33,6 +33,7 @@ public class WaitingRoom {
 	private HashSet<Client> activeClients; 
 	private Queue<Client> playerQueue; //clients waiting assignment as player
 	private HashMap<Integer,GameRoom> games;
+	private HashMap<Integer,GameRoom> gamesAllShipsPlaced;
 	
 	public WaitingRoom(GameServer server)
 	{
@@ -40,6 +41,7 @@ public class WaitingRoom {
 		this.activeClients = new HashSet<Client>();
 		this.playerQueue = new LinkedList<Client>();
 		this.games = new HashMap<Integer,GameRoom>();
+		this.gamesAllShipsPlaced = new HashMap<Integer,GameRoom>();
 	}
 
 	/**
@@ -104,9 +106,19 @@ public class WaitingRoom {
 		{
 			//Assign to a random game 
 			int gameRoomId = getRandomGameRoomId();
-			addClientAsObserver(client, gameRoomId);
+			if (gameRoomId != -1)
+				addClientAsObserver(client, gameRoomId);
+			else //there are no games to observe
+			{
+				//Send 'observe failure' message
+				Message observeFailure = new Message();
+				observeFailure.setClient(client);
+				observeFailure.setProtocolId(WAITING_ROOM_ID);
+				observeFailure.setFlag(GAME_OBSERVE_SUCCESS);
+				server.sendToClient(client, observeFailure);	
+			}
 		}
-		else if (msg.getFlag() == GAME_OBSERVE_SPECIFIED_FLAG)
+		/*else if (msg.getFlag() == GAME_OBSERVE_SPECIFIED_FLAG)
 		{
 			int gameRoomId = Integer.parseInt(msg.getData());
 			addClientAsObserver(client, gameRoomId);
@@ -114,7 +126,7 @@ public class WaitingRoom {
 		else if (msg.getFlag() == LIST_GAMES_FLAG)
 		{
 			sendListOfGamesTo(client);
-		}
+		}*/
 	}
 	
 	/**
@@ -144,7 +156,7 @@ public class WaitingRoom {
 	 * wish to observe from the list. 
 	 * !!! Not yet fully implemented/tested.
 	 * @param client : the client that would like to become an observer
-	 */
+	 *//*
 	private void sendListOfGamesTo(Client client) 
 	{	
 		String[] gameIds = new String[games.size()];
@@ -162,7 +174,7 @@ public class WaitingRoom {
 		listOfGames.setProtocolId(WAITING_ROOM_ID);
 		listOfGames.setFlag(LIST_GAMES_SUCCESS);
 		server.sendToClient(client, listOfGames);
-	}
+	}*/
 
 	/**
 	 * Helper function to retrieve a random game room id should an observer
@@ -171,9 +183,21 @@ public class WaitingRoom {
 	 */
 	private int getRandomGameRoomId() 
 	{
-		double randDouble = Math.random() * (games.size() - 1);
-		int randInt = (int) Math.round(randDouble);
-		return randInt;
+		if (gamesAllShipsPlaced.size() > 0)
+		{
+			double randDouble = Math.random() * (gamesAllShipsPlaced.size() - 1);
+			int randInt = (int) Math.round(randDouble);
+			GameRoom game = gamesAllShipsPlaced.get(randInt);
+			return game.getGameID();
+		}
+		else
+			return -1;
+	}
+	
+	public void addToSetOfGamesAllShipsPlaced(GameRoom game)
+	{
+		System.out.println("Waiting room: game id " + game.getGameID() + " has all ships placed");
+		gamesAllShipsPlaced.put(gamesAllShipsPlaced.size(), game);
 	}
 
 	/**
