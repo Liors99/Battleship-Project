@@ -140,7 +140,8 @@ public class GameRoom
                 server.sendToClient(assocClient, response);
                 
                 if(allPlayersFinishedPlacingShips()) //Both players have finished placing ships 
-                {      
+                {   
+                		waitingRoom.addToSetOfGamesAllShipsPlaced(this); //Let waiting room know this game has all ships placed
                 		communicateToAllPlayersStart();     //Tell all players that they're done 
                 }
                 

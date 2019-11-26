@@ -342,8 +342,12 @@ public class GameServer {
     {
     		System.out.println("read() error, or connection closed");
 		key.cancel();  // deregister the socket
-		//remove the client from waiting room
-		waitingRoom.deactiviateClient(clientsByChannel.get(tcpClientChannel));
+		//is the clientChannel registered to a client? 
+		//if so, if client is active, deactivate them
+		if (clientsByChannel.containsKey(tcpClientChannel))
+		{
+			waitingRoom.deactiviateClient(clientsByChannel.get(tcpClientChannel));
+		}
 		return false;  	
 	}
 
@@ -354,8 +358,9 @@ public class GameServer {
      */
     private void handleClientLogout(SocketChannel clientChannel, Message msg) 
     {
-			Client client = clientsByChannel.get(clientChannel);
-			System.out.println("Logging out of GameRoom: "+client.getGameRoomId());
+		Client client = clientsByChannel.get(clientChannel);
+		if (client.getGameRoomId() != -1)
+			System.out.println("Logging out of GameRoom: " + client.getGameRoomId());
 		//Message to send back if logout successful
 		Message reply = new Message();
 		reply.setProtocolId(SERVER_ID);
