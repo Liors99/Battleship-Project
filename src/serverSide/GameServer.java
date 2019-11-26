@@ -248,7 +248,6 @@ public class GameServer {
     {
     		SocketChannel tcpClientChannel = (SocketChannel) keyChannel;
     		ByteBuffer inFieldsByteBuffer = ByteBuffer.allocateDirect(FIELDSSIZE);
-    		CharBuffer inCharBuffer = CharBuffer.allocate(BUFFERSIZE);
     		int bytesRead = 0;
     		boolean doneReading = false;
     		
@@ -287,8 +286,9 @@ public class GameServer {
         		//Get the length of the data section
         		int dataSectionLength = inFieldsByteBuffer.getInt(); //get 4 bytes
         		System.out.println("Received DATA SECTION LENGTH: " + dataSectionLength);
-        		//Allocate this many bytes to inByteBuffer
+        		//Allocate this many bytes to inByteBuffer and charBuffer
         		ByteBuffer inDataByteBuffer = ByteBuffer.allocateDirect(dataSectionLength);
+        		CharBuffer inCharBuffer = CharBuffer.allocate(dataSectionLength);
         		   		
         		//Get data section
         		bytesRead = tcpClientChannel.read(inDataByteBuffer);
@@ -308,9 +308,12 @@ public class GameServer {
         			chatMsgLength = inDataByteBuffer.getInt();
         		
         		//Decode the bytes to ASCII characters
-        		decoder.decode(inFieldsByteBuffer, inCharBuffer, false);
+        		decoder.decode(inDataByteBuffer, inCharBuffer, false);
         		
+        		//rewind before converting to string
+        		inCharBuffer.rewind(); 
         		//Set the message data section to this string
+        		System.out.println("Char buffer contents: " + inCharBuffer.toString());
         		msg.setData(inCharBuffer.toString());
         		System.out.println("Data: " + msg.getData());
         		
@@ -421,6 +424,9 @@ public class GameServer {
 	    	{
 	    	 	Client client = signedUpClientsByUsername.get(providedUsername);
 	    		//Check that password matches username
+	    	 	//System.out.println("Saved password: " + client.getPassword());
+	    	 	//System.out.println("Provided password password: " + providedPassword);
+	    	 	System.out.println("Does the password match? " + client.passwordMatches(providedPassword));
 	    		if (client.passwordMatches(providedPassword))
 	    		{
 	    			//Check that client isn't already logged in
