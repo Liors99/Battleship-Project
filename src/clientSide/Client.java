@@ -44,9 +44,9 @@ class Client {
 	public static final int HIT_ID = 2; 
 	public static final int HIT_FLAG = 2; 
 	
-	public static final int CHAT_ID= 8;
-	public static final int CHAT_PLAYER_FLAG= 0;
-	public static final int CHAT_OBSERVER_FLAG= 1;
+	public static final int CHAT_ID = 8;
+	public static final int CHAT_PLAYER_FLAG = 0;
+	public static final int CHAT_OBSERVER_FLAG = 1;
 	
 	//Flag and IDs for Replies
 	public static final int REPLY_LOGIN_ID = 0;
@@ -204,6 +204,7 @@ class Client {
     	int res = getJoinObserve();
     	if(res == 0) {
     		observeRequest();
+    		System.out.println("Observing a game!");
     	}
     	else if(res == 1) {
 			joinRequest();

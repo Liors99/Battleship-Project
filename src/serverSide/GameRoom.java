@@ -242,7 +242,8 @@ public class GameRoom
         //Send the hits on each Client 
         System.out.println("Number of Hits on Client: "+ playerBoards.values().size());
         
-        for(PlayerFleetBoard board : playerBoards.values()){
+        for(PlayerFleetBoard board : playerBoards.values())
+        {
             
             newData = "";
             //For each hit that has been made add the hit to the data section in the message
@@ -394,7 +395,8 @@ public class GameRoom
         Message msg;
         //String data = Integer.toString(x) + Integer.toString(y) + Integer.toString(hit);
         String data = "" + x + y + hit;
-        System.out.println("Data that should be sent for Hit: "+ data);
+        System.out.println("Data that should be sent for Hit: " + data);
+        System.out.println("Length of hit data, in bytes: " + data.getBytes().length);
         
         //Send to players
         for (Client player : players())
