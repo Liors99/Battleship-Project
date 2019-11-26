@@ -492,7 +492,8 @@ class Client {
     				playerState.updatePlayer1Board(mv);
     			}
     			
-    			preGamePhase();
+				preGamePhase();
+				gamePhase();
     		}
     		
     		//We are NOT in game

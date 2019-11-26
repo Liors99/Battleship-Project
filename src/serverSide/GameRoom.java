@@ -10,10 +10,11 @@ public class GameRoom
 
     private int gameID; 
     private boolean gameOver; 
+    private boolean gameStarted = false; 
     private HashMap<Client, PlayerFleetBoard> playerBoards = new HashMap<Client, PlayerFleetBoard>();
     private Client player1;	//keep track of player1 and 2 for game observers
     private Client player2;
-    private Client sourcePlayer; 
+    private Client sourcePlayer; //the current player
     private Client targetPlayer;
     private List<Client> observers = new ArrayList<Client>();  
     private Time duration; 
@@ -270,7 +271,18 @@ public class GameRoom
         msg = new Message(PLAYER_BOARD_DUMP_ID, DUMP_HITS_MADE_FLAG, client, message61);
         server.sendToClient(client, msg);  
         msg = new Message(PLAYER_BOARD_DUMP_ID, DUMP_HITS_ON_PLAYER, client, message62);
-        server.sendToClient(client, msg);  
+        server.sendToClient(client, msg);
+        if(gameStarted) //All ships have been placed 
+        {
+            //ID 3, FLAG 0 (protocol response for finishing placing ships)
+            msg = new Message(PROTOCOL_SHIP_PLACEMENT_COMPLETE,FLAG_SHIPS_PLACED_BOTH_PLAYERS, client, "");
+            server.sendToClient(client, msg);
+            if(client == sourcePlayer)//turn)
+            {
+                communicateToPlayerTurn(); 
+            }
+            //Check player turn and send ID = 2 Flag = 6 
+        }
         System.out.println("Skipped");
     }
 
@@ -290,6 +302,7 @@ public class GameRoom
             		return false;
             }
         }
+        gameStarted = true; 
         return true; 
     }
 
