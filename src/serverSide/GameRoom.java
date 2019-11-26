@@ -53,7 +53,7 @@ public class GameRoom
     
     private static final int PLAYER_BOARD_DUMP_ID = 6;
     private static final int DUMP_PLAYER_SHIPS_FLAG = 0; 
-    private static final int DUMP_PLAYER_HITS_FLAG = 1; 
+    private static final int DUMP_HITS_MADE_FLAG = 1; 
     private static final int DUMP_HITS_ON_PLAYER = 2;
        
     private static final int OBSERVER_BOARD_DUMP_ID = 7;
@@ -241,7 +241,8 @@ public class GameRoom
 
         //Send the hits on each Client 
         System.out.println("Number of Hits on Client: "+ playerBoards.values().size());
-        
+        String message61 = "";
+        String message62 = ""; 
         for(PlayerFleetBoard board : playerBoards.values())
         {
             
@@ -249,6 +250,7 @@ public class GameRoom
             //For each hit that has been made add the hit to the data section in the message
             if(board.boardHits.size() > 0){
                 System.out.print("Should Skip "); 
+                //get all the hits made on this board
                 for (Pair<Integer, Integer, Integer> hit : clientBoard.boardHits)
                 {
                     newData += hit.getH().toString(); //Hit or Miss (1/0)
@@ -259,16 +261,16 @@ public class GameRoom
             System.out.print("Data section for Hit: "+newData); 
             //If the board that we are getting the hits for is the the clients board (Flag = hits on)
             if(board == clientBoard)
-                msg = new Message(PLAYER_BOARD_DUMP_ID, DUMP_HITS_ON_PLAYER, client, newData);
+                message62 = newData; 
             //The board is the targets board - so its the hits we have made 
             else 
-                msg = new Message(PLAYER_BOARD_DUMP_ID, DUMP_PLAYER_HITS_FLAG, client, newData);
-        
-            //send the message to the client
-            server.sendToClient(client, msg);
+                message61 = newData; 
             
         }
-
+        msg = new Message(PLAYER_BOARD_DUMP_ID, DUMP_HITS_MADE_FLAG, client, message61);
+        server.sendToClient(client, msg);  
+        msg = new Message(PLAYER_BOARD_DUMP_ID, DUMP_HITS_ON_PLAYER, client, message62);
+        server.sendToClient(client, msg);  
         System.out.println("Skipped");
     }
 
