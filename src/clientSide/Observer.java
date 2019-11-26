@@ -1,5 +1,7 @@
 package clientSide;
 
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.List;
 
 public class Observer {
@@ -69,6 +71,38 @@ public class Observer {
         
     }
 
+
+    private  int fromByteArray(byte[] bytes) {
+        return ByteBuffer.wrap(bytes).getInt();
+    }
+
+    /**
+     * Gets the hit coordiantes and the type
+     * @return
+     * @throws InterruptedException
+     */
+    private int[] getHitData(ClientMessage rec_msg){
+        int[] data = new int[5];
+        int id = -1;
+
+
+        data[0] = id;
+        data[1]=rec_msg.getFlag();
+
+        byte[] msg_data = rec_msg.getData();
+
+        System.out.println("-------- Length of data recieved: " + msg_data.length);
+        data[2] = fromByteArray(Arrays.copyOfRange(msg_data, 0, 4));
+        data[3] = fromByteArray(Arrays.copyOfRange(msg_data, 4, 8));
+        data[4] = fromByteArray(Arrays.copyOfRange(msg_data, 8, 12));
+
+
+        System.out.println("Received data[2]: " + data[2]);
+        System.out.println("Received data[3]: " + data[3]);
+        System.out.println("Received data[4]: " + data[4]);
+        return data;
+    }
+
     /**
      * handles observer
      * currently supports chat and viewing the gameplay
@@ -87,11 +121,11 @@ public class Observer {
             while(!gameOver){
                 ClientMessage CM = C.getServerMsg();
                 int protId = CM.getProtocolId();
-                if(protId == 3){ //chat
+                if(protId == 8){ //chat
                     getChatMSG(CM.getData());
-                }else if(protId == 2){ //hit
+                }else if(protId == 4){ //hit
                     if(moveCounter%2==0){ //p1
-                      int[] ar = get2Ints(CM.getData());
+                      int[] ar = getHitData(CM);
                       Move mv = new Move();
                       mv.setCol(ar[0]);
                       mv.setRow(ar[1]);
@@ -99,7 +133,7 @@ public class Observer {
                       else mv.setValue(3);
                       gameBoards.updatePlayer1Board(mv);
                     }else{ //p2
-                        int[] ar = get2Ints(CM.getData());
+                        int[] ar = getHitData(CM);
                         Move mv = new Move();
                         mv.setCol(ar[0]);
                         mv.setRow(ar[1]);
