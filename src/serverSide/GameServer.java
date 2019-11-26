@@ -441,7 +441,6 @@ public class GameServer {
 					}
 					else
 					{
-						System.out.println("Start a new game"); 
 						System.out.println("Start a new game"); //the client has options on what they want to do
 						reply = new Message(5,3,client,"");  
 						//send to client the message that they can do whatever when they log in  
