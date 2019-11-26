@@ -1,5 +1,7 @@
 package clientSide;
 
+import java.util.List;
+
 public class Observer {
     private GameState GameBoards;
     private Client C;
@@ -26,7 +28,6 @@ public class Observer {
     }
 
 
-
     /**
      * get a particular board from server dump
      * @param id which board to get
@@ -34,7 +35,7 @@ public class Observer {
      */
     private void getBoard(int id) throws InterruptedException {
         ClientMessage CM = C.getServerMsg(); //expects dump
-        String sBoard = String(Bytes.toArray(CM.getData()));
+        String sBoard = new String(CM.getData());
         int [][] board = new int[10][10];
         for(int i=0;i<10;i++){
             for(int j=0;j<10;j++){
