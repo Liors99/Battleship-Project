@@ -105,7 +105,7 @@ public class PlayerFleetBoard
     {	
         ShipSet<Integer, Integer, Integer, Integer, Integer> ship = new ShipSet<Integer, Integer, Integer, Integer, Integer>(shipID, x1, y1, x2, y2);
         ships.add(ship); 
-        System.out.print("Length of Placed Ships Set: "+ ships.size());
+        System.out.println("Length of Placed Ships Set: "+ ships.size());
         int shipSize = shipSizes[shipID];
         for(int i = y1; i <= y2; i++)
             for (int j = x1; j <= x2; j++)

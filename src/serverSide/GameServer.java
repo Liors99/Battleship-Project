@@ -350,7 +350,8 @@ public class GameServer {
      */
     private void handleClientLogout(SocketChannel clientChannel, Message msg) 
     {
-    		Client client = clientsByChannel.get(clientChannel);
+			Client client = clientsByChannel.get(clientChannel);
+			System.out.println("Logging out of GameRoom: "+client.getGameRoomId());
 		//Message to send back if logout successful
 		Message reply = new Message();
 		reply.setProtocolId(SERVER_ID);
@@ -430,24 +431,29 @@ public class GameServer {
 					if(client.getGameRoomId() != -1)
 					{
 						System.out.println("Resume game"); 
-						waitingRoom.dumpClientBoard(client); 
+						reply = new Message(5,2,client,"");  
+						//send to client the message that they have to resume a game immediately 
+						sendToClient(client, reply);		
+						waitingRoom.dumpClientBoard(client);
 					}
 					else
 					{
 						System.out.println("Start a new game"); 
+						System.out.println("Start a new game"); //the client has options on what they want to do
+						reply = new Message(5,3,client,"");  
+						//send to client the message that they can do whatever when they log in  
+						sendToClient(client, reply);	
 					}
 	    			}
 	    			else // client is already logged in 
 	    				sendLoginFailure(clientChannel, reply);
 	    		}
 	    		else //password doesn't match
-	    			sendLoginFailure(clientChannel, reply);	    	
+	    			sendLoginFailure(clientChannel, reply);	
 	    	}
 	    	else
 	    		sendLoginFailure(clientChannel, reply);
 	}
-    
-    
     
     private void sendLoginFailure(SocketChannel clientChannel, Message reply) 
     {
