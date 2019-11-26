@@ -54,6 +54,15 @@ public class ClientMessage {
 		}
 		return res;
 	}
+
+
+	public void viewData() {
+		System.out.println("Printning contents of ClientMessage");
+		for(int i=0; i<data.size();i++) {
+			System.out.println(data.get(i));
+		}
+
+	}
 	
 	/**
 	 * Special class for converting the raw data into ship hit coordinates 

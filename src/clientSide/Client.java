@@ -204,6 +204,8 @@ class Client {
     	int res = getJoinObserve();
     	if(res == 0) {
     		observeRequest();
+            Observer Obs = new Observer();
+            Obs.main(this);
     	}
     	else if(res == 1) {
 			joinRequest();
