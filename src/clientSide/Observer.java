@@ -11,21 +11,6 @@ public class Observer {
         System.out.println("------------ Your opponent has messaged: " + s);
     }
 
-    /**
-     * get character or BETTER int value of the
-     * @param CM
-     * @param i
-     * @param j
-     * @return
-     */
-    private char getCharFromStream(ClientMessage CM, int i, int j){
-        byte[] barr = new byte[4];
-        for(int k =0;k<4;k++){
-            barr[k] = CM.getData()[(i*10+j)*4];
-        }
-        int c = C.fromByteArray(barr);
-        return (char)c;
-    }
 
     private int[] get2Ints( byte[] barr){
         byte[] b1 = new byte[4];
@@ -49,11 +34,11 @@ public class Observer {
      */
     private void getBoard(int id) throws InterruptedException {
         ClientMessage CM = C.getServerMsg(); //expects dump
-
+        String sBoard = String(Bytes.toArray(CM.getData()));
         int [][] board = new int[10][10];
         for(int i=0;i<10;i++){
             for(int j=0;j<10;j++){
-                char c = getCharFromStream(CM, i, j);
+                char c = sBoard.charAt(i*10+j);
                 if(c == '.'){ //in case we got char
                     board[i][j] = 0;
                 }else if(c=='+'){
@@ -89,6 +74,7 @@ public class Observer {
             getBoard(1);
 
             boolean gameOver = false;
+
             while(!gameOver){
                 ClientMessage CM = C.getServerMsg();
                 int protId = CM.getProtocolId();
