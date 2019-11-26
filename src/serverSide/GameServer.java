@@ -31,6 +31,7 @@ public class GameServer {
 	private static final int LOGIN_SIGNUP_FAILURE = 1;
 	private static final int LOGOUT_SUCCESS = 2;
 	private static final int LOGOUT_FAILURE = 3;
+	private static final int DATA_START = 6; //data section starts at 6 bytes into message
 	
 	//Encoding and decoding
 	private Charset charset; 
@@ -285,11 +286,13 @@ public class GameServer {
         		
         		//Get the length of the data section
         		int dataSectionLength = inFieldsByteBuffer.getInt(); //get 4 bytes
+        		System.out.println("Received DATA SECTION LENGTH: " + dataSectionLength);
         		//Allocate this many bytes to inByteBuffer
         		ByteBuffer inDataByteBuffer = ByteBuffer.allocateDirect(dataSectionLength);
         		   		
         		//Get data section
         		bytesRead = tcpClientChannel.read(inDataByteBuffer);
+        		System.out.println("Number of bytes read: " + bytesRead);
         		
         		//Read error?
         		if (bytesRead <= 0 && dataSectionLength != 0) //if we have read 0, and we were supposed to read something
@@ -548,29 +551,22 @@ public class GameServer {
 		byte flagByte = (byte) msg.getFlag();
 		String data = msg.getData();
 		byte[] dataBytes = data.getBytes();
-		byte[] outBytes = null;
-		int dataStart = 2; //the index at which the data starts
+		byte[] outBytes = new byte[2 + 4 + dataBytes.length]; 
 		
-		if (msg.getProtocolId() == MESSAGING_ID)
-		{
-			//We must include the message length, if a chat message
-			outBytes = new byte[2 + 4 + dataBytes.length];
-			byte[] msgLength = ByteBuffer.allocate(4).putInt(dataBytes.length).array();
-			System.arraycopy(msgLength, 0, outBytes, dataStart, msgLength.length);
-			dataStart += 4;	// increment by 4 since length takes up 4 bytes
-		}
-		else
-		{
-			outBytes = new byte[2 + dataBytes.length];		
-		}
-		
+		//Put protocol Id, flag, and data section length in outBytes
 		outBytes[0] = protocolByte;
 		outBytes[1] = flagByte;
-		System.arraycopy(dataBytes, 0, outBytes,  dataStart, dataBytes.length);
 		System.out.println("Sent PROTOCOL ID: " + outBytes[0]);
 		System.out.println("Sent PROTOCOL FLAG: " + outBytes[1]);
+		byte[] dataSectionLength = ByteBuffer.allocate(4).putInt(dataBytes.length).array(); //4 bytes for dataSectionLength
+		System.arraycopy(dataSectionLength, 0, outBytes, 2, 4);
+		System.out.println("Send DATASECTION LENGTH: " + dataBytes.length);
+		
+		//Copy data section into outBytes
+		System.arraycopy(dataBytes, 0, outBytes, DATA_START, dataBytes.length);
+		
 		if (dataBytes.length > 0)
-			System.out.println("Sent data section: " + new String(outBytes, dataStart, dataBytes.length));
+			System.out.println("Sent data section: " + new String(outBytes, DATA_START, dataBytes.length));
 		
     		// Write message to client socket 
     		int bytesSent = 0;
@@ -593,7 +589,7 @@ public class GameServer {
             return false;    
         }
     		
-    		System.out.println("Length of bytes sent: " + msgSize);
+    		System.out.println("Length of message sent, in bytes: " + msgSize);
         return true;	
     }
 	  
