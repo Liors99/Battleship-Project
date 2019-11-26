@@ -530,6 +530,8 @@ class Client {
     	System.arraycopy(username, 0, data,  pos, username.length);
     	pos += username.length;
     	System.arraycopy(password, 0, data,  pos, password.length);
+    	
+    	send_msg.setData(intToByteArray(data.length));
     	send_msg.setData(data);
     	
     	SendMessage(send_msg.getEntirePacket());
@@ -945,9 +947,19 @@ class Client {
 	    		System.out.println("Trying to get data from buffer, size of buffer: " + inStream.available());
 	    		data_length = fromByteArray(inStream.readNBytes(4));
 	    		System.out.println("length of data recvd: "+ data_length);
-	    		in_msg.setData(inStream.readNBytes(data_length));
+	    		byte[] data_section = new byte[data_length];
+	    		
+	    		for(int i =0 ; i< data_length ; i ++ ) {
+	    			data_section[i] = (byte) inStream.read();
+	    		}
+	    		
+	    		in_msg.setData(data_section);
+	    		
+	    		//in_msg.setData(inStream.readNBytes(data_length));
 	    		
 	    		System.out.println("LENGTH OF DATA: "+data_length);
+	    		
+	    		
 	    	}
 	    	else {
 	    		result[2]=-1;
