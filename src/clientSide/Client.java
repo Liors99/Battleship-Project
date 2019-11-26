@@ -470,9 +470,7 @@ class Client {
     				playerState.updatePlayer1Board(mv);
     			}
     			
-    			//Gets hits on the enemy board
-    			rec_msg = getServerMsg();
-    			
+    			//Gets hits on the enemy board    			
     			rec_msg = getServerMsg();
     			data_msg = rec_msg.data4BytesToIntArray();
     			for(int i = 0; i< data_msg.length ; i+=3) {
