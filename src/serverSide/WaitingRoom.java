@@ -135,7 +135,7 @@ public class WaitingRoom {
 		observeSuccess.setFlag(GAME_OBSERVE_SUCCESS);
 		server.sendToClient(client, observeSuccess);	
 		//Send dump of game board contents
-		game.dumpBoardContentsToObserver(client);
+		game.dumpBoardContentsToObserverUponJoin(client);
 	}
 
 	/**
