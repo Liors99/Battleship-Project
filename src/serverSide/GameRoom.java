@@ -11,6 +11,8 @@ public class GameRoom
     private int gameID; 
     private boolean gameOver; 
     private HashMap<Client, PlayerFleetBoard> playerBoards = new HashMap<Client, PlayerFleetBoard>();
+    private Client player1;	//keep track of player1 and 2 for game observers
+    private Client player2;
     private Client sourcePlayer; 
     private Client targetPlayer;
     private List<Client> observers = new ArrayList<Client>();  
@@ -55,14 +57,21 @@ public class GameRoom
     private static final int DUMP_HITS_ON_PLAYER = 2;
        
     private static final int OBSERVER_BOARD_DUMP_ID = 7;
+    
+    //For observer dumps
+	private static final int PLAYER_1_FLAG = 0;
+	private static final int PLAYER_2_FLAG = 1;
 
     /** Constructors */
     public GameRoom(GameServer newServer, WaitingRoom newWaitingRoom, int gameRoomID, Client player1, Client player2)
     {
-        server = newServer;
-        waitingRoom = newWaitingRoom; 
-        gameID = gameRoomID;
-        gameOver = false; 
+        this.server = newServer;
+        this.waitingRoom = newWaitingRoom; 
+        this.gameID = gameRoomID;
+        System.out.println("GameRoom ID: "+ gameID);
+        this.gameOver = false; 
+        this.player1 = player1;
+        this.player2 = player2;
         PlayerFleetBoard board1 = new PlayerFleetBoard(player1); 
         PlayerFleetBoard board2 = new PlayerFleetBoard(player2); 
         playerBoards.put(player1, board1);
@@ -113,8 +122,11 @@ public class GameRoom
     {
         Client assocClient = msg.getClient(); 
         int protocolID = msg.getProtocolId(); 
+        System.out.println("GameRoom Protocol ID: "+ protocolID);
         int flag = msg.getFlag();
+        System.out.println("GameRoom Flag: "+ flag);
         String data = msg.getData(); 
+        System.out.println("GameRoom Data: "+ data);
         PlayerFleetBoard board = playerBoards.get(assocClient);
         
         /** Ship placement request */
@@ -206,51 +218,57 @@ public class GameRoom
 
     public void dumpBoardContents(Client client)
     {
+        //System.out.println("Dump Board Contents");
         PlayerFleetBoard clientBoard = playerBoards.get(client); 
-        int iterator = 1;
-        byte newData[] = new byte[(clientBoard.ships.size())];
-        newData[0] = (byte)clientBoard.ships.size();
+        System.out.println("Size of client board: "+clientBoard.ships.size());
+        //The first position is the number of shops that are currently placed (Max 5)
+        String newData = "";
+        //Go through all ships currently placed and add them to the byte array (data section)
         for (ShipSet<Integer, Integer, Integer, Integer, Integer> ship : clientBoard.ships) {
 
-            //for all the ships get the information and add it to a byte array
-            newData[iterator] = ship.getS().byteValue();
-            iterator++;
-            newData[iterator] = ship.getX().byteValue();
-            iterator++;
-            newData[iterator] = ship.getY().byteValue();
-            iterator++;
-            newData[iterator] = ship.getL().byteValue();
-            iterator++;
-            newData[iterator] = ship.getR().byteValue();
-            iterator++;
-
+            //for the information associated with each ship and add it to a position in the byte array
+            newData += ship.getS().toString();   //shipID
+            newData += ship.getX().toString();  //x1
+            newData += ship.getY().toString();   //y1
+            newData += ship.getL().toString();   //x2
+            newData += ship.getR().toString();   //y2
         }
+        System.out.println("Data Section: "+newData);
         //BOARD_DUMP_ID = 6, DUMP_PLAYER_SHIPS_FLAG = 0
-        Message msg = new Message(PLAYER_BOARD_DUMP_ID, DUMP_PLAYER_SHIPS_FLAG, client, newData.toString());
+        Message msg = new Message(PLAYER_BOARD_DUMP_ID, DUMP_PLAYER_SHIPS_FLAG, client, newData);
         server.sendToClient(client, msg);
 
+
+        //Send the hits on each Client 
+        System.out.println("Number of Hits on Client: "+ playerBoards.values().size());
+        
         for(PlayerFleetBoard board : playerBoards.values()){
-        //send the message to client 
-            iterator = 1; 
-            newData[0] = (byte)clientBoard.boardHits.size();
-            for (Pair<Integer, Integer, Integer> hit : clientBoard.boardHits)
-            {
-                newData[iterator] = hit.getH().byteValue(); 
-                iterator++;
-                newData[iterator] = hit.getL().byteValue(); 
-                iterator++;
-                newData[iterator] = hit.getR().byteValue(); 
-                iterator++;
-            }
             
+            newData = "";
+            //For each hit that has been made add the hit to the data section in the message
+            if(board.boardHits.size() > 0){
+                System.out.print("Should Skip "); 
+                for (Pair<Integer, Integer, Integer> hit : clientBoard.boardHits)
+                {
+                    newData += hit.getH().toString(); //Hit or Miss (1/0)
+                    newData += hit.getL().toString(); //X
+                    newData += hit.getR().toString(); //Y
+                }
+            }
+            System.out.print("Data section for Hit: "+newData); 
+            //If the board that we are getting the hits for is the the clients board (Flag = hits on)
             if(board == clientBoard)
-                msg = new Message(PLAYER_BOARD_DUMP_ID, DUMP_HITS_ON_PLAYER, client, newData.toString());
+                msg = new Message(PLAYER_BOARD_DUMP_ID, DUMP_HITS_ON_PLAYER, client, newData);
+            //The board is the targets board - so its the hits we have made 
             else 
-                msg = new Message(PLAYER_BOARD_DUMP_ID, DUMP_PLAYER_HITS_FLAG, client, newData.toString());
-           
+                msg = new Message(PLAYER_BOARD_DUMP_ID, DUMP_PLAYER_HITS_FLAG, client, newData);
+        
+            //send the message to the client
             server.sendToClient(client, msg);
+            
         }
 
+        System.out.println("Skipped");
     }
 
 	/**
@@ -340,9 +358,6 @@ public class GameRoom
             //failed 
         }
     }
-
-
-    private void sendChatMessage(Message Msg){}
     
     /**
      * Communicates to all other members of the GameRoom that a player has left 
@@ -377,8 +392,11 @@ public class GameRoom
     private void communicateToAllPlayersHit(Client source, int x, int y, int hit)
     {
         Message msg;
-        String data = Integer.toString(x) + Integer.toString(y) + Integer.toString(hit);
+        //String data = Integer.toString(x) + Integer.toString(y) + Integer.toString(hit);
+        String data = "" + x + y + hit;
         System.out.println("Data that should be sent for Hit: "+ data);
+        
+        //Send to players
         for (Client player : players())
         {
             if (player == source)
@@ -387,7 +405,16 @@ public class GameRoom
                 msg = new Message(HIT_REPLY_PROTOCOL_ID, HIT_REPLY_TARGET_FLAG, player, data);
             server.sendToClient(player, msg);
         }
-        /** Have to implement for observers */
+        
+        //And send to observers
+        for (Client observer : observers)
+        {
+        		if (source == player1) //hit by player 1, on player 2
+        			msg = new Message(HIT_REPLY_PROTOCOL_ID, PLAYER_2_FLAG, observer, data); //hit on player 2
+        		else //hit by player 2, on player 1
+        			msg = new Message(HIT_REPLY_PROTOCOL_ID, PLAYER_1_FLAG, observer, data); //hit on player 1
+        		server.sendToClient(observer, msg);
+        }
     }
 
     /**
@@ -475,16 +502,18 @@ public class GameRoom
         return gameID;
     }
 
-    public void dumpBoardContentsToObserver(Client observer)
+    public void dumpBoardContentsToObserverUponJoin(Client observer)
     {
-    		int playerFlag = 0; //to indicate via flag that we are dumping different players' boards
-    		for (PlayerFleetBoard board : playerBoards.values())
-    		{
-    			String boardString = board.getPrivateBoardString();
-    			Message boardDump = new Message(OBSERVER_BOARD_DUMP_ID, playerFlag, observer, boardString);
-    			server.sendToClient(observer, boardDump);
-    			playerFlag++; //increment flag; should be 0 for first player, 1 for second player
-    		}
+    		//Dump player 1's board
+    		PlayerFleetBoard board1 = playerBoards.get(player1);
+    		String boardString1 = board1.getPrivateBoardString();
+    		Message boardDump1 = new Message(OBSERVER_BOARD_DUMP_ID, PLAYER_1_FLAG, observer, boardString1);
+    		server.sendToClient(observer, boardDump1);
+    		//Dump player 2's board
+    		PlayerFleetBoard board2 = playerBoards.get(player2);
+    		String boardString2 = board2.getPrivateBoardString();
+    		Message boardDump2 = new Message(OBSERVER_BOARD_DUMP_ID, PLAYER_2_FLAG, observer, boardString2);
+    		server.sendToClient(observer, boardDump2);
     }
     
     public Set<Client> players()

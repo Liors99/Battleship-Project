@@ -59,19 +59,25 @@ public class ClientMessage {
 	 * Special class for converting the raw data into ship hit coordinates 
 	 * @return
 	 */
-	public int[] getDataShipInts() {
-		byte[] placements = getData();
-		int[] res = new int[placements.length/4];
-		System.out.println("--------- SIZE OF HITS: "+placements.length);
+	public int[] data1ByteToIntArray() {
+		byte[] org = getData();
+		int[] res = new int[org.length];
+		System.out.println("--------- SIZE OF BYTES TO CONVERT: "+org.length);
 		
-		res[0]=fromByteArray(Arrays.copyOfRange(placements, 0, 4));
-		res[1]=fromByteArray(Arrays.copyOfRange(placements, 4, 8));
-		res[2]=fromByteArray(Arrays.copyOfRange(placements, 8, 12));
+		for(int i = 0; i < org.length; i++) {
+			res[i]=org[i];
+		}
+		
+		System.out.println("res = " + Arrays.toString(res));
 		
 		return res;
 	}
 	
 	
+	/**
+	 * Gets the entire packet as a byte[]
+	 * @return
+	 */
 	public byte[] getEntirePacket() {
 		byte[] res = new byte[2 + data.size()];
 		res[0] = (byte) protocolId;
@@ -84,7 +90,7 @@ public class ClientMessage {
 	}
 	
 	
-	public int[] dataToIntArray() {
+	public int[] data4BytesToIntArray() {
 		byte[] org = getData();
 		int[] res = new int[org.length/4];
 		
@@ -94,6 +100,7 @@ public class ClientMessage {
 			j++;
 		}
 		
+		System.out.println("res = " + Arrays.toString(res));
 		return res;
 	}
 	
