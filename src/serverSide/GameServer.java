@@ -425,31 +425,37 @@ public class GameServer {
 		    			//Add the new client-socket mapping
 		    			addToClientSocketMapping(client, clientChannel);
 		    		 	//Set flag of message to success
-						reply.setFlag(LOGIN_SIGNUP_SUCCESS);
-						sendToClient(client, reply);		
-						if(client.getGameRoomId() != -1)
-						{
-							System.out.println("Resume game"); 
-							waitingRoom.dumpClientBoard(client); 
-						}
-						else
-						{
-							System.out.println("Start a new game"); 
-						}
-	    			}		
+		    			reply.setFlag(LOGIN_SIGNUP_SUCCESS);
+					sendToClient(client, reply);		
+					if(client.getGameRoomId() != -1)
+					{
+						System.out.println("Resume game"); 
+						waitingRoom.dumpClientBoard(client); 
+					}
+					else
+					{
+						System.out.println("Start a new game"); 
+					}
+	    			}
+	    			else // client is already logged in 
+	    				sendLoginFailure(clientChannel, reply);
 	    		}
-	    		//Send message to client
-		    	
+	    		else //password doesn't match
+	    			sendLoginFailure(clientChannel, reply);	    	
 	    	}
 	    	else
-	    	{
-	    		//Set flag of message to failure
-	    		reply.setFlag(LOGIN_SIGNUP_FAILURE);
-	    		sendToClientChannel(clientChannel, reply);
-	    	}    
+	    		sendLoginFailure(clientChannel, reply);
 	}
     
-    /**
+    
+    
+    private void sendLoginFailure(SocketChannel clientChannel, Message reply) 
+    {
+    		reply.setFlag(LOGIN_SIGNUP_FAILURE);
+		sendToClientChannel(clientChannel, reply);	
+	}
+
+	/**
      * Method for handling client signup to game server
      * @param clientChannel : the channel to which the client in question is associated
      * @param msg : the message associated with the signup request
