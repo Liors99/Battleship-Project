@@ -303,8 +303,6 @@ public class GameServer {
         		if (msg.getProtocolId() == SERVER_ID && 
                         (msg.getFlag() == SIGN_UP_FLAG || msg.getFlag() == LOGIN_FLAG))
     				usernameLength = inDataByteBuffer.getInt();
-        		else if (msg.getProtocolId() == MESSAGING_ID)
-        			chatMsgLength = inDataByteBuffer.getInt();
         		
         		//Decode the bytes to ASCII characters
         		decoder.decode(inDataByteBuffer, inCharBuffer, false);
@@ -326,7 +324,7 @@ public class GameServer {
         				handleClientLogout(tcpClientChannel, msg);
         		}
         		else if (msg.getProtocolId() == MESSAGING_ID)
-        			handleChatMessage(tcpClientChannel, msg, chatMsgLength);
+        			handleChatMessage(tcpClientChannel, msg);
         		else if (msg.getProtocolId() == WAITING_ROOM_ID)
         			waitingRoom.handleMessage(msg);
         		else if (msg.getProtocolId() == GAME_ROOM_ID)
@@ -383,10 +381,10 @@ public class GameServer {
      * @param msg : the message associated with the login/signup request
      * @param chatMsgLength : the length of the chat message payload
      */
-    private void handleChatMessage(SocketChannel tcpClientChannel, Message msg, int chatMsgLength) 
+    private void handleChatMessage(SocketChannel tcpClientChannel, Message msg) 
     {
     		byte[] bytes = msg.getData().getBytes();
-    		System.out.println("Chat message of length " + chatMsgLength + " from " + clientsByChannel.get(tcpClientChannel).getUsername() + ":");
+    		System.out.println("Chat message of length " + bytes.length + " from " + clientsByChannel.get(tcpClientChannel).getUsername() + ":");
     		System.out.println(new String(bytes)); //print the chat message
     		waitingRoom.forwardMessageToGameRoom(msg);  
 	}
@@ -564,7 +562,7 @@ public class GameServer {
 		System.out.println("Sent PROTOCOL FLAG: " + outBytes[1]);
 		byte[] dataSectionLength = ByteBuffer.allocate(4).putInt(dataBytes.length).array(); //4 bytes for dataSectionLength
 		System.arraycopy(dataSectionLength, 0, outBytes, 2, 4);
-		System.out.println("Send DATASECTION LENGTH: " + dataBytes.length);
+		System.out.println("Sent DATASECTION LENGTH: " + dataBytes.length);
 		
 		//Copy data section into outBytes
 		System.arraycopy(dataBytes, 0, outBytes, DATA_START, dataBytes.length);

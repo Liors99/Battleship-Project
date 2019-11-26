@@ -352,9 +352,6 @@ public class GameRoom
             //failed 
         }
     }
-
-
-    private void sendChatMessage(Message Msg){}
     
     /**
      * Communicates to all other members of the GameRoom that a player has left 
