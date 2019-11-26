@@ -945,8 +945,18 @@ class Client {
 	    		//Get the size of the text message, and move populate the data section.
 	    		
 	    		System.out.println("Trying to get data from buffer, size of buffer: " + inStream.available());
-	    		data_length = fromByteArray(inStream.readNBytes(4));
+	    		
+	    		
+	    		//read in the size of the data section
+	    		byte[] size = new byte[4];
+	    		for(int i = 0; i < size.length ; i++) {
+	    			size[i] = (byte) inStream.read();
+	    		}
+	    		
+	    		data_length = fromByteArray(size);
 	    		System.out.println("length of data recvd: "+ data_length);
+	    		
+	    		//Read in the data section
 	    		byte[] data_section = new byte[data_length];
 	    		
 	    		for(int i =0 ; i< data_length ; i ++ ) {
