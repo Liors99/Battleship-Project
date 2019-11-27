@@ -270,14 +270,14 @@ public class GameState {
             for(int i=y1;i<=y2;i++){
                 if(Player1Board[i][x2]!=0){
                    occupiedSpace(x1,i);
-                   return shipPlaced;
+                   return false;
                 }
             }
         }else{
             for(int i=x1;i<=x2;i++){
                 if(Player1Board[y1][i]!=0){
                     occupiedSpace(i,y1);
-                    return shipPlaced;
+                    return false;
                 }
             }
         }
