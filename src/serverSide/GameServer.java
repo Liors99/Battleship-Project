@@ -338,18 +338,35 @@ public class GameServer {
         return true;
     }
     
-    private boolean signalReadError(SocketChannel tcpClientChannel, SelectionKey key2) 
+    private boolean signalReadError(SocketChannel clientChannel, SelectionKey key2) 
     {
     		System.out.println("read() error, or connection closed");
 		key.cancel();  // deregister the socket
 		//is the clientChannel registered to a client? 
 		//if so, if client is active, deactivate them
-		if (clientsByChannel.containsKey(tcpClientChannel))
+		if (clientsByChannel.containsKey(clientChannel))
 		{
-			waitingRoom.deactiviateClient(clientsByChannel.get(tcpClientChannel));
+			waitingRoom.deactiviateClient(clientsByChannel.get(clientChannel));
+			//Remove from client-channel mapping
+			removeFromClientSocketMapping(clientsByChannel.get(clientChannel));
 		}
 		return false;  	
 	}
+    
+    private boolean signalSendError(SocketChannel clientChannel)
+    {
+    		System.out.println("write() error, or connection closed");
+		key.cancel();
+		//is the clientChannel registered to a client? 
+		//if so, if client is active, deactivate them
+		if (clientsByChannel.containsKey(clientChannel))
+		{
+			waitingRoom.deactiviateClient(clientsByChannel.get(clientChannel));
+			//Remove from client-channel mapping
+			removeFromClientSocketMapping(clientsByChannel.get(clientChannel));
+		}
+		return false;
+    }
 
 	/**
      * Method to handle client logout request
@@ -583,17 +600,14 @@ public class GameServer {
  	       
     		try {
 	    		bytesSent = clientChannel.write(outByteBuffer);
-	    	} catch (IOException e) {
-	    		// TODO Auto-generated catch block
-	    		e.printStackTrace();
+	    	} catch (Exception e) {
+	    		return signalSendError(clientChannel);
 	    	} 	
     		
     		// error checking on bytes
     		if (bytesSent != msgSize)
     		{
-    			System.out.println("write() error, or connection closed");
-    			key.cancel();
-            return false;    
+    			return signalSendError(clientChannel);
         }
     		
     		System.out.println("Length of message sent, in bytes: " + msgSize);
