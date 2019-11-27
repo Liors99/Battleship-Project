@@ -209,6 +209,8 @@ class Client {
     		System.out.println("Observing a game!");
         Observer Obs = new Observer();
         Obs.main(this);
+        getUserPath();
+        this.clientSocket.close();
     	}
     	else if(res == 1) {
 			joinRequest();

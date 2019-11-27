@@ -402,13 +402,13 @@ public class GameState {
 
     public boolean isGameOver2(){
         boolean isOver = true;
-        l1:
+        l2:
         for(int[] row : Player2Board) {
             for(int ship : row) {
                 if(ship==1) {
                     isOver = false;
 
-                    break l1;
+                    break l2;
                 }
             }
 

@@ -12,7 +12,7 @@ public class Observer {
     private static void getChatMSG(byte[] msg) {
 
         String s = new String(msg);
-        System.out.println("------------ Your opponent has messaged: " + s);
+        System.out.println("------------ Player messaged: " + s);
     }
 
 
@@ -127,22 +127,23 @@ public class Observer {
                     if(moveCounter%2==0){ //p1
                       int[] ar = getHitData(CM);
                       Move mv = new Move();
-                      mv.setCol(ar[0]);
-                      mv.setRow(ar[1]);
+                      mv.setCol(ar[2]);
+                      mv.setRow(ar[3]);
                       if(gameBoards.isShipAtPlayer1Board(mv)) mv.setValue(2);
                       else mv.setValue(3);
                       gameBoards.updatePlayer1Board(mv);
                     }else{ //p2
                         int[] ar = getHitData(CM);
                         Move mv = new Move();
-                        mv.setCol(ar[0]);
-                        mv.setRow(ar[1]);
+                        mv.setCol(ar[2]);
+                        mv.setRow(ar[3]);
                         if(gameBoards.isShipAtPlayer2Board(mv)) {mv.setValue(2);}
                         else{ mv.setValue(3);}
                         gameBoards.updatePlayer2Board(mv);
                     }
                     gameBoards.observe();
                     if(gameBoards.isGameOver() || gameBoards.isGameOver2()) {
+                        System.out.println("Game over");
                         gameOver = true;
                     }
                     moveCounter++;
