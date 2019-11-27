@@ -268,7 +268,6 @@ class Client {
     	playerState.displayBoards();
     	System.out.println("Waiting for a the other player to finish placing ships....");
     	waitForACK(FINISHED_PLACING_ID, FINISHED_PLACING_ACK_FLAG);
-    	System.out.println("All ships placed. GAME ON!");
     }
     
     /**
@@ -281,7 +280,8 @@ class Client {
     		boolean isWon= false;
     		
 	    	while(!playerState.isGameOver()) {
-	    		ClientMessage rec_msg = receiveMsg();
+	    		System.out.println("Waitng for opponent to make a move....");
+	    		ClientMessage rec_msg = getServerMsg();
 	    		int protocolId = rec_msg.getProtocolId();
 	    		int flag = rec_msg.getFlag();
 	    		if (protocolId == REPLY_TURN_ID && flag == REPLY_TURN_FLAG) //it's my turn
@@ -420,6 +420,7 @@ class Client {
     	
     	if(!valid) {
     		System.out.println("Username or password incorrect");
+    		this.clientSocket.close();
     		preLoginPhase();
     	}
     	
@@ -433,7 +434,7 @@ class Client {
     		//If we are in game
     		if(rec_msg.getFlag() == REPLY_RECONNECT_INGAME_FLAG) {
     			
-    			System.out.println("CLIENT IS CURRENTLY IN GAME");
+    			System.out.println("------------------- YOU HAVE BEEN AUTOMATICALLY RECONNECTED TO AN OLDER SESSION -------------------");
     			
     			int[] data_msg;
     			
@@ -459,13 +460,21 @@ class Client {
     			//Get hits on our board
     			rec_msg = getServerMsg();
     			data_msg = rec_msg.data4BytesToIntArray();
-    			for(int i = 0; i< data_msg.length ; i+=2) {
-    				int x = data_msg[i];
-    				int y = data_msg[i+1];
+    			for(int i = 0; i< data_msg.length ; i+=3) {
+    				int val = data_msg[i];
+    				int x = data_msg[i+1];
+    				int y = data_msg[i+2];
     				
     				Move mv = new Move();
     				mv.setCol(x);
     				mv.setRow(y);
+    				
+    				if(val == REPLY_HIT_ACK) {
+    					mv.setValue(2);
+    				}
+    				else {
+    					mv.setValue(3);
+    				}
     				
     				playerState.updatePlayer1Board(mv);
     			}
@@ -474,22 +483,21 @@ class Client {
     			rec_msg = getServerMsg();
     			data_msg = rec_msg.data4BytesToIntArray();
     			for(int i = 0; i< data_msg.length ; i+=3) {
-    				int x = data_msg[i];
-    				int y = data_msg[i+1];
-    				int hit = data_msg[i+2];
+    				int val = data_msg[i];
+    				int x = data_msg[i+1];
+    				int y = data_msg[i+2];
     				
     				Move mv = new Move();
     				mv.setCol(x);
     				mv.setRow(y);
     				
-    				if(hit == REPLY_HIT_ACK) {
-    					mv.setValue(3);
-    				}
-    				else {
+    				if(val == REPLY_HIT_ACK) {
     					mv.setValue(2);
     				}
-    				
-    				playerState.updatePlayer1Board(mv);
+    				else {
+    					mv.setValue(3);
+    				}
+    				playerState.updatePlayer2Board(mv);
     			}
     			
 				preGamePhase();
@@ -547,6 +555,7 @@ class Client {
     	
     	if(!valid) {
     		System.out.println("Username already exists or already logged in");
+    		this.clientSocket.close();
     		preLoginPhase();
     	}
     }
