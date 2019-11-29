@@ -38,7 +38,7 @@ public class Observer {
     private void getBoard(int id) throws InterruptedException {
         ClientMessage CM = C.getServerMsg(); //expects dump
         String sBoard = new String(CM.getData());
-        System.out.println(sBoard);
+        //System.out.println(sBoard);
 
         //CM.viewData();
 
