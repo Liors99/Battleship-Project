@@ -253,6 +253,7 @@ public class WaitingRoom {
 	public void alertGameHasEnded(int gameRoomId, Set<Client> clients) 
 	{
 		games.remove(gameRoomId);
+		gamesAllShipsPlaced.remove(gameRoomId);
 		for (Client client : clients)
 			client.resetStatus(); // client is no longer a player (or observer) at conclusion of game
 	}
