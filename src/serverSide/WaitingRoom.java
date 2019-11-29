@@ -114,7 +114,7 @@ public class WaitingRoom {
 				Message observeFailure = new Message();
 				observeFailure.setClient(client);
 				observeFailure.setProtocolId(WAITING_ROOM_ID);
-				observeFailure.setFlag(GAME_OBSERVE_SUCCESS);
+				observeFailure.setFlag(GAME_OBSERVE_FAILURE);
 				server.sendToClient(client, observeFailure);	
 			}
 		}

@@ -57,7 +57,6 @@ public class ClientMessage {
 
 
 	public void viewData() {
-		System.out.println("Printning contents of ClientMessage");
 		for(int i=0; i<data.size();i++) {
 			System.out.println(data.get(i));
 		}
@@ -71,13 +70,11 @@ public class ClientMessage {
 	public int[] data1ByteToIntArray() {
 		byte[] org = getData();
 		int[] res = new int[org.length];
-		System.out.println("--------- SIZE OF BYTES TO CONVERT: "+org.length);
 		
 		for(int i = 0; i < org.length; i++) {
 			res[i]=org[i];
 		}
 		
-		System.out.println("res = " + Arrays.toString(res));
 		
 		return res;
 	}

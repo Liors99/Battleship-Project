@@ -206,11 +206,7 @@ class Client {
     	int res = getJoinObserve();
     	if(res == 0) {
     		observeRequest();
-    		System.out.println("Observing a game!");
-        Observer Obs = new Observer();
-        Obs.main(this);
-        getUserPath();
-        this.clientSocket.close();
+    		
     	}
     	else if(res == 1) {
 			joinRequest();
@@ -362,8 +358,9 @@ class Client {
     /**
      * Makes a game observe request to the server
      * @throws IOException
+     * @throws InterruptedException 
      */
-    private void observeRequest() throws IOException {
+    private void observeRequest() throws IOException, InterruptedException {
     	int id = OBSERVE_ID;
     	int flag = OBSERVE_FLAG;
     	
@@ -374,7 +371,23 @@ class Client {
     	
     	SendMessage(send_msg.getEntirePacket());
     	
-    	waitForACK(REPLY_JOIN_ID,REPLY_OBS_ACK_FLAG);
+    	ClientMessage rec_msg = getServerMsg();
+    	
+    	if(rec_msg.getProtocolId() == REPLY_JOIN_ID) {
+    		if(rec_msg.getFlag() == REPLY_OBS_ACK_FLAG) {
+    			System.out.println("Observing a game!");
+    			Observer Obs = new Observer();
+    	        Obs.main(this);
+    	        getUserPath();
+    	        this.clientSocket.close();
+    		}
+    		else {
+    			System.out.println("There are no games to observe...");
+    			getUserPath();
+    		}
+    	}
+    	
+    	//waitForACK(REPLY_JOIN_ID,REPLY_OBS_ACK_FLAG);
     }
     
     
@@ -449,12 +462,6 @@ class Client {
     				int y1= data_msg[i+2];
     				int x2= data_msg[i+3];
     				int y2= data_msg[i+4];
-    				
-    				System.out.println("GOT SHIP = " + ship_n);
-    				System.out.println("GOT X1 = " + x1);
-    				System.out.println("GOT Y1 = " + y1);
-    				System.out.println("GOT X2 = " + x2);
-    				System.out.println("GOT Y2 = " + y2);
     				
     				playerState.placeShipPlayer1Board(ship_n, x1, y1, x2, y2);
     			}
@@ -978,9 +985,9 @@ class Client {
 		    		}
 	    		}
 	    		
-    	    //System.out.println("Received PROTOCOL ID: " + protocolId);
-    	    //System.out.println("Received PROTOCOL FLAG: "+flag);
-    	    	//System.out.println("LENGTH OF DATA: "+data_length);
+	    		System.out.println("Received PROTOCOL ID: " + protocolId);
+    	    	System.out.println("Received PROTOCOL FLAG: "+flag);
+    	    	System.out.println("LENGTH OF DATA: "+data_length);
 
     		}
     		
@@ -1151,9 +1158,9 @@ class Client {
     	data[4] = fromByteArray(Arrays.copyOfRange(msg_data, 8, 12));
     	
     	
-    	System.out.println("Received data[2]: " + data[2]);
-    	System.out.println("Received data[3]: " + data[3]);
-    	System.out.println("Received data[4]: " + data[4]);
+    	//System.out.println("Received data[2]: " + data[2]);
+    	//System.out.println("Received data[3]: " + data[3]);
+    	//System.out.println("Received data[4]: " + data[4]);
     	return data;
     }
     
