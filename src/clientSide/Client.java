@@ -947,12 +947,7 @@ class Client {
     	    	in_msg.setFlag(flag);
     	    	//in_msg.setData(inStream.readNBytes(data_length));
     	    	
-<<<<<<< HEAD
-    	    //System.out.println("Trying to get data from buffer, size of buffer: " + inStream.available());
-=======
-    	    	System.out.println("Trying to get data from buffer, size of buffer: " + inStream.available());
->>>>>>> c4f3b6097fed1e3a2938f5479836f1f99e7aa6f3
-	    		
+    	    //System.out.println("Trying to get data from buffer, size of buffer: " + inStream.available());	    		
 	    		
 	    		//read in the size of the data section
 	    		byte[] size = new byte[4];
@@ -961,11 +956,8 @@ class Client {
 	    		}
 	    		
 	    		data_length = fromByteArray(size);
-<<<<<<< HEAD
+
 	    		//System.out.println("length of data recvd: "+ data_length);
-=======
-	    		System.out.println("length of data recvd: "+ data_length);
->>>>>>> c4f3b6097fed1e3a2938f5479836f1f99e7aa6f3
 	    		
 	    		//Read in the data section
 	    		
@@ -986,16 +978,10 @@ class Client {
 		    		}
 	    		}
 	    		
-	    		
-<<<<<<< HEAD
     	    //System.out.println("Received PROTOCOL ID: " + protocolId);
     	    //System.out.println("Received PROTOCOL FLAG: "+flag);
     	    	//System.out.println("LENGTH OF DATA: "+data_length);
-=======
-    	    	System.out.println("Received PROTOCOL ID: " + protocolId);
-    	    	System.out.println("Received PROTOCOL FLAG: "+flag);
-    	    	System.out.println("LENGTH OF DATA: "+data_length);
->>>>>>> c4f3b6097fed1e3a2938f5479836f1f99e7aa6f3
+
     		}
     		
     		/*
@@ -1195,11 +1181,7 @@ class Client {
 	   packet.setData(msg.getBytes());
 	   SendMessage(packet.getEntirePacket());
 	   
-<<<<<<< HEAD
 	   //System.out.println("SENT MESSAGE OF SIZE: " + msg.length());
-=======
-	   System.out.println("SENT MESSAGE OF SIZE: " + msg.length());
->>>>>>> c4f3b6097fed1e3a2938f5479836f1f99e7aa6f3
    }
    
    private static void getChatMSG(byte[] msg) {

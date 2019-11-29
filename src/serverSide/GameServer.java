@@ -331,12 +331,7 @@ public class GameServer {
         			waitingRoom.forwardMessageToGameRoom(msg); 	
         }
         catch (IOException e) {
-<<<<<<< HEAD
         		signalReadError(tcpClientChannel, key);
-=======
-        	// TODO Auto-generated catch block
-        	e.printStackTrace();
->>>>>>> c4f3b6097fed1e3a2938f5479836f1f99e7aa6f3
         }
         
         return true;
