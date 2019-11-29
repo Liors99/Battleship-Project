@@ -54,8 +54,8 @@ public class GameRoom
     
     private static final int PLAYER_BOARD_DUMP_ID = 6;
     private static final int DUMP_PLAYER_SHIPS_FLAG = 0; 
-    private static final int DUMP_HITS_MADE_FLAG = 1; 
-    private static final int DUMP_HITS_ON_PLAYER = 2;
+    private static final int DUMP_HITS_ON_PLAYER = 1;
+    private static final int DUMP_HITS_MADE_FLAG = 2; 
        
     private static final int OBSERVER_BOARD_DUMP_ID = 7;
     
@@ -247,32 +247,42 @@ public class GameRoom
         String message62 = ""; 
         for(PlayerFleetBoard board : playerBoards.values())
         {
-            
+            System.out.println("Number of Boards to Parse: "+playerBoards.values().size());
             newData = "";
             //For each hit that has been made add the hit to the data section in the message
             if(board.boardHits.size() > 0){
-                System.out.print("Should Skip "); 
                 //get all the hits made on this board
-                for (Pair<Integer, Integer, Integer> hit : clientBoard.boardHits)
+                for (Pair<Integer, Integer, Integer> hit : board.boardHits)
                 {
                     newData += hit.getH().toString(); //Hit or Miss (1/0)
                     newData += hit.getL().toString(); //X
                     newData += hit.getR().toString(); //Y
                 }
             }
-            System.out.print("Data section for Hit: "+newData); 
+            System.out.println("Data section for Hit: "+newData); 
             //If the board that we are getting the hits for is the the clients board (Flag = hits on)
-            if(board == clientBoard)
-                message62 = newData; 
-            //The board is the targets board - so its the hits we have made 
-            else 
+            if(board == clientBoard){
+                System.out.println("BOARD IS THE CLIENT BOARD");
                 message61 = newData; 
+                System.out.println("Message 6.2: "+message62);
+                //board.printBoard();
+            }
+            //The board is the targets board - so its the hits we have made 
+            else {
+                message62 = newData; 
+                System.out.println("Message 6.1: "+message61);
+                //board.printBoard();
+            }
             
         }
-        msg = new Message(PLAYER_BOARD_DUMP_ID, DUMP_HITS_MADE_FLAG, client, message61);
+        //HAVING PROBLEMS 
+        msg = new Message(PLAYER_BOARD_DUMP_ID, DUMP_HITS_ON_PLAYER, client, message61);
         server.sendToClient(client, msg);  
-        msg = new Message(PLAYER_BOARD_DUMP_ID, DUMP_HITS_ON_PLAYER, client, message62);
+
+        //WORKS
+        msg = new Message(PLAYER_BOARD_DUMP_ID, DUMP_HITS_MADE_FLAG, client, message62);
         server.sendToClient(client, msg);
+        
         if(gameStarted) //All ships have been placed 
         {
             //ID 3, FLAG 0 (protocol response for finishing placing ships)
